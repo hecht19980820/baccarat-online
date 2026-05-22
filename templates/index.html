@@ -2,124 +2,114 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>百家樂 AI 分析系統</title>
 
 <style>
+*{
+    box-sizing:border-box;
+}
 
 body{
     margin:0;
     background:
-    radial-gradient(circle at top,#12203f 0%,#050b18 45%,#02050d 100%);
+        radial-gradient(circle at top,#101f3d 0%,#050b18 48%,#02050d 100%);
     color:white;
     font-family:Arial,"Microsoft JhengHei";
 }
 
 .container{
-    max-width:1000px;
+    width:100%;
+    max-width:980px;
     margin:auto;
-    padding:20px;
+    padding:12px;
 }
 
 .topbar{
-    display:flex;
-    gap:12px;
-    margin-bottom:20px;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:12px;
 }
 
 .card{
-    background:rgba(10,20,40,.72);
-    backdrop-filter:blur(10px);
-
-    border:1px solid rgba(80,160,255,.55);
-
-    box-shadow:
-        0 0 25px rgba(0,120,255,.22),
-        inset 0 0 18px rgba(255,255,255,.03);
-
-    border-radius:18px;
-
-    padding:18px;
-
-    margin-bottom:18px;
+    background:rgba(8,18,38,.82);
+    border:1px solid rgba(80,160,255,.48);
+    box-shadow:0 0 18px rgba(0,120,255,.18), inset 0 0 12px rgba(255,255,255,.025);
+    border-radius:16px;
+    padding:14px;
+    margin-bottom:12px;
 }
 
 .grid{
     display:grid;
-    grid-template-columns:1fr 1.4fr 1fr;
-    gap:18px;
-    margin-bottom:18px;
+    grid-template-columns:1fr 1.35fr 1fr;
+    gap:12px;
+    margin-bottom:12px;
 }
 
 .grid2{
     display:grid;
-    grid-template-columns:1.6fr .8fr;
-    gap:18px;
-    margin-bottom:18px;
+    grid-template-columns:1.35fr .9fr;
+    gap:12px;
+    margin-bottom:12px;
 }
 
 select,
 button{
-    border-radius:14px;
-    border:1px solid rgba(80,160,255,.5);
+    width:100%;
+    border-radius:12px;
+    border:1px solid rgba(90,170,255,.45);
     background:#08162f;
     color:white;
-    padding:14px;
-    font-size:18px;
+    padding:12px;
+    font-size:16px;
+    font-weight:bold;
 }
 
 button{
-    transition:.18s;
     cursor:pointer;
 }
 
-button:hover{
-    transform:translateY(-2px);
-
-    box-shadow:
-        0 0 18px rgba(255,255,255,.18);
-}
-
 .banker{
-    background:linear-gradient(135deg,#c4004b,#ff2f71);
+    background:linear-gradient(135deg,#9d0038,#ff2f71);
 }
 
 .player{
-    background:linear-gradient(135deg,#0061ff,#00a2ff);
+    background:linear-gradient(135deg,#0048d8,#009dff);
 }
 
 .tie{
-    background:linear-gradient(135deg,#00a86b,#00d49a);
+    background:linear-gradient(135deg,#007a4c,#00d49a);
 }
 
 .warn{
-    background:linear-gradient(135deg,#9d6d00,#e0a500);
+    background:linear-gradient(135deg,#8d6200,#d39b00);
 }
 
 .danger{
-    background:linear-gradient(135deg,#5f001e,#b00038);
+    background:linear-gradient(135deg,#4b0018,#b00038);
 }
 
 .title{
-    color:#8ec5ff;
-    font-size:20px;
-    margin-bottom:14px;
+    color:#9dccff;
+    font-size:17px;
+    font-weight:bold;
+    margin-bottom:10px;
 }
 
 .big{
-    font-size:82px;
+    font-size:64px;
     font-weight:bold;
-
     text-align:center;
-
-    text-shadow:
-        0 0 18px rgba(255,70,120,.8);
-
-    margin-top:30px;
+    color:#ff4c7d;
+    text-shadow:0 0 18px rgba(255,70,120,.75);
+    margin:12px 0 4px;
 }
 
 .rate{
     text-align:center;
-    font-size:62px;
+    font-size:42px;
     font-weight:bold;
     color:#ff9ec0;
 }
@@ -129,140 +119,152 @@ button:hover{
 }
 
 .sub{
-    color:#8ea6d9;
-    font-size:14px;
+    color:#91a8d7;
+    font-size:13px;
 }
 
 .stats-grid{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:18px;
+    gap:8px;
 }
 
 .stat-box{
     border:1px solid rgba(255,255,255,.08);
-    border-radius:14px;
-    padding:16px;
+    border-radius:12px;
+    padding:10px;
+    font-size:13px;
 }
 
 .stat-value{
-    font-size:22px;
+    font-size:20px;
     font-weight:bold;
-    margin-top:8px;
+    margin-top:6px;
 }
 
 .alert-box{
     border:1px solid rgba(255,255,255,.08);
-    border-radius:14px;
-    padding:14px;
-    margin-bottom:14px;
+    border-radius:12px;
+    padding:10px;
+    margin-bottom:8px;
+    background:rgba(255,255,255,.025);
 }
 
 .alert-title{
-    font-size:22px;
-    margin-bottom:4px;
+    font-size:16px;
+    color:#ffd36a;
 }
 
 .keypad-area{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:24px;
+    gap:14px;
     align-items:center;
 }
 
 .card-preview{
     display:flex;
-    gap:12px;
-    margin-top:20px;
+    gap:8px;
+    margin-top:12px;
     flex-wrap:wrap;
+    min-height:46px;
 }
 
 .preview-number{
-    width:52px;
-    height:52px;
-    border-radius:12px;
-    border:1px solid rgba(120,180,255,.4);
+    width:42px;
+    height:42px;
+    border-radius:10px;
+    border:1px solid rgba(120,180,255,.48);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:32px;
+    font-size:24px;
+    font-weight:bold;
 }
 
 .keypad{
     display:grid;
     grid-template-columns:repeat(3,1fr);
-    gap:14px;
+    gap:8px;
 }
 
 .keypad button{
-    height:76px;
-    font-size:34px;
-    font-weight:bold;
+    height:54px;
+    font-size:24px;
+}
+
+.manual-buttons{
+    display:grid;
+    gap:10px;
+}
+
+.manual-buttons button{
+    height:56px;
+    font-size:22px;
 }
 
 .road{
     display:grid;
-    grid-template-rows:repeat(6,54px);
+    grid-template-rows:repeat(6,40px);
     grid-auto-flow:column;
-    grid-auto-columns:54px;
-
-    gap:6px;
-
+    grid-auto-columns:40px;
+    gap:5px;
     overflow-x:auto;
-
-    padding:14px;
-
+    padding:10px;
     border-radius:14px;
-
-    background:
-        linear-gradient(
-            rgba(255,255,255,.03),
-            rgba(255,255,255,.01)
-        );
+    background:rgba(255,255,255,.025);
 }
 
 .cell{
-    width:50px;
-    height:50px;
+    width:38px;
+    height:38px;
     border-radius:50%;
-
     display:flex;
     align-items:center;
     justify-content:center;
-
     font-weight:bold;
-    font-size:24px;
+    font-size:18px;
 }
 
 .B{
-    border:3px solid #ff3151;
+    border:2px solid #ff3151;
     color:#ff3151;
 }
 
 .P{
-    border:3px solid #2f8bff;
+    border:2px solid #2f8bff;
     color:#2f8bff;
 }
 
 .T{
-    border:3px solid #00d26a;
+    border:2px solid #00d26a;
     color:#00d26a;
 }
 
 .bottom-buttons{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:18px;
+    gap:10px;
+}
+
+.bottom-buttons button{
+    height:56px;
+    font-size:18px;
 }
 
 .footer{
-    opacity:.6;
+    opacity:.55;
+    font-size:12px;
     margin-top:12px;
     display:flex;
     justify-content:space-between;
 }
 
-@media(max-width:900px){
+@media(max-width:760px){
+
+    .container{
+        padding:8px;
+    }
 
     .grid{
         grid-template-columns:1fr;
@@ -272,12 +274,63 @@ button:hover{
         grid-template-columns:1fr;
     }
 
+    .card{
+        padding:12px;
+        border-radius:14px;
+    }
+
+    .big{
+        font-size:52px;
+        margin:4px 0;
+    }
+
+    .rate{
+        font-size:34px;
+    }
+
+    .stats-grid{
+        grid-template-columns:repeat(3,1fr);
+        gap:6px;
+    }
+
+    .stat-box{
+        padding:8px;
+        font-size:12px;
+    }
+
+    .stat-value{
+        font-size:17px;
+    }
+
     .keypad-area{
         grid-template-columns:1fr;
     }
 
-}
+    .keypad button{
+        height:50px;
+        font-size:22px;
+    }
 
+    .manual-buttons{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .manual-buttons button{
+        height:52px;
+        font-size:20px;
+    }
+
+    .road{
+        grid-template-rows:repeat(6,34px);
+        grid-auto-columns:34px;
+    }
+
+    .cell{
+        width:32px;
+        height:32px;
+        font-size:15px;
+    }
+}
 </style>
 </head>
 
@@ -286,100 +339,62 @@ button:hover{
 <div class="container">
 
     <div class="topbar">
-
         <select id="platform" onchange="loadTables()">
             <option value="DG">DG</option>
             <option value="MT">MT</option>
         </select>
 
         <select id="table" onchange="loadData()"></select>
-
     </div>
 
     <div class="grid">
 
         <div class="card">
-
-            <div class="title">
-                👑 AI 建議方向
-            </div>
-
-            <div id="suggest" class="big">
-                莊
-            </div>
-
-            <div class="center sub">
-                後台穩定率
-            </div>
-
-            <div id="stableRate" class="rate">
-                0%
-            </div>
-
+            <div class="title">✦ AI 建議方向</div>
+            <div id="suggest" class="big">觀望</div>
+            <div class="center sub">後台穩定率</div>
+            <div id="stableRate" class="rate">0%</div>
         </div>
 
         <div class="card">
-
-            <div class="title">
-                🧠 後台分析總覽
-            </div>
+            <div class="title">📊 後台分析總覽</div>
 
             <div class="stats-grid">
-
                 <div class="stat-box">
-                    莊表面勝率
-                    <div id="bankerRate" class="stat-value">
-                        0%
-                    </div>
+                    莊勝率
+                    <div id="bankerRate" class="stat-value">0%</div>
                 </div>
 
                 <div class="stat-box">
-                    閒表面勝率
-                    <div id="playerRate" class="stat-value">
-                        0%
-                    </div>
+                    閒勝率
+                    <div id="playerRate" class="stat-value">0%</div>
                 </div>
 
                 <div class="stat-box">
-                    和局機率
-                    <div id="tieRate" class="stat-value">
-                        0%
-                    </div>
+                    和局數
+                    <div id="tieRate" class="stat-value">0</div>
                 </div>
 
                 <div class="stat-box">
                     連續狀態
-                    <div id="streak" class="stat-value">
-                        -
-                    </div>
+                    <div id="streak" class="stat-value">-</div>
                 </div>
 
                 <div class="stat-box">
                     下注次數
-                    <div id="betCount" class="stat-value">
-                        0
-                    </div>
+                    <div id="betCount" class="stat-value">0</div>
                 </div>
 
                 <div class="stat-box">
-                    資料分析量
-                    <div id="analysisCount" class="stat-value">
-                        0
-                    </div>
+                    分析量
+                    <div id="analysisCount" class="stat-value">0</div>
                 </div>
-
             </div>
-
         </div>
 
         <div class="card">
-
-            <div class="title">
-                🔔 AI 提醒
-            </div>
-
+            <div class="title">🔔 AI 提醒</div>
             <div id="alerts"></div>
-
         </div>
 
     </div>
@@ -387,30 +402,16 @@ button:hover{
     <div class="grid2">
 
         <div class="card">
-
-            <div class="title">
-                🎰 牌型輸入（手動添加）
-            </div>
+            <div class="title">🎰 牌型輸入</div>
 
             <div class="keypad-area">
-
                 <div>
-
-                    <div class="sub">
-                        目前輸入
-                    </div>
-
-                    <div id="cardPreview" class="card-preview">
-                    </div>
-
-                    <div class="sub" style="margin-top:20px;">
-                        最少 4 張，最多 6 張，自動計算結果
-                    </div>
-
+                    <div class="sub">目前輸入</div>
+                    <div id="cardPreview" class="card-preview"></div>
+                    <div class="sub">最少4張，最多6張，自動計算結果</div>
                 </div>
 
                 <div class="keypad">
-
                     <button onclick="addCard(1)">1</button>
                     <button onclick="addCard(2)">2</button>
                     <button onclick="addCard(3)">3</button>
@@ -423,402 +424,218 @@ button:hover{
                     <button onclick="addCard(8)">8</button>
                     <button onclick="addCard(9)">9</button>
 
-                    <button class="warn" onclick="resetCards()">
-                        清除
-                    </button>
-
+                    <button class="warn" onclick="resetCards()">清除</button>
                     <button onclick="addCard(0)">0</button>
-
-                    <button class="banker" onclick="submitCards()">
-                        送出
-                    </button>
-
+                    <button class="banker" onclick="submitCards()">送出</button>
                 </div>
-
             </div>
-
         </div>
 
         <div class="card">
+            <div class="title">♠ 手動添加大路結果</div>
 
-            <div class="title">
-                ♠ 手動添加大路結果
+            <div class="manual-buttons">
+                <button class="banker" onclick="manualAdd('B')">莊</button>
+                <button class="player" onclick="manualAdd('P')">閒</button>
+                <button class="tie" onclick="manualAdd('T')">和</button>
             </div>
 
-            <button class="banker" onclick="manualAdd('B')" style="width:100%;margin-bottom:14px;">
-                莊
-            </button>
-
-            <button class="player" onclick="manualAdd('P')" style="width:100%;margin-bottom:14px;">
-                閒
-            </button>
-
-            <button class="tie" onclick="manualAdd('T')" style="width:100%;">
-                和
-            </button>
-
-            <div class="sub" style="margin-top:18px;">
-                手動添加不增加下注次數
-            </div>
-
+            <div class="sub" style="margin-top:10px;">手動添加不增加下注次數</div>
         </div>
 
     </div>
 
     <div class="card">
-
-        <div class="title">
-            ⚙ 大路盤
-        </div>
-
+        <div class="title">⚙ 大路盤</div>
         <div id="road" class="road"></div>
-
     </div>
 
     <div class="bottom-buttons">
-
-        <button onclick="undo()">
-            ↩ 撤回上一筆
-        </button>
-
-        <button class="danger" onclick="clearTable()">
-            🗑 清除此桌資料
-        </button>
-
+        <button onclick="undo()">↩ 撤回上一筆</button>
+        <button class="danger" onclick="clearTable()">🗑 清除此桌資料</button>
     </div>
 
     <div class="footer">
         <div>♠ 百家樂 AI 輔助分析系統</div>
-        <div>Ver 2.0.0</div>
+        <div>Ver 2.1.0</div>
     </div>
 
 </div>
 
 <script>
-
 let cards = [];
 
 async function loadTables(){
+    const platform = document.getElementById("platform").value;
+    const res = await fetch(`/api/tables?platform=${platform}`);
+    const tables = await res.json();
 
-    const platform =
-        document.getElementById("platform").value;
-
-    const res =
-        await fetch(`/api/tables?platform=${platform}`);
-
-    const tables =
-        await res.json();
-
-    const tableSelect =
-        document.getElementById("table");
-
+    const tableSelect = document.getElementById("table");
     tableSelect.innerHTML = "";
 
     tables.forEach(t=>{
-
-        const opt =
-            document.createElement("option");
-
+        const opt = document.createElement("option");
         opt.value = t;
         opt.textContent = t;
-
         tableSelect.appendChild(opt);
-
     });
 
     loadData();
 }
 
 async function loadData(){
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    const res =
-        await fetch(`/api/data?platform=${platform}&table=${table}`);
-
-    const data =
-        await res.json();
+    const res = await fetch(`/api/data?platform=${platform}&table=${table}`);
+    const data = await res.json();
 
     renderRoad(data.records);
-
     renderStats(data);
 }
 
 function renderRoad(records){
-
-    const road =
-        document.getElementById("road");
-
+    const road = document.getElementById("road");
     road.innerHTML = "";
 
     records.forEach(r=>{
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            `cell ${r.result}`;
-
-        div.textContent =
-            r.result === "B"
-            ? "莊"
-            : r.result === "P"
-            ? "閒"
-            : "和";
-
+        const div = document.createElement("div");
+        div.className = `cell ${r.result}`;
+        div.textContent = r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和";
         road.appendChild(div);
-
     });
-
 }
 
 function renderStats(data){
-
     const s = data.stats;
 
-    document.getElementById("suggest").textContent =
-        s.suggest;
-
-    document.getElementById("stableRate").textContent =
-        s.stableRate + "%";
-
-    document.getElementById("bankerRate").textContent =
-        s.bankerRate + "%";
-
-    document.getElementById("playerRate").textContent =
-        s.playerRate + "%";
-
-    document.getElementById("tieRate").textContent =
-        s.tieCount || 0;
-
-    document.getElementById("betCount").textContent =
-        data.betCount;
-
-    document.getElementById("analysisCount").textContent =
-        s.totalAnalysis;
+    document.getElementById("suggest").textContent = s.suggest;
+    document.getElementById("stableRate").textContent = s.stableRate + "%";
+    document.getElementById("bankerRate").textContent = s.bankerRate + "%";
+    document.getElementById("playerRate").textContent = s.playerRate + "%";
+    document.getElementById("tieRate").textContent = s.tieCount || 0;
+    document.getElementById("betCount").textContent = data.betCount;
+    document.getElementById("analysisCount").textContent = s.totalAnalysis;
 
     let streakText = "-";
 
     if(s.streakResult){
-
-        streakText =
-            `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount} 連`;
-
+        streakText = `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount}`;
     }
 
-    document.getElementById("streak").textContent =
-        streakText;
+    document.getElementById("streak").textContent = streakText;
 
-    const alerts =
-        document.getElementById("alerts");
-
+    const alerts = document.getElementById("alerts");
     alerts.innerHTML = "";
 
     if(s.alerts && s.alerts.length){
-
         s.alerts.forEach(a=>{
-
-            const div =
-                document.createElement("div");
-
+            const div = document.createElement("div");
             div.className = "alert-box";
-
-            div.innerHTML =
-                `<div class="alert-title">${a}</div>`;
-
+            div.innerHTML = `<div class="alert-title">${a}</div>`;
             alerts.appendChild(div);
-
         });
-
+    }else{
+        alerts.innerHTML = `<div class="sub">目前無明顯提醒</div>`;
     }
-
 }
 
 async function manualAdd(result){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/manual",{
-
         method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-            platform,
-            table,
-            result
-        })
-
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform, table, result})
     });
 
     loadData();
 }
 
 function addCard(num){
-
-    if(cards.length >= 6){
-        return;
-    }
-
+    if(cards.length >= 6) return;
     cards.push(num);
-
     updatePreview();
 }
 
 function updatePreview(){
-
-    const preview =
-        document.getElementById("cardPreview");
-
+    const preview = document.getElementById("cardPreview");
     preview.innerHTML = "";
 
     cards.forEach(n=>{
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "preview-number";
-
-        div.textContent =
-            n;
-
+        const div = document.createElement("div");
+        div.className = "preview-number";
+        div.textContent = n;
         preview.appendChild(div);
-
     });
-
 }
 
 function resetCards(){
-
     cards = [];
-
     updatePreview();
 }
 
 async function submitCards(){
-
     if(cards.length < 4){
-
         alert("最少4張");
-
         return;
     }
 
     if(cards.length > 6){
-
         alert("最多6張");
-
         return;
     }
 
-    const platform =
-        document.getElementById("platform").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
-    const table =
-        document.getElementById("table").value;
+    const res = await fetch("/api/cards",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform, table, cards})
+    });
 
-    const res =
-        await fetch("/api/cards",{
-
-            method:"POST",
-
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify({
-                platform,
-                table,
-                cards
-            })
-
-        });
-
-    const data =
-        await res.json();
+    const data = await res.json();
 
     if(!data.ok){
-
         alert("牌型錯誤");
-
         return;
     }
 
     resetCards();
-
     loadData();
 }
 
 async function undo(){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/undo",{
-
         method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-            platform,
-            table
-        })
-
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform, table})
     });
 
     loadData();
 }
 
 async function clearTable(){
+    if(!confirm("確定清除此桌？")) return;
 
-    if(!confirm("確定清除此桌？")){
-        return;
-    }
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/clear",{
-
         method:"POST",
-
-        headers:{
-            "Content-Type":"application/json"
-        },
-
-        body:JSON.stringify({
-            platform,
-            table
-        })
-
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform, table})
     });
 
     loadData();
 }
 
 loadTables();
-
 </script>
 
 </body>
