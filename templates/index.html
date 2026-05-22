@@ -137,23 +137,35 @@ button {
     </div>
 
     <div class="card">
-        <div class="small-title">牌型按鈕輸入</div>
-        <div class="card-preview" id="cardPreview">尚未輸入</div>
+        <div class="small-title">牌型輸入</div>
 
-        <div class="small-title">第 1 張：閒 / 莊</div>
-        <div class="card-buttons" id="buttons1"></div>
+<div id="cardPreview" class="card-preview">
+    尚未輸入
+</div>
 
-        <div class="small-title">第 2 張：閒 / 莊</div>
-        <div class="card-buttons" id="buttons2"></div>
+<div class="keypad">
 
-        <div class="small-title">第 3 張：閒 / 莊</div>
-        <div class="card-buttons" id="buttons3"></div>
+    <button onclick="addCard(1)">1</button>
+    <button onclick="addCard(2)">2</button>
+    <button onclick="addCard(3)">3</button>
 
-        <div class="row" style="margin-top:12px;">
-            <button class="warn" onclick="resetCards()">重填</button>
-            <button class="banker" onclick="submitCards()">確認加入</button>
-        </div>
+    <button onclick="addCard(4)">4</button>
+    <button onclick="addCard(5)">5</button>
+    <button onclick="addCard(6)">6</button>
 
+    <button onclick="addCard(7)">7</button>
+    <button onclick="addCard(8)">8</button>
+    <button onclick="addCard(9)">9</button>
+
+    <button class="warn" onclick="resetCards()">清除</button>
+    <button onclick="addCard(0)">0</button>
+    <button class="banker" onclick="submitCards()">送出</button>
+
+</div>
+
+<div style="font-size:13px;color:#aaa;margin-top:10px;">
+    最少4張，最多6張
+</div>
         <div style="font-size:13px;color:#aaa;">
             牌型輸入會增加下注次數，也會更新大路盤、勝率、AI權重。
         </div>
