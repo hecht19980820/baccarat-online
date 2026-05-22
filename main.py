@@ -723,6 +723,8 @@ def api_stats():
     })
 
 
+# Render / gunicorn 啟動時不會執行 __main__，所以資料庫初始化必須放在這裡
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     app.run(host='0.0.0.0', port=5000, debug=True)
