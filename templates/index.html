@@ -100,15 +100,34 @@ select,button{
 .sub{color:#91a8d7;font-size:14px}
 
 .road{
+    .road{
     display:grid;
-    grid-template-rows:repeat(5,43px);
+
+    /* 一欄固定6顆 */
+    grid-template-rows:repeat(6,43px);
+
+    /* 往右長 */
     grid-auto-flow:column;
+
+    /* 每欄寬度 */
     grid-auto-columns:43px;
+
     gap:5px;
+
     overflow-x:auto;
+
+    overflow-y:hidden;
+
     padding:8px;
+
     border-radius:14px;
+
     background:rgba(255,255,255,.025);
+
+    align-items:start;
+
+    max-width:100%;
+}
 }
 
 .cell{
