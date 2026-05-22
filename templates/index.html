@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>百家樂輔助</title>
+<style>
+body {
+    margin: 0;
+    background: #050b18;
+    color: white;
+    font-family: Arial, "Microsoft JhengHei", sans-serif;
+}
+.container {
+    max-width: 430px;
+    margin: auto;
+    padding: 14px;
+}
+.card {
+    border: 2px solid #1689ff;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+    background: #081327;
+    box-shadow: 0 0 12px rgba(22,137,255,.35);
+}
+.row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+select, button {
+    border-radius: 10px;
+    border: 1px solid #1689ff;
+    background: #061a35;
+    color: white;
+    padding: 12px;
+    font-size: 16px;
+}
+button {
+    flex: 1;
+    font-weight: bold;
+}
+.big {
+    font-size: 22px;
+}
+.banker { background: #b00020; }
+.player { background: #0057d9; }
+.tie { background: #138a36; }
+.warn { background: #6b4e00; }
+.danger { background: #5a0000; }
+
+.road {
+    display: grid;
+    grid-template-rows: repeat(6, 36px);
+    grid-auto-flow: column;
+    grid-auto-columns: 36px;
+    gap: 5px;
+    overflow-x: auto;
+    padding: 8px;
+    border: 1px solid #1689ff;
+    border-radius: 10px;
+    min-height: 235px;
+}
+.cell {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+.B { border: 3px solid #ff3151; color: #ff3151; }
+.P { border: 3px solid #2f8bff; color: #2f8bff; }
+.T { border: 3px solid #00d26a; color: #00d26a; }
+
+.card-buttons {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+}
+.small-title {
+    color: #8fc8ff;
+    margin: 10px 0 6px;
+}
+.card-preview {
+    color: #ffd86b;
+    font-size: 18px;
+    margin-bottom: 8px;
+}
+.stat {
+    font-size: 16px;
+    line-height: 1.8;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="card">
+        <div class="row">
+            <select id="platform" onchange="loadTables()">
+                <option value="DG">DG</option>
+                <option value="MT">MT</option>
+            </select>
+            <select id="table" onchange="loadData()"></select>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="stat">
+            建議方向：<span id="suggest" class="big">觀望</span><br>
+            穩定勝率：<span id="stableRate">0</span>%<br>
+            莊勝率：<span id="bankerRate">0</span>%　
+            閒勝率：<span id="playerRate">0</span>%<br>
+            連續：<span id="streak">-</span><br>
+            下注次數：<span id="betCount">0</span>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="small-title">大路盤</div>
+        <div id="road" class="road"></div>
+    </div>
+
+    <div class="card">
+        <div class="small-title">手動添加大路盤</div>
+        <div class="row">
+            <button class="banker" onclick="manualAdd('B')">莊</button>
+            <button class="player" onclick="manualAdd('P')">閒</button>
+            <button class="tie" onclick="manualAdd('T')">和</button>
+        </div>
+        <div style="font-size:13px;color:#aaa;">
+            手動添加不增加下注次數，但會更新勝率、連贏連輸、AI權重。
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="small-title">牌型按鈕輸入</div>
+        <div class="card-preview" id="cardPreview">尚未輸入</div>
+
+        <div class="small-title">第 1 張：閒 / 莊</div>
+        <div class="card-buttons" id="buttons1"></div>
+
+        <div class="small-title">第 2 張：閒 / 莊</div>
+        <div class="card-buttons" id="buttons2"></div>
+
+        <div class="small-title">第 3 張：閒 / 莊</div>
+        <div class="card-buttons" id="buttons3"></div>
+
+        <div class="row" style="margin-top:12px;">
+            <button class="warn" onclick="resetCards()">重填</button>
+            <button class="banker" onclick="submitCards()">確認加入</button>
+        </div>
+
+        <div style="font-size:13px;color:#aaa;">
+            牌型輸入會增加下注次數，也會更新大路盤、勝率、AI權重。
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="row">
+            <button onclick="undo()">撤回</button>
+            <button class="danger" onclick="clearTable()">清除此桌</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let cards = [];
+
+async function loadTables() {
+    const platform = document.getElementById("platform").value;
+    const res = await fetch(`/api/tables?platform=${platform}`);
+    const tables = await res.json();
+
+    const tableSelect = document.getElementById("table");
+    tableSelect.innerHTML = "";
+
+    tables.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t;
+        opt.textContent = t;
+        tableSelect.appendChild(opt);
+    });
+
+    loadData();
+}
+
+async function loadData() {
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
+
+    const res = await fetch(`/api/data?platform=${platform}&table=${table}`);
+    const data = await res.json();
+
+    renderRoad(data.records);
+    renderStats(data);
+}
+
+function renderRoad(records) {
+    const road = document.getElementById("road");
+    road.innerHTML = "";
+
+    records.forEach(r => {
+        const div = document.createElement("div");
+        div.className = `cell ${r.result}`;
+        div.textContent = r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和";
+        road.appendChild(div);
+    });
+}
+
+function renderStats(data) {
+    const s = data.stats;
+
+    document.getElementById("suggest").textContent = s.suggest;
+    document.getElementById("stableRate").textContent = s.stableRate;
+    document.getElementById("bankerRate").textContent = s.bankerRate;
+    document.getElementById("playerRate").textContent = s.playerRate;
+    document.getElementById("betCount").textContent = data.betCount;
+
+    let streakText = "-";
+    if (s.streakResult) {
+        streakText = `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount}`;
+    }
+    document.getElementById("streak").textContent = streakText;
+}
+
+async function manualAdd(result) {
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
+
+    await fetch("/api/manual", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({platform, table, result})
+    });
+
+    loadData();
+}
+
+function makeCardButtons() {
+    ["buttons1", "buttons2", "buttons3"].forEach((id, groupIndex) => {
+        const box = document.getElementById(id);
+        box.innerHTML = "";
+
+        for (let i = 0; i <= 9; i++) {
+            const pBtn = document.createElement("button");
+            pBtn.textContent = `閒${i}`;
+            pBtn.className = "player";
+            pBtn.onclick = () => addCard(i);
+            box.appendChild(pBtn);
+
+            const bBtn = document.createElement("button");
+            bBtn.textContent = `莊${i}`;
+            bBtn.className = "banker";
+            bBtn.onclick = () => addCard(i);
+            box.appendChild(bBtn);
+        }
+    });
+}
+
+function addCard(num) {
+    if (cards.length >= 6) return;
+    cards.push(num);
+    updatePreview();
+}
+
+function updatePreview() {
+    document.getElementById("cardPreview").textContent =
+        cards.length ? cards.join(".") : "尚未輸入";
+}
+
+function resetCards() {
+    cards = [];
+    updatePreview();
+}
+
+async function submitCards() {
+    if (cards.length !== 6) {
+        alert("請輸入 6 張牌，例如：閒0 莊0 閒1 莊0 閒7 莊5");
+        return;
+    }
+
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
+
+    const res = await fetch("/api/cards", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({platform, table, cards})
+    });
+
+    const data = await res.json();
+
+    if (!data.ok) {
+        alert("牌型錯誤");
+        return;
+    }
+
+    resetCards();
+    loadData();
+}
+
+async function undo() {
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
+
+    await fetch("/api/undo", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({platform, table})
+    });
+
+    loadData();
+}
+
+async function clearTable() {
+    if (!confirm("確定清除此桌？")) return;
+
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
+
+    await fetch("/api/clear", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({platform, table})
+    });
+
+    loadData();
+}
+
+makeCardButtons();
+loadTables();
+</script>
+
+</body>
+</html>
