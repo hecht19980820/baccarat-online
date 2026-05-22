@@ -264,68 +264,70 @@ LOGIN_HTML = STYLE + """
 """
 
 PLAYER_HTML = STYLE + """
-<div class='wrap'>
-  <div class='side'>
-    <div class='brand'>Baccarat AI</div>
-    <div class='nav'>
-      <a class='active' href='/'>玩家頁面</a>
-      {% if user.role == 'admin' %}<a href='/admin'>後台管理</a>{% endif %}
-      {% if user.role == 'agent' %}<a href='/agent'>代理中心</a>{% endif %}
-      <a href='/logout'>登出</a>
-    </div>
-    <div class='card'>
-      <p>玩家：{{user.username}}</p>
-      <p>狀態：<span class='green'>{{user.status}}</span></p>
-      <p>到期：{{user.expire_at or '無限制'}}</p>
+<style>
+.player-simple{max-width:980px;margin:0 auto;padding:18px}.simple-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.simple-title{font-size:24px;font-weight:800}.simple-box{background:#071a32;border:1px solid #0e89c2;border-radius:14px;padding:14px;margin-bottom:12px}.simple-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}.simple-big{font-size:38px;font-weight:900}.simple-road{min-height:180px;background:#020914;border:1px solid #0e89c2;border-radius:12px;padding:10px;display:flex;flex-wrap:wrap;gap:6px}.simple-actions{display:flex;gap:8px;flex-wrap:wrap}.simple-actions .btn{min-width:90px}.simple-select{max-width:260px}@media(max-width:800px){.simple-grid{grid-template-columns:1fr}.simple-top{display:block}.player-simple{padding:12px}.simple-big{font-size:30px}}
+</style>
+<div class='player-simple'>
+  <div class='simple-top'>
+    <div class='simple-title'>百家樂 AI 玩家頁面</div>
+    <div>
+      玩家：{{user.username}}　
+      <a class='btn' href='/logout'>登出</a>
+      {% if user.role == 'admin' %}<a class='btn' href='/admin'>後台</a>{% endif %}
+      {% if user.role == 'agent' %}<a class='btn' href='/agent'>代理中心</a>{% endif %}
     </div>
   </div>
-  <div class='main'>
-    <div class='top'><div class='title'>AI 玩家控制台</div><div>雲端同步：<span class='green'>ONLINE</span></div></div>
 
-    <div class='grid3'>
-      <div class='card'><div>本週下注次數</div><div class='big'>{{week.total}}</div><div class='sub'>勝率 {{week.accuracy}}%</div></div>
-      <div class='card'><div>本月下注次數</div><div class='big'>{{month.total}}</div><div class='sub'>勝率 {{month.accuracy}}%</div></div>
-      <div class='card'><div>總下注次數</div><div class='big'>{{alltime.total}}</div><div class='sub'>總勝率 {{alltime.accuracy}}%</div></div>
+  <div class='simple-grid'>
+    <div class='simple-box'>
+      <div>本週次數</div>
+      <div class='simple-big'>{{week.total}}</div>
+      <div class='sub'>勝率 {{week.accuracy}}%</div>
     </div>
+    <div class='simple-box'>
+      <div>本月次數</div>
+      <div class='simple-big'>{{month.total}}</div>
+      <div class='sub'>勝率 {{month.accuracy}}%</div>
+    </div>
+    <div class='simple-box'>
+      <div>AI 建議</div>
+      <div class='simple-big green'>{{prediction}}</div>
+      <div class='sub'>信心度 {{confidence}}%｜{{reason}}</div>
+    </div>
+  </div>
+
+  <div class='simple-box'>
+    <h3>路單輸入｜桌號 {{table_id}}</h3>
+    <form method='get'>
+      <select class='simple-select' name='table_id' onchange='this.form.submit()'>
+        <option value='DG-1' {% if table_id=='DG-1' %}selected{% endif %}>DG-1</option>
+        <option value='DG-2' {% if table_id=='DG-2' %}selected{% endif %}>DG-2</option>
+        <option value='DG-3' {% if table_id=='DG-3' %}selected{% endif %}>DG-3</option>
+        <option value='MT-1' {% if table_id=='MT-1' %}selected{% endif %}>MT-1</option>
+        <option value='MT-2' {% if table_id=='MT-2' %}selected{% endif %}>MT-2</option>
+        <option value='MT-3' {% if table_id=='MT-3' %}selected{% endif %}>MT-3</option>
+        {% for i in range(1,9) %}<option value='{{i}}' {% if table_id==i|string %}selected{% endif %}>桌號 {{i}}</option>{% endfor %}
+      </select>
+    </form>
     <br>
-
-    <div class='grid3'>
-      <div class='card'><h3>閒 PLAYER</h3><div class='big'>{{player_rate}}%</div></div>
-      <div class='card'><h3>AI 信心度</h3><div class='mega'>{{confidence}}%</div><p class='green'>建議：{{prediction}}</p><p class='sub'>{{reason}}</p></div>
-      <div class='card'><h3>莊 BANKER</h3><div class='big red'>{{banker_rate}}%</div></div>
-    </div>
+    <div class='simple-road'>{% for r in records %}<div class='ball {% if r.result=='莊' %}b{% elif r.result=='閒' %}p{% else %}t{% endif %}'>{{r.result}}</div>{% endfor %}</div>
     <br>
+    <form class='simple-actions' method='post' action='/add_record'>
+      <input type='hidden' name='table_id' value='{{table_id}}'>
+      <button name='result' value='莊' class='btn btn-danger'>莊</button>
+      <button name='result' value='閒' class='btn'>閒</button>
+      <button name='result' value='和' class='btn'>和</button>
+      <a class='btn' href='/undo_record?table_id={{table_id}}'>撤回</a>
+      <a class='btn' href='/clear_table?table_id={{table_id}}'>清除此桌</a>
+    </form>
+  </div>
 
-    <div class='panel'>
-      <div class='card'>
-        <h3>路單分析｜桌號 {{table_id}}</h3>
-        <form method='get'>
-          <select name='table_id' onchange='this.form.submit()'>
-          {% for i in range(1,9) %}<option value='{{i}}' {% if table_id==i|string %}selected{% endif %}>桌號 {{i}}</option>{% endfor %}
-          </select>
-        </form><br>
-        <div class='road'>{% for r in records %}<div class='ball {% if r.result=='莊' %}b{% elif r.result=='閒' %}p{% else %}t{% endif %}'>{{r.result}}</div>{% endfor %}</div>
-        <br>
-        <form method='post' action='/add_record'>
-          <input type='hidden' name='table_id' value='{{table_id}}'>
-          <button name='result' value='莊' class='btn btn-danger'>加入 莊</button>
-          <button name='result' value='閒' class='btn'>加入 閒</button>
-          <button name='result' value='和' class='btn'>加入 和</button>
-          <a class='btn' href='/clear_table?table_id={{table_id}}'>清除此桌畫面</a>
-        </form>
-        <div class='footer-note'>清除此桌不刪後台資料，只清目前畫面顯示。</div>
-      </div>
-      <div class='card'>
-        <h3>本桌統計</h3>
-        <p>今日：{{today.total}} 次｜勝率 {{today.accuracy}}%</p>
-        <p>本週：{{week_table.total}} 次｜勝率 {{week_table.accuracy}}%</p>
-        <p>本月：{{month_table.total}} 次｜勝率 {{month_table.accuracy}}%</p>
-        <hr style='border-color:#123b63'>
-        <p>莊：{{table_all.banker}}</p>
-        <p>閒：{{table_all.player}}</p>
-        <p>和：{{table_all.tie}}</p>
-      </div>
-    </div>
+  <div class='simple-box'>
+    <h3>本桌統計</h3>
+    <p>今日：{{today.total}} 次｜勝率 {{today.accuracy}}%</p>
+    <p>本週：{{week_table.total}} 次｜勝率 {{week_table.accuracy}}%</p>
+    <p>本月：{{month_table.total}} 次｜勝率 {{month_table.accuracy}}%</p>
+    <p>莊：{{table_all.banker}}　閒：{{table_all.player}}　和：{{table_all.tie}}</p>
   </div>
 </div>
 """
@@ -495,7 +497,25 @@ def clear_table():
     if not user:
         return redirect('/login')
     table_id = request.args.get('table_id', '1')
-    # 保護：不 DELETE、不 DROP、不清 records，只回到同桌
+    # 只保留安全邏輯：不刪後台資料
+    return redirect('/?table_id=' + str(table_id))
+
+
+@app.route('/undo_record')
+def undo_record():
+    user = require_login()
+    if not user:
+        return redirect('/login')
+    table_id = request.args.get('table_id', '1')
+    conn = db()
+    last = conn.execute(
+        "SELECT id FROM records WHERE user_id=? AND table_id=? ORDER BY id DESC LIMIT 1",
+        (user['id'], str(table_id))
+    ).fetchone()
+    if last:
+        conn.execute("DELETE FROM records WHERE id=?", (last['id'],))
+        conn.commit()
+    conn.close()
     return redirect('/?table_id=' + str(table_id))
 
 
