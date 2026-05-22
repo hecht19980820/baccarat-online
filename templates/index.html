@@ -5,7 +5,6 @@
 <title>百家樂輔助</title>
 
 <style>
-
 body{
     margin:0;
     background:#050b18;
@@ -141,6 +140,15 @@ button{
     font-size:16px;
 }
 
+.note{
+    font-size:13px;
+    color:#aaa;
+    margin-top:10px;
+}
+
+.alert{
+    color:#ffd86b;
+}
 </style>
 </head>
 
@@ -149,40 +157,34 @@ button{
 <div class="container">
 
     <div class="card">
-
         <div class="row">
-
             <select id="platform" onchange="loadTables()">
                 <option value="DG">DG</option>
                 <option value="MT">MT</option>
             </select>
 
             <select id="table" onchange="loadData()"></select>
-
         </div>
-
     </div>
 
     <div class="card">
-
         <div class="stat">
-
             建議方向：
             <span id="suggest" class="big">觀望</span>
 
             <br>
 
-            穩定勝率：
+            後台穩定率：
             <span id="stableRate">0</span>%
 
             <br>
 
-            莊勝率：
+            莊表面率：
             <span id="bankerRate">0</span>%
 
             ／
 
-            閒勝率：
+            閒表面率：
             <span id="playerRate">0</span>%
 
             <br>
@@ -195,48 +197,14 @@ button{
             下注次數：
             <span id="betCount">0</span>
 
-        </div>
+            <br>
 
+            提醒：
+            <span id="alerts" class="alert">-</span>
+        </div>
     </div>
 
     <div class="card">
-
-        <div class="small-title">大路盤</div>
-
-        <div id="road" class="road"></div>
-
-    </div>
-
-    <div class="card">
-
-        <div class="small-title">
-            手動添加大路盤
-        </div>
-
-        <div class="row">
-
-            <button class="banker" onclick="manualAdd('B')">
-                莊
-            </button>
-
-            <button class="player" onclick="manualAdd('P')">
-                閒
-            </button>
-
-            <button class="tie" onclick="manualAdd('T')">
-                和
-            </button>
-
-        </div>
-
-        <div style="font-size:13px;color:#aaa;">
-            手動添加不增加下注次數，但會更新勝率、連贏連輸、AI權重
-        </div>
-
-    </div>
-
-    <div class="card">
-
         <div class="small-title">
             牌型輸入
         </div>
@@ -246,7 +214,6 @@ button{
         </div>
 
         <div class="keypad">
-
             <button onclick="addCard(1)">1</button>
             <button onclick="addCard(2)">2</button>
             <button onclick="addCard(3)">3</button>
@@ -259,110 +226,91 @@ button{
             <button onclick="addCard(8)">8</button>
             <button onclick="addCard(9)">9</button>
 
-            <button class="warn" onclick="resetCards()">
-                清除
-            </button>
-
+            <button class="warn" onclick="resetCards()">清除</button>
             <button onclick="addCard(0)">0</button>
-
-            <button class="banker" onclick="submitCards()">
-                送出
-            </button>
-
+            <button class="banker" onclick="submitCards()">送出</button>
         </div>
 
-        <div style="font-size:13px;color:#aaa;margin-top:10px;">
-            最少4張，最多6張
+        <div class="note">
+            最少4張，最多6張。系統自動判斷莊、閒、和、莊對、閒對、幸運6。
         </div>
-
     </div>
 
     <div class="card">
-
-        <div class="row">
-
-            <button onclick="undo()">
-                撤回
-            </button>
-
-            <button class="danger" onclick="clearTable()">
-                清除此桌
-            </button>
-
+        <div class="small-title">
+            手動添加大路盤
         </div>
 
+        <div class="row">
+            <button class="banker" onclick="manualAdd('B')">莊</button>
+            <button class="player" onclick="manualAdd('P')">閒</button>
+            <button class="tie" onclick="manualAdd('T')">和</button>
+        </div>
+
+        <div class="note">
+            手動添加不增加下注次數，但會進入後台權重與勝率分析。
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="small-title">大路盤</div>
+        <div id="road" class="road"></div>
+    </div>
+
+    <div class="card">
+        <div class="row">
+            <button onclick="undo()">撤回</button>
+            <button class="danger" onclick="clearTable()">清除此桌</button>
+        </div>
     </div>
 
 </div>
 
 <script>
-
 let cards = [];
 
 async function loadTables(){
+    const platform = document.getElementById("platform").value;
 
-    const platform =
-        document.getElementById("platform").value;
+    const res = await fetch(`/api/tables?platform=${platform}`);
+    const tables = await res.json();
 
-    const res =
-        await fetch(`/api/tables?platform=${platform}`);
-
-    const tables =
-        await res.json();
-
-    const tableSelect =
-        document.getElementById("table");
+    const tableSelect = document.getElementById("table");
 
     tableSelect.innerHTML = "";
 
     tables.forEach(t=>{
-
-        const opt =
-            document.createElement("option");
+        const opt = document.createElement("option");
 
         opt.value = t;
         opt.textContent = t;
 
         tableSelect.appendChild(opt);
-
     });
 
     loadData();
 }
 
 async function loadData(){
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    const res =
-        await fetch(`/api/data?platform=${platform}&table=${table}`);
-
-    const data =
-        await res.json();
+    const res = await fetch(`/api/data?platform=${platform}&table=${table}`);
+    const data = await res.json();
 
     renderRoad(data.records);
-
     renderStats(data);
 }
 
 function renderRoad(records){
-
-    const road =
-        document.getElementById("road");
+    const road = document.getElementById("road");
 
     road.innerHTML = "";
 
     records.forEach(r=>{
+        const div = document.createElement("div");
 
-        const div =
-            document.createElement("div");
-
-        div.className =
-            `cell ${r.result}`;
+        div.className = `cell ${r.result}`;
 
         div.textContent =
             r.result === "B"
@@ -372,73 +320,55 @@ function renderRoad(records){
             : "和";
 
         road.appendChild(div);
-
     });
-
 }
 
 function renderStats(data){
-
     const s = data.stats;
 
-    document.getElementById("suggest").textContent =
-        s.suggest;
-
-    document.getElementById("stableRate").textContent =
-        s.stableRate;
-
-    document.getElementById("bankerRate").textContent =
-        s.bankerRate;
-
-    document.getElementById("playerRate").textContent =
-        s.playerRate;
-
-    document.getElementById("betCount").textContent =
-        data.betCount;
+    document.getElementById("suggest").textContent = s.suggest;
+    document.getElementById("stableRate").textContent = s.stableRate;
+    document.getElementById("bankerRate").textContent = s.bankerRate;
+    document.getElementById("playerRate").textContent = s.playerRate;
+    document.getElementById("betCount").textContent = data.betCount;
 
     let streakText = "-";
 
     if(s.streakResult){
-
-        streakText =
-            `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount}`;
-
+        streakText = `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount}`;
     }
 
-    document.getElementById("streak").textContent =
-        streakText;
+    document.getElementById("streak").textContent = streakText;
 
+    let alertText = "-";
+
+    if(s.alerts && s.alerts.length){
+        alertText = s.alerts.join(" / ");
+    }
+
+    document.getElementById("alerts").textContent = alertText;
 }
 
 async function manualAdd(result){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/manual",{
-
         method:"POST",
-
         headers:{
             "Content-Type":"application/json"
         },
-
         body:JSON.stringify({
             platform,
             table,
             result
         })
-
     });
 
     loadData();
 }
 
 function addCard(num){
-
     if(cards.length >= 6){
         return;
     }
@@ -449,133 +379,95 @@ function addCard(num){
 }
 
 function updatePreview(){
-
     document.getElementById("cardPreview").textContent =
         cards.length
         ? cards.join(" ")
         : "尚未輸入";
-
 }
 
 function resetCards(){
-
     cards = [];
-
     updatePreview();
 }
 
 async function submitCards(){
-
     if(cards.length < 4){
-
         alert("最少4張");
-
         return;
     }
 
     if(cards.length > 6){
-
         alert("最多6張");
-
         return;
     }
 
-    const platform =
-        document.getElementById("platform").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
-    const table =
-        document.getElementById("table").value;
+    const res = await fetch("/api/cards",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform,
+            table,
+            cards
+        })
+    });
 
-    const res =
-        await fetch("/api/cards",{
-
-            method:"POST",
-
-            headers:{
-                "Content-Type":"application/json"
-            },
-
-            body:JSON.stringify({
-                platform,
-                table,
-                cards
-            })
-
-        });
-
-    const data =
-        await res.json();
+    const data = await res.json();
 
     if(!data.ok){
-
         alert("牌型錯誤");
-
         return;
     }
 
     resetCards();
-
     loadData();
 }
 
 async function undo(){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/undo",{
-
         method:"POST",
-
         headers:{
             "Content-Type":"application/json"
         },
-
         body:JSON.stringify({
             platform,
             table
         })
-
     });
 
     loadData();
 }
 
 async function clearTable(){
-
     if(!confirm("確定清除此桌？")){
         return;
     }
 
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
+    const platform = document.getElementById("platform").value;
+    const table = document.getElementById("table").value;
 
     await fetch("/api/clear",{
-
         method:"POST",
-
         headers:{
             "Content-Type":"application/json"
         },
-
         body:JSON.stringify({
             platform,
             table
         })
-
     });
 
     loadData();
 }
 
 loadTables();
-
 </script>
 
 </body>
