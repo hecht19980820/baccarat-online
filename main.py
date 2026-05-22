@@ -1,9 +1,7 @@
 from flask import Flask, render_template, request, jsonify, redirect, session
-from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import json
-import os
 
 app = Flask(__name__)
 app.secret_key = "baccarat_admin_secret_2026"
@@ -15,6 +13,10 @@ MT_TABLES = ["01","02","03","03A","05","06","07","08","09","10"]
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "Baccarat2026!"
+
+
+def now():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def db():
@@ -35,7 +37,12 @@ def init_db():
         expire TEXT NOT NULL,
         enabled INTEGER DEFAULT 1,
         created_at TEXT,
-        last_login TEXT
+        last_login TEXT,
+        last_active TEXT,
+        current_platform TEXT,
+        current_table TEXT,
+        ip TEXT,
+        device TEXT
     )
     """)
 
@@ -55,6 +62,8 @@ def init_db():
         source TEXT,
         count_bet INTEGER DEFAULT 0,
         ai_learn INTEGER DEFAULT 1,
+        ai_suggest_before TEXT,
+        ai_hit INTEGER DEFAULT 0,
         created_at TEXT
     )
     """)
@@ -62,14 +71,20 @@ def init_db():
     cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
     if cur.fetchone()["c"] == 0:
         cur.execute("""
-        INSERT INTO members (username,password,expire,enabled,created_at,last_login)
-        VALUES (?,?,?,?,?,?)
+        INSERT INTO members
+        (username,password,expire,enabled,created_at,last_login,last_active,current_platform,current_table,ip,device)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
         """, (
             "test01",
             "123456",
             "2026-12-31 23:59:59",
             1,
             now(),
+            "",
+            "",
+            "",
+            "",
+            "",
             ""
         ))
 
@@ -77,29 +92,55 @@ def init_db():
     conn.close()
 
 
-def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
 def table_key(platform, table):
     return f"{platform}_{table}"
 
 
+def detect_device():
+    ua = request.headers.get("User-Agent", "")
+    if "iPhone" in ua:
+        return "iPhone"
+    if "Android" in ua:
+        return "Android"
+    if "Windows" in ua:
+        return "Windows"
+    if "Macintosh" in ua:
+        return "Mac"
+    return "Unknown"
+
+
+def update_member_active(platform=None, table=None):
+    username = session.get("member")
+    if not username:
+        return
+
+    conn = db()
+    conn.execute("""
+    UPDATE members
+    SET last_active=?, current_platform=?, current_table=?, ip=?, device=?
+    WHERE username=?
+    """, (
+        now(),
+        platform or "",
+        table or "",
+        request.headers.get("X-Forwarded-For", request.remote_addr),
+        detect_device(),
+        username
+    ))
+    conn.commit()
+    conn.close()
+
+
 def get_member(username):
     conn = db()
-    row = conn.execute(
-        "SELECT * FROM members WHERE username=?",
-        (username,)
-    ).fetchone()
+    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
     conn.close()
     return row
 
 
 def member_expire_time(username):
     row = get_member(username)
-    if not row:
-        return "-"
-    return row["expire"]
+    return row["expire"] if row else "-"
 
 
 def calc_cards(cards):
@@ -112,7 +153,7 @@ def calc_cards(cards):
         player_cards = []
         banker_cards = []
 
-        # 固定順序：閒1、莊1、閒2、莊2、閒3、莊3
+        # 固定：閒1 莊1 閒2 莊2 閒3 莊3
         for i, n in enumerate(nums):
             if i % 2 == 0:
                 player_cards.append(n)
@@ -129,17 +170,13 @@ def calc_cards(cards):
         else:
             result = "T"
 
-        player_pair = len(player_cards) >= 2 and player_cards[0] == player_cards[1]
-        banker_pair = len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1]
-        lucky6 = result == "B" and banker_point == 6
-
         return {
             "result": result,
             "playerPoint": player_point,
             "bankerPoint": banker_point,
-            "playerPair": player_pair,
-            "bankerPair": banker_pair,
-            "lucky6": lucky6,
+            "playerPair": len(player_cards) >= 2 and player_cards[0] == player_cards[1],
+            "bankerPair": len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1],
+            "lucky6": result == "B" and banker_point == 6,
             "tie": result == "T"
         }
 
@@ -163,6 +200,8 @@ def row_to_record(row):
         "source": row["source"],
         "countBet": bool(row["count_bet"]),
         "aiLearn": bool(row["ai_learn"]),
+        "aiSuggestBefore": row["ai_suggest_before"],
+        "aiHit": bool(row["ai_hit"]),
         "createdAt": row["created_at"]
     }
 
@@ -291,6 +330,40 @@ def road_stats(data):
     }
 
 
+def ai_accuracy():
+    conn = db()
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    seven_days = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+
+    def calc(where, params):
+        rows = conn.execute(f"""
+            SELECT ai_hit FROM records
+            WHERE ai_suggest_before IN ('B','P')
+            AND count_bet=1
+            {where}
+        """, params).fetchall()
+
+        if not rows:
+            return 0
+
+        hit = len([r for r in rows if r["ai_hit"]])
+        return round((hit / len(rows)) * 100, 1)
+
+    today_acc = calc("AND DATE(created_at)=?", (today,))
+    yesterday_acc = calc("AND DATE(created_at)=?", (yesterday,))
+    week_acc = calc("AND DATE(created_at)>=?", (seven_days,))
+
+    conn.close()
+
+    return {
+        "today": today_acc,
+        "yesterday": yesterday_acc,
+        "week": week_acc
+    }
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -314,10 +387,17 @@ def login():
             return render_template("login.html", error="會員已到期")
 
         conn = db()
-        conn.execute(
-            "UPDATE members SET last_login=? WHERE username=?",
-            (now(), username)
-        )
+        conn.execute("""
+        UPDATE members
+        SET last_login=?, last_active=?, ip=?, device=?
+        WHERE username=?
+        """, (
+            now(),
+            now(),
+            request.headers.get("X-Forwarded-For", request.remote_addr),
+            detect_device(),
+            username
+        ))
         conn.commit()
         conn.close()
 
@@ -376,6 +456,8 @@ def get_data():
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
 
+    update_member_active(platform, table)
+
     data = get_records(platform, table)
 
     return jsonify({
@@ -423,13 +505,22 @@ def admin_data():
             })
 
     conn = db()
-    members = conn.execute(
-        "SELECT * FROM members ORDER BY id DESC"
-    ).fetchall()
+    members_rows = conn.execute("SELECT * FROM members ORDER BY id DESC").fetchall()
     conn.close()
 
+    now_dt = datetime.now()
     member_list = []
-    for m in members:
+
+    for m in members_rows:
+        online = False
+
+        if m["last_active"]:
+            try:
+                active_time = datetime.strptime(m["last_active"], "%Y-%m-%d %H:%M:%S")
+                online = (now_dt - active_time).total_seconds() <= 300
+            except:
+                online = False
+
         member_list.append({
             "id": m["id"],
             "username": m["username"],
@@ -437,8 +528,16 @@ def admin_data():
             "expire": m["expire"],
             "enabled": bool(m["enabled"]),
             "createdAt": m["created_at"],
-            "lastLogin": m["last_login"]
+            "lastLogin": m["last_login"],
+            "lastActive": m["last_active"],
+            "currentPlatform": m["current_platform"],
+            "currentTable": m["current_table"],
+            "ip": m["ip"],
+            "device": m["device"],
+            "online": online
         })
+
+    acc = ai_accuracy()
 
     return jsonify({
         "ok": True,
@@ -446,7 +545,9 @@ def admin_data():
         "totalBets": total_bets,
         "totalTables": len(all_tables),
         "tables": all_tables,
-        "members": member_list
+        "members": member_list,
+        "onlineCount": len([m for m in member_list if m["online"]]),
+        "aiAccuracy": acc
     })
 
 
@@ -466,9 +567,10 @@ def admin_member_add():
     conn = db()
     try:
         conn.execute("""
-        INSERT INTO members (username,password,expire,enabled,created_at,last_login)
-        VALUES (?,?,?,?,?,?)
-        """, (username, password, expire, 1, now(), ""))
+        INSERT INTO members
+        (username,password,expire,enabled,created_at,last_login,last_active,current_platform,current_table,ip,device)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)
+        """, (username, password, expire, 1, now(), "", "", "", "", "", ""))
         conn.commit()
     except sqlite3.IntegrityError:
         conn.close()
@@ -492,11 +594,7 @@ def admin_member_update():
         return jsonify({"ok": False, "msg": "資料不完整"})
 
     conn = db()
-    conn.execute("""
-    UPDATE members
-    SET password=?, expire=?
-    WHERE id=?
-    """, (password, expire, member_id))
+    conn.execute("UPDATE members SET password=?, expire=? WHERE id=?", (password, expire, member_id))
     conn.commit()
     conn.close()
 
@@ -512,10 +610,7 @@ def admin_member_toggle():
     member_id = body.get("id")
 
     conn = db()
-    m = conn.execute(
-        "SELECT enabled FROM members WHERE id=?",
-        (member_id,)
-    ).fetchone()
+    m = conn.execute("SELECT enabled FROM members WHERE id=?", (member_id,)).fetchone()
 
     if not m:
         conn.close()
@@ -523,10 +618,7 @@ def admin_member_toggle():
 
     new_status = 0 if m["enabled"] else 1
 
-    conn.execute(
-        "UPDATE members SET enabled=? WHERE id=?",
-        (new_status, member_id)
-    )
+    conn.execute("UPDATE members SET enabled=? WHERE id=?", (new_status, member_id))
     conn.commit()
     conn.close()
 
@@ -559,10 +651,7 @@ def admin_clear_table():
     table = body.get("table")
 
     conn = db()
-    conn.execute(
-        "DELETE FROM records WHERE platform=? AND table_no=?",
-        (platform, table)
-    )
+    conn.execute("DELETE FROM records WHERE platform=? AND table_no=?", (platform, table))
     conn.commit()
     conn.close()
 
@@ -592,20 +681,30 @@ def manual_add():
     table = body.get("table")
     result = body.get("result")
 
+    update_member_active(platform, table)
+
     if result not in ["B", "P", "T"]:
         return jsonify({"ok": False})
+
+    data_before = get_records(platform, table)
+    suggest_before = road_stats(data_before)["suggest"]
+    suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
+
+    ai_hit = 1 if suggest_code == result else 0
 
     conn = db()
     conn.execute("""
     INSERT INTO records
     (platform,table_no,result,cards,player_point,banker_point,
-     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,
+     ai_suggest_before,ai_hit,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         platform, table, result, "",
         None, None,
         0, 0, 0, 1 if result == "T" else 0,
-        "manual", 0, 1, now()
+        "manual", 0, 1,
+        suggest_code, ai_hit, now()
     ))
     conn.commit()
     conn.close()
@@ -623,17 +722,26 @@ def cards_add():
     table = body.get("table")
     cards = body.get("cards", [])
 
+    update_member_active(platform, table)
+
     calc = calc_cards(cards)
 
     if calc is None:
         return jsonify({"ok": False})
 
+    data_before = get_records(platform, table)
+    suggest_before = road_stats(data_before)["suggest"]
+    suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
+
+    ai_hit = 1 if suggest_code == calc["result"] else 0
+
     conn = db()
     conn.execute("""
     INSERT INTO records
     (platform,table_no,result,cards,player_point,banker_point,
-     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,
+     ai_suggest_before,ai_hit,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         platform,
         table,
@@ -648,6 +756,8 @@ def cards_add():
         "card_button",
         1,
         1,
+        suggest_code,
+        ai_hit,
         now()
     ))
     conn.commit()
@@ -664,6 +774,8 @@ def undo():
     body = request.json
     platform = body.get("platform")
     table = body.get("table")
+
+    update_member_active(platform, table)
 
     conn = db()
     row = conn.execute("""
@@ -690,11 +802,10 @@ def clear():
     platform = body.get("platform")
     table = body.get("table")
 
+    update_member_active(platform, table)
+
     conn = db()
-    conn.execute(
-        "DELETE FROM records WHERE platform=? AND table_no=?",
-        (platform, table)
-    )
+    conn.execute("DELETE FROM records WHERE platform=? AND table_no=?", (platform, table))
     conn.commit()
     conn.close()
 
