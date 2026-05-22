@@ -1,1 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理員登入</title>
 
+<style>
+body{
+    margin:0;
+    height:100vh;
+    background:radial-gradient(circle at top,#1b2b4d,#050914 60%,#02040a);
+    color:white;
+    font-family:Arial,"Microsoft JhengHei",sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.login-box{
+    width:360px;
+    padding:28px;
+    border-radius:20px;
+    background:rgba(8,18,38,.86);
+    border:1px solid rgba(90,170,255,.5);
+    box-shadow:0 0 35px rgba(0,120,255,.35);
+}
+
+h1{
+    text-align:center;
+    color:#9dccff;
+    margin-bottom:24px;
+}
+
+input{
+    width:100%;
+    padding:14px;
+    margin-bottom:14px;
+    border-radius:12px;
+    border:1px solid rgba(90,170,255,.45);
+    background:#08162f;
+    color:white;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,#005eff,#00a2ff);
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+}
+
+.error{
+    color:#ff5b7d;
+    text-align:center;
+    margin-bottom:12px;
+}
+</style>
+</head>
+
+<body>
+
+<form class="login-box" method="POST">
+    <h1>管理員後台</h1>
+
+    {% if error %}
+    <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <input name="username" placeholder="管理員帳號" required>
+    <input name="password" type="password" placeholder="管理員密碼" required>
+
+    <button type="submit">登入後台</button>
+</form>
+
+</body>
+</html>
