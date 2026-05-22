@@ -5,11 +5,20 @@ app = Flask(__name__)
 
 records = defaultdict(list)
 
-DG_TABLES = ["RB01", "RB02", "RB03", "RB04", "RB05", "RB06", "RB07", "RB08"]
-MT_TABLES = ["01", "02", "03", "03A", "05", "06", "07", "08", "09", "10"]
+DG_TABLES = [
+    "RB01", "RB02", "RB03", "RB04", "RB05",
+    "RB06", "RB07", "RB08", "RB09", "RB10"
+]
+
+MT_TABLES = [
+    "01", "02", "03", "03A", "05",
+    "06", "07", "08", "09", "10"
+]
+
 
 def table_key(platform, table):
     return f"{platform}_{table}"
+
 
 def calc_cards(cards):
     try:
@@ -39,7 +48,6 @@ def calc_cards(cards):
 
         player_pair = len(player_cards) >= 2 and player_cards[0] == player_cards[1]
         banker_pair = len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1]
-
         lucky6 = result == "B" and banker_point == 6
 
         return {
@@ -55,89 +63,188 @@ def calc_cards(cards):
     except:
         return None
 
+
 def road_stats(data):
-    total_analysis = len([x for x in data if x["result"] in ["B", "P"]])
-    b_count = len([x for x in data if x["result"] == "B"])
-    p_count = len([x for x in data if x["result"] == "P"])
+    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
+    bp = [x for x in valid if x.get("result") in ["B", "P"]]
 
-    b_rate = round((b_count / total_analysis) * 100, 1) if total_analysis else 0
-    p_rate = round((p_count / total_analysis) * 100, 1) if total_analysis else 0
+    bet_count = len([x for x in data if x.get("countBet")])
 
+    b_count = len([x for x in bp if x["result"] == "B"])
+    p_count = len([x for x in bp if x["result"] == "P"])
+    t_count = len([x for x in valid if x["result"] == "T"])
+
+    total_bp = len(bp)
+
+    raw_b_rate = round((b_count / total_bp) * 100, 1) if total_bp else 0
+    raw_p_rate = round((p_count / total_bp) * 100, 1) if total_bp else 0
+
+    recent = [x["result"] for x in bp][-20:]
+    recent10 = recent[-10:]
+    recent6 = recent[-6:]
+
+    banker_score = 50
+    player_score = 50
+    alerts = []
+
+    # 近20局加權，不是單純看莊閒顆數
+    for i, r in enumerate(recent):
+        weight = i + 1
+
+        if r == "B":
+            banker_score += weight * 0.35
+        elif r == "P":
+            player_score += weight * 0.35
+
+    # 近10局強化
+    b10 = recent10.count("B")
+    p10 = recent10.count("P")
+
+    banker_score += b10 * 1.8
+    player_score += p10 * 1.8
+
+    # 連莊 / 連閒
     streak_result = None
     streak_count = 0
 
-    for item in reversed(data):
-        if item["result"] == "T":
-            continue
+    for item in reversed(bp):
+        r = item["result"]
+
         if streak_result is None:
-            streak_result = item["result"]
+            streak_result = r
             streak_count = 1
-        elif item["result"] == streak_result:
+        elif r == streak_result:
             streak_count += 1
         else:
             break
 
-    recent = [x["result"] for x in data if x["result"] in ["B", "P"]][-12:]
+    if streak_result == "B":
+        banker_score += min(streak_count * 3.2, 18)
+    elif streak_result == "P":
+        player_score += min(streak_count * 3.2, 18)
 
-    banker_score = b_rate
-    player_score = p_rate
+    # 跳路
+    if len(recent6) >= 6:
+        if recent6 == ["B", "P", "B", "P", "B", "P"]:
+            banker_score += 10
+            alerts.append("跳路偏莊")
+        elif recent6 == ["P", "B", "P", "B", "P", "B"]:
+            player_score += 10
+            alerts.append("跳路偏閒")
 
-    if len(recent) >= 4:
-        if recent[-1] == "B":
-            banker_score += 4
-        if recent[-1] == "P":
+    # 長龍反打風險
+    if streak_count >= 5:
+        if streak_result == "B":
+            banker_score -= 6
             player_score += 4
+            alerts.append("長莊注意斷龍")
+        elif streak_result == "P":
+            player_score -= 6
+            banker_score += 4
+            alerts.append("長閒注意斷龍")
 
-        if len(set(recent[-3:])) == 1:
-            if recent[-1] == "B":
-                banker_score += 8
+    # 牌型後台權重
+    recent_cards = valid[-20:]
+
+    banker_pair_count = len([x for x in recent_cards if x.get("bankerPair")])
+    player_pair_count = len([x for x in recent_cards if x.get("playerPair")])
+    lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
+    tie_count = len([x for x in recent_cards if x.get("tie")])
+
+    if banker_pair_count >= 3:
+        banker_score += 3
+        alerts.append("莊對偏熱")
+
+    if player_pair_count >= 3:
+        player_score += 3
+        alerts.append("閒對偏熱")
+
+    if lucky6_count >= 2:
+        banker_score += 4
+        alerts.append("幸運6偏熱")
+
+    if tie_count >= 2:
+        alerts.append("和局偏熱")
+
+    # 蟑螂路 / 空心路簡化後台分析
+    if len(recent) >= 8:
+        last8 = recent[-8:]
+        changes = sum(
+            1 for i in range(1, len(last8))
+            if last8[i] != last8[i - 1]
+        )
+
+        if changes >= 6:
+            alerts.append("蟑螂路跳動偏強")
+
+            if last8[-1] == "B":
+                player_score += 5
             else:
-                player_score += 8
+                banker_score += 5
 
-        if len(recent) >= 6:
-            pattern = recent[-6:]
-            if pattern == ["B", "P", "B", "P", "B", "P"]:
-                banker_score += 6
-            if pattern == ["P", "B", "P", "B", "P", "B"]:
-                player_score += 6
+        if changes <= 2:
+            alerts.append("空心路偏黏")
 
-    if banker_score > player_score:
-        suggest = "莊"
-        stable_rate = round(banker_score, 1)
-    elif player_score > banker_score:
-        suggest = "閒"
-        stable_rate = round(player_score, 1)
-    else:
+            if last8[-1] == "B":
+                banker_score += 5
+            else:
+                player_score += 5
+
+    diff = abs(banker_score - player_score)
+
+    if total_bp < 6:
         suggest = "觀望"
         stable_rate = 0
+        alerts.append("資料不足")
+    elif diff < 6:
+        suggest = "觀望"
+        stable_rate = round(50 + diff, 1)
+        alerts.append("莊閒不明顯")
+    elif banker_score > player_score:
+        suggest = "莊"
+        stable_rate = round(min(92, 50 + diff), 1)
+    else:
+        suggest = "閒"
+        stable_rate = round(min(92, 50 + diff), 1)
 
     return {
-        "totalAnalysis": total_analysis,
+        "totalAnalysis": total_bp,
+        "betCount": bet_count,
         "bankerWin": b_count,
         "playerWin": p_count,
-        "bankerRate": b_rate,
-        "playerRate": p_rate,
+        "tieCount": t_count,
+        "bankerRate": raw_b_rate,
+        "playerRate": raw_p_rate,
         "streakResult": streak_result,
         "streakCount": streak_count,
         "suggest": suggest,
         "stableRate": stable_rate,
+        "alerts": alerts[:3],
+        "bankerScore": round(banker_score, 1),
+        "playerScore": round(player_score, 1)
     }
+
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
+
 @app.route("/api/tables")
 def tables():
     platform = request.args.get("platform", "DG")
+
     if platform == "MT":
         return jsonify(MT_TABLES)
+
     return jsonify(DG_TABLES)
+
 
 @app.route("/api/data")
 def get_data():
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
+
     key = table_key(platform, table)
     data = records[key]
 
@@ -149,9 +256,11 @@ def get_data():
         "stats": road_stats(data)
     })
 
+
 @app.route("/api/manual", methods=["POST"])
 def manual_add():
     body = request.json
+
     platform = body.get("platform")
     table = body.get("table")
     result = body.get("result")
@@ -165,14 +274,20 @@ def manual_add():
         "result": result,
         "source": "manual_road",
         "countBet": False,
-        "aiLearn": True
+        "aiLearn": True,
+        "playerPair": False,
+        "bankerPair": False,
+        "lucky6": False,
+        "tie": result == "T"
     })
 
     return jsonify({"ok": True})
 
+
 @app.route("/api/cards", methods=["POST"])
 def cards_add():
     body = request.json
+
     platform = body.get("platform")
     table = body.get("table")
     cards = body.get("cards", [])
@@ -200,11 +315,14 @@ def cards_add():
 
     return jsonify({"ok": True, **calc})
 
+
 @app.route("/api/undo", methods=["POST"])
 def undo():
     body = request.json
+
     platform = body.get("platform")
     table = body.get("table")
+
     key = table_key(platform, table)
 
     if records[key]:
@@ -212,14 +330,20 @@ def undo():
 
     return jsonify({"ok": True})
 
+
 @app.route("/api/clear", methods=["POST"])
 def clear():
     body = request.json
+
     platform = body.get("platform")
     table = body.get("table")
+
     key = table_key(platform, table)
+
     records[key] = []
+
     return jsonify({"ok": True})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
