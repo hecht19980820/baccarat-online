@@ -6,57 +6,31 @@
 <title>百家樂 AI 分析系統</title>
 
 <style>
-*{
-    box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
     margin:0;
-    background:
-        radial-gradient(circle at top,#101f3d 0%,#050b18 48%,#02050d 100%);
+    background:radial-gradient(circle at top,#101f3d 0%,#050b18 48%,#02050d 100%);
     color:white;
     font-family:Arial,"Microsoft JhengHei";
 }
 
 .container{
     width:100%;
-    max-width:980px;
+    max-width:1120px;
     margin:auto;
     padding:12px;
 }
 
 .topbar{
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-bottom:12px;
-}
-
-.card{
-    background:rgba(8,18,38,.82);
-    border:1px solid rgba(80,160,255,.48);
-    box-shadow:0 0 18px rgba(0,120,255,.18), inset 0 0 12px rgba(255,255,255,.025);
-    border-radius:16px;
-    padding:14px;
-    margin-bottom:12px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1.35fr 1fr;
+    grid-template-columns:170px 170px 1fr 170px;
     gap:12px;
+    align-items:center;
     margin-bottom:12px;
 }
 
-.grid2{
-    display:grid;
-    grid-template-columns:1.35fr .9fr;
-    gap:12px;
-    margin-bottom:12px;
-}
-
-select,
-button{
+select,button{
     width:100%;
     border-radius:12px;
     border:1px solid rgba(90,170,255,.45);
@@ -67,8 +41,174 @@ button{
     font-weight:bold;
 }
 
-button{
-    cursor:pointer;
+.expire{
+    color:#ffd86b;
+    font-size:16px;
+    font-weight:bold;
+    display:flex;
+    align-items:center;
+}
+
+.time{
+    color:#dceaff;
+    text-align:right;
+    font-size:15px;
+}
+
+.card{
+    background:rgba(8,18,38,.82);
+    border:1px solid rgba(80,160,255,.48);
+    box-shadow:0 0 18px rgba(0,120,255,.18), inset 0 0 12px rgba(255,255,255,.025);
+    border-radius:16px;
+    padding:14px;
+}
+
+.grid-top{
+    display:grid;
+    grid-template-columns:290px 1fr 280px;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.grid-mid{
+    display:grid;
+    grid-template-columns:1fr 360px;
+    gap:12px;
+    margin-bottom:12px;
+}
+
+.title{
+    color:#9dccff;
+    font-size:21px;
+    font-weight:bold;
+    margin-bottom:10px;
+}
+
+.ai-result{
+    font-size:86px;
+    font-weight:bold;
+    text-align:center;
+    margin:15px 0 8px;
+    text-shadow:0 0 18px currentColor;
+}
+
+.ai-result.banker-text{color:#ff4c5f}
+.ai-result.player-text{color:#2f8bff}
+.ai-result.tie-text{color:#00d26a}
+.ai-result.wait-text{color:#ff5b8d}
+
+.rate{
+    text-align:center;
+    font-size:48px;
+    font-weight:bold;
+    color:#ff9ec0;
+}
+
+.center{text-align:center}
+.sub{color:#91a8d7;font-size:14px}
+
+.road{
+    display:grid;
+    grid-template-rows:repeat(5,43px);
+    grid-auto-flow:column;
+    grid-auto-columns:43px;
+    gap:5px;
+    overflow-x:auto;
+    padding:8px;
+    border-radius:14px;
+    background:rgba(255,255,255,.025);
+}
+
+.cell{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:20px;
+}
+
+.B{border:2px solid #ff3151;color:#ff3151;background:rgba(255,0,40,.18)}
+.P{border:2px solid #2f8bff;color:#2f8bff;background:rgba(0,90,255,.18)}
+.T{border:2px solid #00d26a;color:#00d26a;background:rgba(0,210,106,.18)}
+
+.alert-box{
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px;
+    padding:14px;
+    margin-bottom:12px;
+    background:rgba(255,255,255,.025);
+    color:#ffd36a;
+    font-size:18px;
+}
+
+.input-box{
+    display:grid;
+    grid-template-columns:1fr 320px;
+    gap:16px;
+}
+
+.hint{
+    border:1px solid rgba(80,160,255,.35);
+    border-radius:12px;
+    padding:12px;
+    color:#bcd8ff;
+    line-height:1.8;
+}
+
+.blue{color:#2f8bff;font-weight:bold}
+.red{color:#ff3151;font-weight:bold}
+.orange{color:#ff8a00;font-weight:bold}
+
+.card-preview{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    min-height:54px;
+    margin:10px 0;
+}
+
+.preview-wrap{
+    text-align:center;
+}
+
+.preview-number{
+    width:48px;
+    height:48px;
+    border-radius:8px;
+    border:1px solid rgba(120,180,255,.48);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    font-weight:bold;
+}
+
+.preview-label{
+    font-size:12px;
+    margin-top:4px;
+    color:#91a8d7;
+}
+
+.preview-player .preview-number{
+    border-color:#2f8bff;
+}
+
+.preview-banker .preview-number{
+    border-color:#ff3151;
+}
+
+.keypad{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+
+.keypad button{
+    height:62px;
+    font-size:26px;
 }
 
 .banker{
@@ -91,237 +231,99 @@ button{
     background:linear-gradient(135deg,#4b0018,#b00038);
 }
 
-.title{
-    color:#9dccff;
-    font-size:17px;
-    font-weight:bold;
-    margin-bottom:10px;
-}
-
-.big{
-    font-size:64px;
-    font-weight:bold;
-    text-align:center;
-    color:#ff4c7d;
-    text-shadow:0 0 18px rgba(255,70,120,.75);
-    margin:12px 0 4px;
-}
-
-.rate{
-    text-align:center;
-    font-size:42px;
-    font-weight:bold;
-    color:#ff9ec0;
-}
-
-.center{
-    text-align:center;
-}
-
-.sub{
-    color:#91a8d7;
-    font-size:13px;
-}
-
-.stats-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-}
-
-.stat-box{
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:12px;
-    padding:10px;
-    font-size:13px;
-}
-
-.stat-value{
-    font-size:20px;
-    font-weight:bold;
-    margin-top:6px;
-}
-
-.alert-box{
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:12px;
-    padding:10px;
-    margin-bottom:8px;
-    background:rgba(255,255,255,.025);
-}
-
-.alert-title{
-    font-size:16px;
-    color:#ffd36a;
-}
-
-.keypad-area{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:14px;
-    align-items:center;
-}
-
-.card-preview{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-    flex-wrap:wrap;
-    min-height:46px;
-}
-
-.preview-number{
-    width:42px;
-    height:42px;
-    border-radius:10px;
-    border:1px solid rgba(120,180,255,.48);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:24px;
-    font-weight:bold;
-}
-
-.keypad{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-}
-
-.keypad button{
-    height:54px;
-    font-size:24px;
-}
-
 .manual-buttons{
     display:grid;
-    gap:10px;
+    gap:16px;
+    margin-top:30px;
 }
 
 .manual-buttons button{
-    height:56px;
-    font-size:22px;
+    height:72px;
+    font-size:30px;
 }
 
-.road{
+.stats-row{
     display:grid;
-    grid-template-rows:repeat(6,40px);
-    grid-auto-flow:column;
-    grid-auto-columns:40px;
-    gap:5px;
-    overflow-x:auto;
-    padding:10px;
-    border-radius:14px;
-    background:rgba(255,255,255,.025);
+    grid-template-columns:repeat(6,1fr);
+    gap:12px;
+    margin-bottom:12px;
 }
 
-.cell{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
+.stat-card{
+    background:rgba(8,18,38,.82);
+    border:1px solid rgba(80,160,255,.48);
+    border-radius:14px;
+    padding:16px;
+}
+
+.stat-title{
+    color:#bceaff;
     font-size:18px;
 }
 
-.B{
-    border:2px solid #ff3151;
-    color:#ff3151;
+.stat-value{
+    margin-top:10px;
+    font-size:34px;
+    font-weight:bold;
 }
 
-.P{
-    border:2px solid #2f8bff;
-    color:#2f8bff;
-}
-
-.T{
-    border:2px solid #00d26a;
-    color:#00d26a;
-}
+.red-text{color:#ff3151}
+.blue-text{color:#2f8bff}
+.green-text{color:#00d26a}
+.white-text{color:#fff}
 
 .bottom-buttons{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:10px;
+    gap:12px;
+    margin-bottom:12px;
 }
 
 .bottom-buttons button{
-    height:56px;
-    font-size:18px;
+    height:64px;
+    font-size:24px;
 }
 
 .footer{
-    opacity:.55;
-    font-size:12px;
-    margin-top:12px;
+    opacity:.65;
+    font-size:14px;
     display:flex;
     justify-content:space-between;
+    padding:14px;
+    border:1px solid rgba(80,160,255,.35);
+    border-radius:12px;
 }
 
 @media(max-width:760px){
+    .container{padding:8px}
 
-    .container{
-        padding:8px;
+    .topbar{
+        grid-template-columns:1fr 1fr;
     }
 
-    .grid{
+    .expire{
+        grid-column:1/3;
+        font-size:14px;
+    }
+
+    .time{
+        display:none;
+    }
+
+    .grid-top,.grid-mid,.input-box,.stats-row{
         grid-template-columns:1fr;
     }
 
-    .grid2{
-        grid-template-columns:1fr;
-    }
-
-    .card{
-        padding:12px;
-        border-radius:14px;
-    }
-
-    .big{
-        font-size:52px;
-        margin:4px 0;
+    .ai-result{
+        font-size:64px;
     }
 
     .rate{
-        font-size:34px;
-    }
-
-    .stats-grid{
-        grid-template-columns:repeat(3,1fr);
-        gap:6px;
-    }
-
-    .stat-box{
-        padding:8px;
-        font-size:12px;
-    }
-
-    .stat-value{
-        font-size:17px;
-    }
-
-    .keypad-area{
-        grid-template-columns:1fr;
-    }
-
-    .keypad button{
-        height:50px;
-        font-size:22px;
-    }
-
-    .manual-buttons{
-        grid-template-columns:repeat(3,1fr);
-    }
-
-    .manual-buttons button{
-        height:52px;
-        font-size:20px;
+        font-size:38px;
     }
 
     .road{
-        grid-template-rows:repeat(6,34px);
+        grid-template-rows:repeat(5,34px);
         grid-auto-columns:34px;
     }
 
@@ -329,6 +331,25 @@ button{
         width:32px;
         height:32px;
         font-size:15px;
+    }
+
+    .keypad button{
+        height:52px;
+        font-size:22px;
+    }
+
+    .manual-buttons{
+        grid-template-columns:repeat(3,1fr);
+        margin-top:10px;
+    }
+
+    .manual-buttons button{
+        height:56px;
+        font-size:22px;
+    }
+
+    .bottom-buttons button{
+        font-size:18px;
     }
 }
 </style>
@@ -340,56 +361,33 @@ button{
 
     <div class="topbar">
         <select id="platform" onchange="loadTables()">
-            <option value="DG">DG</option>
-            <option value="MT">MT</option>
+            <option value="DG">♠ DG</option>
+            <option value="MT">♠ MT</option>
         </select>
 
         <select id="table" onchange="loadData()"></select>
+
+        <div class="expire">
+            會員到期時間：<span id="memberExpire">2025-06-30 23:59:59</span>
+        </div>
+
+        <div class="time">
+            ⟳ 更新時間 19:47:25
+        </div>
     </div>
 
-    <div class="grid">
+    <div class="grid-top">
 
         <div class="card">
             <div class="title">✦ AI 建議方向</div>
-            <div id="suggest" class="big">觀望</div>
+            <div id="suggest" class="ai-result wait-text">觀望</div>
             <div class="center sub">後台穩定率</div>
             <div id="stableRate" class="rate">0%</div>
         </div>
 
         <div class="card">
-            <div class="title">📊 後台分析總覽</div>
-
-            <div class="stats-grid">
-                <div class="stat-box">
-                    莊勝率
-                    <div id="bankerRate" class="stat-value">0%</div>
-                </div>
-
-                <div class="stat-box">
-                    閒勝率
-                    <div id="playerRate" class="stat-value">0%</div>
-                </div>
-
-                <div class="stat-box">
-                    和局數
-                    <div id="tieRate" class="stat-value">0</div>
-                </div>
-
-                <div class="stat-box">
-                    連續狀態
-                    <div id="streak" class="stat-value">-</div>
-                </div>
-
-                <div class="stat-box">
-                    下注次數
-                    <div id="betCount" class="stat-value">0</div>
-                </div>
-
-                <div class="stat-box">
-                    分析量
-                    <div id="analysisCount" class="stat-value">0</div>
-                </div>
-            </div>
+            <div class="title">⚙ 大路盤 <span class="sub" style="float:right;">長按可查看局號</span></div>
+            <div id="road" class="road"></div>
         </div>
 
         <div class="card">
@@ -399,35 +397,61 @@ button{
 
     </div>
 
-    <div class="grid2">
+    <div class="grid-mid">
 
         <div class="card">
-            <div class="title">🎰 牌型輸入</div>
+            <div class="title">🎴 牌型輸入（手動添加）</div>
 
-            <div class="keypad-area">
+            <div class="input-box">
+
                 <div>
-                    <div class="sub">目前輸入</div>
+                    <div class="hint">
+                        輸入順序：<br>
+                        <span class="blue">閒</span> 1 2 3　
+                        <span class="red">莊</span> 1 2 3<br>
+                        範例：
+                        <span class="blue">閒</span> 1 2 3　
+                        <span class="red">莊</span> 2 0 6
+                    </div>
+
+                    <div class="sub" style="margin-top:12px;">目前輸入</div>
                     <div id="cardPreview" class="card-preview"></div>
-                    <div class="sub">最少4張，最多6張，自動計算結果</div>
+
+                    <div class="hint">
+                        範例說明<br>
+                        輸入：
+                        <span class="blue">閒</span> 1 2 3　
+                        <span class="red">莊</span> 2 0 6<br>
+                        <span class="blue">閒</span> = 1 + 2 + 3 = 6（取個位 6 點）<br>
+                        <span class="red">莊</span> = 2 + 0 + 6 = 8（取個位 8 點）<br>
+                        結果：<span class="orange">莊贏（8 &gt; 6）</span>
+                    </div>
                 </div>
 
-                <div class="keypad">
-                    <button onclick="addCard(1)">1</button>
-                    <button onclick="addCard(2)">2</button>
-                    <button onclick="addCard(3)">3</button>
+                <div>
+                    <div class="keypad">
+                        <button onclick="addCard(1)">1</button>
+                        <button onclick="addCard(2)">2</button>
+                        <button onclick="addCard(3)">3</button>
 
-                    <button onclick="addCard(4)">4</button>
-                    <button onclick="addCard(5)">5</button>
-                    <button onclick="addCard(6)">6</button>
+                        <button onclick="addCard(4)">4</button>
+                        <button onclick="addCard(5)">5</button>
+                        <button onclick="addCard(6)">6</button>
 
-                    <button onclick="addCard(7)">7</button>
-                    <button onclick="addCard(8)">8</button>
-                    <button onclick="addCard(9)">9</button>
+                        <button onclick="addCard(7)">7</button>
+                        <button onclick="addCard(8)">8</button>
+                        <button onclick="addCard(9)">9</button>
 
-                    <button class="warn" onclick="resetCards()">清除</button>
-                    <button onclick="addCard(0)">0</button>
-                    <button class="banker" onclick="submitCards()">送出</button>
+                        <button class="warn" onclick="resetCards()">清除</button>
+                        <button onclick="addCard(0)">0</button>
+                        <button class="banker" onclick="submitCards()">送出</button>
+                    </div>
+
+                    <div class="center sub" style="margin-top:18px;">
+                        最少 4 張，最多 6 張
+                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -439,15 +463,40 @@ button{
                 <button class="player" onclick="manualAdd('P')">閒</button>
                 <button class="tie" onclick="manualAdd('T')">和</button>
             </div>
-
-            <div class="sub" style="margin-top:10px;">手動添加不增加下注次數</div>
         </div>
 
     </div>
 
-    <div class="card">
-        <div class="title">⚙ 大路盤</div>
-        <div id="road" class="road"></div>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-title">莊勝率</div>
+            <div id="bankerRate" class="stat-value red-text">0%</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">閒勝率</div>
+            <div id="playerRate" class="stat-value blue-text">0%</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">和局數</div>
+            <div id="tieRate" class="stat-value green-text">0</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">連續狀態</div>
+            <div id="streak" class="stat-value red-text">-</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">下注次數</div>
+            <div id="betCount" class="stat-value white-text">0</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-title">分析量</div>
+            <div id="analysisCount" class="stat-value white-text">0</div>
+        </div>
     </div>
 
     <div class="bottom-buttons">
@@ -490,6 +539,10 @@ async function loadData(){
     const res = await fetch(`/api/data?platform=${platform}&table=${table}`);
     const data = await res.json();
 
+    if(data.memberExpireTime){
+        document.getElementById("memberExpire").textContent = data.memberExpireTime;
+    }
+
     renderRoad(data.records);
     renderStats(data);
 }
@@ -508,8 +561,21 @@ function renderRoad(records){
 
 function renderStats(data){
     const s = data.stats;
+    const suggest = document.getElementById("suggest");
 
-    document.getElementById("suggest").textContent = s.suggest;
+    suggest.textContent = s.suggest;
+    suggest.className = "ai-result";
+
+    if(s.suggest === "莊"){
+        suggest.classList.add("banker-text");
+    }else if(s.suggest === "閒"){
+        suggest.classList.add("player-text");
+    }else if(s.suggest === "和"){
+        suggest.classList.add("tie-text");
+    }else{
+        suggest.classList.add("wait-text");
+    }
+
     document.getElementById("stableRate").textContent = s.stableRate + "%";
     document.getElementById("bankerRate").textContent = s.bankerRate + "%";
     document.getElementById("playerRate").textContent = s.playerRate + "%";
@@ -520,7 +586,7 @@ function renderStats(data){
     let streakText = "-";
 
     if(s.streakResult){
-        streakText = `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount}`;
+        streakText = `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount} 連`;
     }
 
     document.getElementById("streak").textContent = streakText;
@@ -532,7 +598,7 @@ function renderStats(data){
         s.alerts.forEach(a=>{
             const div = document.createElement("div");
             div.className = "alert-box";
-            div.innerHTML = `<div class="alert-title">${a}</div>`;
+            div.textContent = a;
             alerts.appendChild(div);
         });
     }else{
@@ -563,11 +629,32 @@ function updatePreview(){
     const preview = document.getElementById("cardPreview");
     preview.innerHTML = "";
 
-    cards.forEach(n=>{
-        const div = document.createElement("div");
-        div.className = "preview-number";
-        div.textContent = n;
-        preview.appendChild(div);
+    cards.forEach((n, i)=>{
+        const wrap = document.createElement("div");
+        wrap.className = "preview-wrap";
+
+        if(i <= 2){
+            wrap.classList.add("preview-player");
+        }else{
+            wrap.classList.add("preview-banker");
+        }
+
+        const numBox = document.createElement("div");
+        numBox.className = "preview-number";
+        numBox.textContent = n;
+
+        const label = document.createElement("div");
+        label.className = "preview-label";
+
+        if(i <= 2){
+            label.textContent = `閒 ${i + 1}`;
+        }else{
+            label.textContent = `莊 ${i - 2}`;
+        }
+
+        wrap.appendChild(numBox);
+        wrap.appendChild(label);
+        preview.appendChild(wrap);
     });
 }
 
