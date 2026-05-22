@@ -5,15 +5,10 @@ app = Flask(__name__)
 
 records = defaultdict(list)
 
-DG_TABLES = [
-    "RB01", "RB02", "RB03", "RB04", "RB05",
-    "RB06", "RB07", "RB08", "RB09", "RB10"
-]
+DG_TABLES = ["RB01", "RB02", "RB03", "RB04", "RB05", "RB06", "RB07", "RB08", "RB09", "RB10"]
+MT_TABLES = ["01", "02", "03", "03A", "05", "06", "07", "08", "09", "10"]
 
-MT_TABLES = [
-    "01", "02", "03", "03A", "05",
-    "06", "07", "08", "09", "10"
-]
+MEMBER_EXPIRE_TIME = "2025-06-30 23:59:59"
 
 
 def table_key(platform, table):
@@ -26,12 +21,6 @@ def calc_cards(cards):
 
         if len(nums) < 4 or len(nums) > 6:
             return None
-
-        # 新規則：
-        # 前面一半是閒，後面一半是莊
-        # 4張：閒1 閒2 莊1 莊2
-        # 5張：閒1 閒2 閒3 莊1 莊2
-        # 6張：閒1 閒2 閒3 莊1 莊2 莊3
 
         if len(nums) == 4:
             player_cards = nums[0:2]
@@ -94,29 +83,21 @@ def road_stats(data):
     player_score = 50
     alerts = []
 
-    # 近20局加權，不是單純看莊閒顆數
     for i, r in enumerate(recent):
         weight = i + 1
-
         if r == "B":
             banker_score += weight * 0.35
         elif r == "P":
             player_score += weight * 0.35
 
-    # 近10局強化
-    b10 = recent10.count("B")
-    p10 = recent10.count("P")
+    banker_score += recent10.count("B") * 1.8
+    player_score += recent10.count("P") * 1.8
 
-    banker_score += b10 * 1.8
-    player_score += p10 * 1.8
-
-    # 連莊 / 連閒
     streak_result = None
     streak_count = 0
 
     for item in reversed(bp):
         r = item["result"]
-
         if streak_result is None:
             streak_result = r
             streak_count = 1
@@ -130,7 +111,6 @@ def road_stats(data):
     elif streak_result == "P":
         player_score += min(streak_count * 3.2, 18)
 
-    # 跳路
     if len(recent6) >= 6:
         if recent6 == ["B", "P", "B", "P", "B", "P"]:
             banker_score += 10
@@ -139,7 +119,6 @@ def road_stats(data):
             player_score += 10
             alerts.append("跳路偏閒")
 
-    # 長龍反打風險
     if streak_count >= 5:
         if streak_result == "B":
             banker_score -= 6
@@ -150,7 +129,6 @@ def road_stats(data):
             banker_score += 4
             alerts.append("長閒注意斷龍")
 
-    # 牌型後台權重
     recent_cards = valid[-20:]
 
     banker_pair_count = len([x for x in recent_cards if x.get("bankerPair")])
@@ -173,17 +151,12 @@ def road_stats(data):
     if tie_count >= 2:
         alerts.append("和局偏熱")
 
-    # 蟑螂路 / 空心路簡化後台分析
     if len(recent) >= 8:
         last8 = recent[-8:]
-        changes = sum(
-            1 for i in range(1, len(last8))
-            if last8[i] != last8[i - 1]
-        )
+        changes = sum(1 for i in range(1, len(last8)) if last8[i] != last8[i - 1])
 
         if changes >= 6:
             alerts.append("蟑螂路跳動偏強")
-
             if last8[-1] == "B":
                 player_score += 5
             else:
@@ -191,7 +164,6 @@ def road_stats(data):
 
         if changes <= 2:
             alerts.append("空心路偏黏")
-
             if last8[-1] == "B":
                 banker_score += 5
             else:
@@ -240,26 +212,20 @@ def index():
 @app.route("/api/tables")
 def tables():
     platform = request.args.get("platform", "DG")
-
-    if platform == "MT":
-        return jsonify(MT_TABLES)
-
-    return jsonify(DG_TABLES)
+    return jsonify(MT_TABLES if platform == "MT" else DG_TABLES)
 
 
 @app.route("/api/data")
 def get_data():
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
-
     key = table_key(platform, table)
     data = records[key]
 
-    bet_count = len([x for x in data if x.get("countBet")])
-
     return jsonify({
         "records": data,
-        "betCount": bet_count,
+        "betCount": len([x for x in data if x.get("countBet")]),
+        "memberExpireTime": MEMBER_EXPIRE_TIME,
         "stats": road_stats(data)
     })
 
@@ -267,13 +233,12 @@ def get_data():
 @app.route("/api/manual", methods=["POST"])
 def manual_add():
     body = request.json
-
     platform = body.get("platform")
     table = body.get("table")
     result = body.get("result")
 
     if result not in ["B", "P", "T"]:
-        return jsonify({"ok": False, "msg": "invalid result"})
+        return jsonify({"ok": False})
 
     key = table_key(platform, table)
 
@@ -294,7 +259,6 @@ def manual_add():
 @app.route("/api/cards", methods=["POST"])
 def cards_add():
     body = request.json
-
     platform = body.get("platform")
     table = body.get("table")
     cards = body.get("cards", [])
@@ -302,7 +266,7 @@ def cards_add():
     calc = calc_cards(cards)
 
     if calc is None:
-        return jsonify({"ok": False, "msg": "cards error"})
+        return jsonify({"ok": False})
 
     key = table_key(platform, table)
 
@@ -326,11 +290,7 @@ def cards_add():
 @app.route("/api/undo", methods=["POST"])
 def undo():
     body = request.json
-
-    platform = body.get("platform")
-    table = body.get("table")
-
-    key = table_key(platform, table)
+    key = table_key(body.get("platform"), body.get("table"))
 
     if records[key]:
         records[key].pop()
@@ -341,12 +301,7 @@ def undo():
 @app.route("/api/clear", methods=["POST"])
 def clear():
     body = request.json
-
-    platform = body.get("platform")
-    table = body.get("table")
-
-    key = table_key(platform, table)
-
+    key = table_key(body.get("platform"), body.get("table"))
     records[key] = []
 
     return jsonify({"ok": True})
