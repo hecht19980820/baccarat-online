@@ -14,14 +14,44 @@ def table_key(platform, table):
 def calc_cards(cards):
     try:
         nums = [int(x) for x in cards]
-        player = (nums[0] + nums[2] + nums[4]) % 10
-        banker = (nums[1] + nums[3] + nums[5]) % 10
 
-        if player > banker:
-            return "P"
-        elif banker > player:
-            return "B"
-        return "T"
+        if len(nums) < 4 or len(nums) > 6:
+            return None
+
+        player_cards = []
+        banker_cards = []
+
+        for i, n in enumerate(nums):
+            if i % 2 == 0:
+                player_cards.append(n)
+            else:
+                banker_cards.append(n)
+
+        player_point = sum(player_cards) % 10
+        banker_point = sum(banker_cards) % 10
+
+        if player_point > banker_point:
+            result = "P"
+        elif banker_point > player_point:
+            result = "B"
+        else:
+            result = "T"
+
+        player_pair = len(player_cards) >= 2 and player_cards[0] == player_cards[1]
+        banker_pair = len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1]
+
+        lucky6 = result == "B" and banker_point == 6
+
+        return {
+            "result": result,
+            "playerPoint": player_point,
+            "bankerPoint": banker_point,
+            "playerPair": player_pair,
+            "bankerPair": banker_pair,
+            "lucky6": lucky6,
+            "tie": result == "T"
+        }
+
     except:
         return None
 
