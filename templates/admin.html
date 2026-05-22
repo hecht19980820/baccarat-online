@@ -38,6 +38,11 @@ body{
     border-radius:12px;
     background:rgba(255,255,255,.04);
     margin-bottom:12px;
+    cursor:pointer;
+}
+
+.menu.active{
+    background:linear-gradient(135deg,#005eff,#00a2ff);
 }
 
 .main{
@@ -81,6 +86,14 @@ body{
     font-size:34px;
     font-weight:bold;
     margin-top:10px;
+}
+
+.section{
+    display:none;
+}
+
+.section.active{
+    display:block;
 }
 
 .table-grid{
@@ -151,6 +164,86 @@ body{
     margin-top:8px;
 }
 
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr auto;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+input,button{
+    border-radius:10px;
+    border:1px solid rgba(90,170,255,.45);
+    background:#08162f;
+    color:white;
+    padding:12px;
+    font-size:15px;
+}
+
+button{
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-blue{
+    background:linear-gradient(135deg,#005eff,#00a2ff);
+}
+
+.btn-red{
+    background:linear-gradient(135deg,#7a001f,#d60045);
+}
+
+.btn-yellow{
+    background:linear-gradient(135deg,#8d6200,#d39b00);
+}
+
+.member-table{
+    width:100%;
+    border-collapse:collapse;
+    background:rgba(8,18,38,.88);
+    border-radius:16px;
+    overflow:hidden;
+}
+
+.member-table th,
+.member-table td{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    text-align:left;
+    font-size:14px;
+}
+
+.member-table th{
+    color:#9dccff;
+    background:rgba(255,255,255,.04);
+}
+
+.status-on{
+    color:#00d26a;
+    font-weight:bold;
+}
+
+.status-off{
+    color:#ff4c5f;
+    font-weight:bold;
+}
+
+.action-row{
+    display:flex;
+    gap:6px;
+}
+
+.action-row button{
+    padding:7px 10px;
+    font-size:13px;
+}
+
+.system-actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+}
+
 @media(max-width:900px){
     .sidebar{
         position:relative;
@@ -163,8 +256,18 @@ body{
     }
 
     .cards,
-    .table-grid{
+    .table-grid,
+    .form-grid,
+    .system-actions{
         grid-template-columns:1fr;
+    }
+
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .action-row{
+        flex-direction:column;
     }
 }
 </style>
@@ -174,16 +277,16 @@ body{
 
 <div class="sidebar">
     <div class="logo">AI 管理後台</div>
-    <div class="menu">全桌監控</div>
-    <div class="menu">AI 權重分析</div>
-    <div class="menu">會員管理</div>
-    <div class="menu">系統設定</div>
+    <div class="menu active" onclick="showSection('monitor', this)">全桌監控</div>
+    <div class="menu" onclick="showSection('members', this)">會員管理</div>
+    <div class="menu" onclick="showSection('ai', this)">AI 權重分析</div>
+    <div class="menu" onclick="showSection('system', this)">系統設定</div>
 </div>
 
 <div class="main">
 
     <div class="top">
-        <h1>全桌數據中心</h1>
+        <h1>管理員數據中心</h1>
         <a class="logout" href="/logout">登出</a>
     </div>
 
@@ -209,11 +312,64 @@ body{
         </div>
     </div>
 
-    <div id="tableGrid" class="table-grid"></div>
+    <div id="monitor" class="section active">
+        <h2>全桌監控</h2>
+        <div id="tableGrid" class="table-grid"></div>
+    </div>
+
+    <div id="members" class="section">
+        <h2>會員管理</h2>
+
+        <div class="form-grid">
+            <input id="newUsername" placeholder="會員帳號">
+            <input id="newPassword" placeholder="會員密碼">
+            <input id="newExpire" placeholder="到期日 例如 2026-12-31 23:59:59">
+            <button class="btn-blue" onclick="addMember()">新增會員</button>
+        </div>
+
+        <table class="member-table">
+            <thead>
+                <tr>
+                    <th>帳號</th>
+                    <th>密碼</th>
+                    <th>到期日</th>
+                    <th>狀態</th>
+                    <th>最後登入</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="memberList"></tbody>
+        </table>
+    </div>
+
+    <div id="ai" class="section">
+        <h2>AI 權重分析</h2>
+        <div id="aiGrid" class="table-grid"></div>
+    </div>
+
+    <div id="system" class="section">
+        <h2>系統設定</h2>
+
+        <div class="system-actions">
+            <button class="btn-yellow" onclick="loadAdminData()">重新整理資料</button>
+            <button class="btn-red" onclick="clearAllTables()">清除全部桌資料</button>
+            <button class="btn-blue" onclick="location.href='/'">前往會員頁</button>
+        </div>
+    </div>
 
 </div>
 
 <script>
+let adminData = null;
+
+function showSection(id, el){
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll(".menu").forEach(m=>m.classList.remove("active"));
+
+    document.getElementById(id).classList.add("active");
+    el.classList.add("active");
+}
+
 async function loadAdminData(){
     const res = await fetch("/api/admin-data");
     const data = await res.json();
@@ -223,32 +379,32 @@ async function loadAdminData(){
         return;
     }
 
+    adminData = data;
+
     document.getElementById("totalTables").textContent = data.totalTables;
     document.getElementById("totalRounds").textContent = data.totalRounds;
     document.getElementById("totalBets").textContent = data.totalBets;
 
+    renderTables(data.tables);
+    renderMembers(data.members);
+    renderAI(data.tables);
+}
+
+function renderTables(tables){
     const grid = document.getElementById("tableGrid");
     grid.innerHTML = "";
 
-    data.tables.forEach(t=>{
+    tables.forEach(t=>{
         const box = document.createElement("div");
         box.className = "table-box";
 
         let roadHtml = "";
-
         t.records.forEach(r=>{
             roadHtml += `<div class="cell ${r.result}">${r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和"}</div>`;
         });
 
-        let alertText = "-";
-        if(t.alerts && t.alerts.length){
-            alertText = t.alerts.join(" / ");
-        }
-
-        let streakText = "-";
-        if(t.streakResult){
-            streakText = `${t.streakResult === "B" ? "莊" : "閒"} ${t.streakCount}連`;
-        }
+        let alertText = t.alerts && t.alerts.length ? t.alerts.join(" / ") : "-";
+        let streakText = t.streakResult ? `${t.streakResult === "B" ? "莊" : "閒"} ${t.streakCount}連` : "-";
 
         box.innerHTML = `
             <div class="table-head">
@@ -270,10 +426,173 @@ async function loadAdminData(){
             <div class="road">${roadHtml}</div>
 
             <div class="alert">提醒：${alertText}</div>
+
+            <div style="margin-top:10px;">
+                <button class="btn-red" onclick="clearTable('${t.platform}','${t.table}')">
+                    清除此桌
+                </button>
+            </div>
         `;
 
         grid.appendChild(box);
     });
+}
+
+function renderMembers(members){
+    const tbody = document.getElementById("memberList");
+    tbody.innerHTML = "";
+
+    members.forEach(m=>{
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${m.username}</td>
+            <td>
+                <input id="pw_${m.id}" value="${m.password}">
+            </td>
+            <td>
+                <input id="ex_${m.id}" value="${m.expire}">
+            </td>
+            <td>
+                <span class="${m.enabled ? "status-on" : "status-off"}">
+                    ${m.enabled ? "啟用" : "停權"}
+                </span>
+            </td>
+            <td>${m.lastLogin || "-"}</td>
+            <td>
+                <div class="action-row">
+                    <button class="btn-blue" onclick="updateMember(${m.id})">儲存</button>
+                    <button class="btn-yellow" onclick="toggleMember(${m.id})">
+                        ${m.enabled ? "停權" : "啟用"}
+                    </button>
+                    <button class="btn-red" onclick="deleteMember(${m.id})">刪除</button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function renderAI(tables){
+    const grid = document.getElementById("aiGrid");
+    grid.innerHTML = "";
+
+    tables.forEach(t=>{
+        const box = document.createElement("div");
+        box.className = "table-box";
+
+        box.innerHTML = `
+            <div class="table-head">
+                <div>${t.platform} - ${t.table}</div>
+                <div>${t.suggest} / ${t.stableRate}%</div>
+            </div>
+
+            <div class="stats">
+                <div class="stat">莊權重<br>${t.bankerScore}</div>
+                <div class="stat">閒權重<br>${t.playerScore}</div>
+                <div class="stat">莊率<br>${t.bankerRate}%</div>
+                <div class="stat">閒率<br>${t.playerRate}%</div>
+            </div>
+
+            <div class="alert">
+                ${t.alerts && t.alerts.length ? t.alerts.join(" / ") : "無提醒"}
+            </div>
+        `;
+
+        grid.appendChild(box);
+    });
+}
+
+async function addMember(){
+    const username = document.getElementById("newUsername").value.trim();
+    const password = document.getElementById("newPassword").value.trim();
+    const expire = document.getElementById("newExpire").value.trim();
+
+    const res = await fetch("/api/admin/member/add", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,password,expire})
+    });
+
+    const data = await res.json();
+
+    if(!data.ok){
+        alert(data.msg || "新增失敗");
+        return;
+    }
+
+    document.getElementById("newUsername").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("newExpire").value = "";
+
+    loadAdminData();
+}
+
+async function updateMember(id){
+    const password = document.getElementById(`pw_${id}`).value.trim();
+    const expire = document.getElementById(`ex_${id}`).value.trim();
+
+    const res = await fetch("/api/admin/member/update", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id,password,expire})
+    });
+
+    const data = await res.json();
+
+    if(!data.ok){
+        alert(data.msg || "修改失敗");
+        return;
+    }
+
+    alert("已儲存");
+    loadAdminData();
+}
+
+async function toggleMember(id){
+    await fetch("/api/admin/member/toggle", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id})
+    });
+
+    loadAdminData();
+}
+
+async function deleteMember(id){
+    if(!confirm("確定刪除此會員？")) return;
+
+    await fetch("/api/admin/member/delete", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id})
+    });
+
+    loadAdminData();
+}
+
+async function clearTable(platform, table){
+    if(!confirm(`確定清除 ${platform}-${table}？`)) return;
+
+    await fetch("/api/admin/clear-table", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform,table})
+    });
+
+    loadAdminData();
+}
+
+async function clearAllTables(){
+    if(!confirm("確定清除全部桌資料？")) return;
+
+    await fetch("/api/admin/clear-all", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"}
+    });
+
+    loadAdminData();
 }
 
 loadAdminData();
