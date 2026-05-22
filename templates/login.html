@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>會員登入</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    height:100vh;
+    background:
+    radial-gradient(circle at top,#162b50,#050914 60%,#02040a);
+
+    color:white;
+    font-family:Arial,"Microsoft JhengHei",sans-serif;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.login-box{
+    width:360px;
+
+    background:rgba(8,18,38,.9);
+
+    border:1px solid rgba(90,170,255,.45);
+
+    border-radius:20px;
+
+    padding:28px;
+
+    box-shadow:
+        0 0 40px rgba(0,120,255,.28);
+}
+
+.logo{
+    text-align:center;
+    font-size:28px;
+    color:#9dccff;
+    margin-bottom:24px;
+    font-weight:bold;
+}
+
+input{
+    width:100%;
+
+    padding:14px;
+
+    border-radius:12px;
+
+    border:1px solid rgba(90,170,255,.4);
+
+    background:#08162f;
+
+    color:white;
+
+    font-size:16px;
+
+    margin-bottom:14px;
+}
+
+button{
+    width:100%;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:
+    linear-gradient(135deg,#005eff,#00a2ff);
+
+    color:white;
+
+    font-size:18px;
+
+    font-weight:bold;
+}
+
+.error{
+    color:#ff6288;
+    text-align:center;
+    margin-bottom:12px;
+}
+</style>
+</head>
+
+<body>
+
+<form class="login-box" method="POST">
+
+    <div class="logo">
+        百家樂 AI 系統
+    </div>
+
+    {% if error %}
+    <div class="error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <input
+        name="username"
+        placeholder="會員帳號"
+        required
+    >
+
+    <input
+        type="password"
+        name="password"
+        placeholder="會員密碼"
+        required
+    >
+
+    <button type="submit">
+        會員登入
+    </button>
+
+</form>
+
+</body>
+</html>
