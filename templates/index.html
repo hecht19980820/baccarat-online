@@ -285,11 +285,27 @@ select,button{
 }
 
 /* 手機版 */
-@media(max-width:760px){
-    .container{
-        padding:8px;
-        max-width:100%;
-    }
+.road{
+    display:grid;
+
+    grid-template-rows:repeat(6,34px);
+
+    grid-auto-flow:column;
+
+    grid-auto-columns:34px;
+
+    gap:4px;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    padding:6px;
+
+    border-radius:12px;
+
+    max-width:100%;
+}
 
     .topbar{
         grid-template-columns:1fr 1fr 1fr;
