@@ -27,14 +27,21 @@ def calc_cards(cards):
         if len(nums) < 4 or len(nums) > 6:
             return None
 
-        player_cards = []
-        banker_cards = []
+        # 新規則：
+        # 前面一半是閒，後面一半是莊
+        # 4張：閒1 閒2 莊1 莊2
+        # 5張：閒1 閒2 閒3 莊1 莊2
+        # 6張：閒1 閒2 閒3 莊1 莊2 莊3
 
-        for i, n in enumerate(nums):
-            if i % 2 == 0:
-                player_cards.append(n)
-            else:
-                banker_cards.append(n)
+        if len(nums) == 4:
+            player_cards = nums[0:2]
+            banker_cards = nums[2:4]
+        elif len(nums) == 5:
+            player_cards = nums[0:3]
+            banker_cards = nums[3:5]
+        else:
+            player_cards = nums[0:3]
+            banker_cards = nums[3:6]
 
         player_point = sum(player_cards) % 10
         banker_point = sum(banker_cards) % 10
