@@ -26,6 +26,7 @@ def calc_cards(cards):
         if len(nums) < 4 or len(nums) > 6:
             return None
 
+        # 固定順序：閒1、莊1、閒2、莊2、閒3、莊3
         player_cards = []
         banker_cards = []
 
@@ -85,7 +86,6 @@ def road_stats(data):
 
     for i, r in enumerate(recent):
         weight = i + 1
-
         if r == "B":
             banker_score += weight * 0.35
         elif r == "P":
@@ -96,7 +96,6 @@ def road_stats(data):
 
     for item in reversed(bp):
         r = item["result"]
-
         if streak_result is None:
             streak_result = r
             streak_count = 1
@@ -109,6 +108,27 @@ def road_stats(data):
         banker_score += min(streak_count * 3, 18)
     elif streak_result == "P":
         player_score += min(streak_count * 3, 18)
+
+    recent_cards = valid[-20:]
+    banker_pair_count = len([x for x in recent_cards if x.get("bankerPair")])
+    player_pair_count = len([x for x in recent_cards if x.get("playerPair")])
+    lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
+    tie_count = len([x for x in recent_cards if x.get("tie")])
+
+    if banker_pair_count >= 3:
+        banker_score += 3
+        alerts.append("莊對偏熱")
+
+    if player_pair_count >= 3:
+        player_score += 3
+        alerts.append("閒對偏熱")
+
+    if lucky6_count >= 2:
+        banker_score += 4
+        alerts.append("幸運6偏熱")
+
+    if tie_count >= 2:
+        alerts.append("和局偏熱")
 
     diff = abs(banker_score - player_score)
 
@@ -137,7 +157,7 @@ def road_stats(data):
         "streakCount": streak_count,
         "suggest": suggest,
         "stableRate": stable_rate,
-        "alerts": alerts,
+        "alerts": alerts[:3],
         "bankerScore": round(banker_score, 1),
         "playerScore": round(player_score, 1)
     }
@@ -202,22 +222,13 @@ def get_data():
 @app.route("/api/admin-data")
 def admin_data():
     if not session.get("admin"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     all_tables = []
-
     total_rounds = 0
     total_bets = 0
-    total_banker = 0
-    total_player = 0
-    total_tie = 0
 
-    platforms = {
-        "DG": DG_TABLES,
-        "MT": MT_TABLES
-    }
-
-    for platform, tables in platforms.items():
+    for platform, tables in {"DG": DG_TABLES, "MT": MT_TABLES}.items():
         for table in tables:
             key = table_key(platform, table)
             data = records[key]
@@ -225,9 +236,6 @@ def admin_data():
 
             total_rounds += len(data)
             total_bets += stats["betCount"]
-            total_banker += stats["bankerRate"]
-            total_player += stats["playerRate"]
-            total_tie += stats["tieCount"]
 
             all_tables.append({
                 "platform": platform,
@@ -244,7 +252,7 @@ def admin_data():
                 "bankerScore": stats["bankerScore"],
                 "playerScore": stats["playerScore"],
                 "alerts": stats["alerts"],
-                "records": data[-30:]
+                "records": data[-36:]
             })
 
     return jsonify({
@@ -252,6 +260,7 @@ def admin_data():
         "memberExpireTime": MEMBER_EXPIRE_TIME,
         "totalRounds": total_rounds,
         "totalBets": total_bets,
+        "totalTables": len(all_tables),
         "tables": all_tables
     })
 
@@ -259,7 +268,6 @@ def admin_data():
 @app.route("/api/manual", methods=["POST"])
 def manual_add():
     body = request.json
-
     platform = body.get("platform")
     table = body.get("table")
     result = body.get("result")
@@ -274,6 +282,9 @@ def manual_add():
         "source": "manual",
         "countBet": False,
         "aiLearn": True,
+        "playerPair": False,
+        "bankerPair": False,
+        "lucky6": False,
         "tie": result == "T"
     })
 
