@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>百家樂 AI 分析系統</title>
+<title>百家樂 AI 系統</title>
 
 <style>
 
@@ -28,7 +28,7 @@ body{
 
 .topbar{
     display:grid;
-    grid-template-columns:170px 170px 170px 1fr;
+    grid-template-columns:160px 160px 160px 1fr;
     gap:12px;
     align-items:center;
     margin-bottom:12px;
@@ -55,6 +55,7 @@ select,button{
 .card{
     background:rgba(8,18,38,.82);
     border:1px solid rgba(80,160,255,.48);
+
     box-shadow:
         0 0 18px rgba(0,120,255,.18),
         inset 0 0 12px rgba(255,255,255,.025);
@@ -66,28 +67,28 @@ select,button{
 
 .grid-top{
     display:grid;
-    grid-template-columns:290px 1fr 280px;
+    grid-template-columns:280px 1fr 260px;
     gap:12px;
 }
 
 .grid-mid{
     display:grid;
-    grid-template-columns:1fr 360px;
+    grid-template-columns:1fr 320px;
     gap:12px;
 }
 
 .title{
     color:#9dccff;
-    font-size:21px;
+    font-size:20px;
     font-weight:bold;
     margin-bottom:10px;
 }
 
 .ai-result{
-    font-size:86px;
+    font-size:78px;
     font-weight:bold;
     text-align:center;
-    margin:15px 0 8px;
+    margin:12px 0 8px;
     text-shadow:0 0 18px currentColor;
 }
 
@@ -99,23 +100,15 @@ select,button{
     color:#2f8bff;
 }
 
-.tie-text{
-    color:#00d26a;
-}
-
 .wait-text{
     color:#ff5b8d;
 }
 
 .rate{
     text-align:center;
-    font-size:48px;
+    font-size:42px;
     font-weight:bold;
     color:#ff9ec0;
-}
-
-.center{
-    text-align:center;
 }
 
 .sub{
@@ -123,16 +116,19 @@ select,button{
     font-size:14px;
 }
 
+.center{
+    text-align:center;
+}
+
 .road{
+
     display:grid;
 
-    /* 一欄固定6顆 */
+    /* 一欄6顆 */
     grid-template-rows:repeat(6,43px);
 
-    /* 往右延伸 */
     grid-auto-flow:column;
 
-    /* 每欄寬度 */
     grid-auto-columns:43px;
 
     gap:5px;
@@ -145,10 +141,6 @@ select,button{
     border-radius:14px;
 
     background:rgba(255,255,255,.025);
-
-    align-items:start;
-
-    max-width:100%;
 }
 
 .cell{
@@ -162,10 +154,7 @@ select,button{
     justify-content:center;
 
     font-weight:bold;
-
     font-size:18px;
-
-    flex-shrink:0;
 }
 
 .B{
@@ -190,16 +179,16 @@ select,button{
     border:1px solid rgba(255,255,255,.08);
     border-radius:12px;
     padding:14px;
-    margin-bottom:12px;
+    margin-bottom:10px;
     background:rgba(255,255,255,.025);
     color:#ffd36a;
-    font-size:18px;
+    font-size:16px;
 }
 
 .input-box{
     display:grid;
-    grid-template-columns:1fr 320px;
-    gap:16px;
+    grid-template-columns:1fr 300px;
+    gap:14px;
 }
 
 .hint{
@@ -210,27 +199,11 @@ select,button{
     line-height:1.8;
 }
 
-.blue{
-    color:#2f8bff;
-    font-weight:bold;
-}
-
-.red{
-    color:#ff3151;
-    font-weight:bold;
-}
-
-.orange{
-    color:#ff8a00;
-    font-weight:bold;
-}
-
 .card-preview{
     display:flex;
     gap:8px;
     flex-wrap:wrap;
-    min-height:54px;
-    margin:10px 0;
+    margin-top:12px;
 }
 
 .preview-wrap{
@@ -238,22 +211,24 @@ select,button{
 }
 
 .preview-number{
-    width:48px;
-    height:48px;
+    width:46px;
+    height:46px;
+
     border-radius:8px;
+
     border:1px solid rgba(120,180,255,.48);
 
     display:flex;
     align-items:center;
     justify-content:center;
 
-    font-size:24px;
+    font-size:22px;
     font-weight:bold;
 }
 
 .preview-label{
-    font-size:12px;
     margin-top:4px;
+    font-size:12px;
     color:#91a8d7;
 }
 
@@ -272,8 +247,8 @@ select,button{
 }
 
 .keypad button{
-    height:62px;
-    font-size:26px;
+    height:58px;
+    font-size:24px;
 }
 
 .banker{
@@ -298,37 +273,36 @@ select,button{
 
 .manual-buttons{
     display:grid;
-    gap:16px;
-    margin-top:30px;
+    gap:14px;
+    margin-top:25px;
 }
 
 .manual-buttons button{
-    height:72px;
-    font-size:30px;
+    height:66px;
+    font-size:28px;
 }
 
 .stats-row{
     display:grid;
     grid-template-columns:repeat(6,1fr);
     gap:12px;
-    margin-bottom:12px;
 }
 
 .stat-card{
     background:rgba(8,18,38,.82);
     border:1px solid rgba(80,160,255,.48);
     border-radius:14px;
-    padding:16px;
+    padding:14px;
 }
 
 .stat-title{
     color:#bceaff;
-    font-size:18px;
+    font-size:16px;
 }
 
 .stat-value{
     margin-top:10px;
-    font-size:34px;
+    font-size:30px;
     font-weight:bold;
 }
 
@@ -344,36 +318,59 @@ select,button{
     color:#00d26a;
 }
 
-.white-text{
-    color:#fff;
-}
-
 .bottom-buttons{
     display:grid;
     grid-template-columns:1fr 1fr;
     gap:12px;
-    margin-bottom:12px;
+    margin-top:12px;
 }
 
 .bottom-buttons button{
-    height:64px;
-    font-size:24px;
+    height:60px;
+    font-size:22px;
 }
 
 .footer{
     opacity:.65;
     font-size:14px;
-
     display:flex;
     justify-content:space-between;
-
     padding:14px;
-
-    border:1px solid rgba(80,160,255,.35);
-    border-radius:12px;
+    margin-top:12px;
 }
 
-/* 手機版 */
+/* 手機強制版 */
+
+body.force-mobile .grid-top,
+body.force-mobile .grid-mid,
+body.force-mobile .input-box{
+    grid-template-columns:1fr !important;
+}
+
+body.force-mobile .stats-row{
+    grid-template-columns:repeat(3,1fr) !important;
+}
+
+body.force-mobile .road{
+    grid-template-rows:repeat(6,34px) !important;
+    grid-auto-columns:34px !important;
+}
+
+body.force-mobile .cell{
+    width:32px !important;
+    height:32px !important;
+    font-size:14px !important;
+}
+
+body.force-mobile .ai-result{
+    font-size:52px !important;
+}
+
+body.force-mobile .manual-buttons{
+    grid-template-columns:repeat(3,1fr);
+}
+
+/* 手機自適應 */
 
 @media(max-width:760px){
 
@@ -383,7 +380,6 @@ select,button{
 
     .container{
         padding:8px;
-        max-width:100%;
     }
 
     .topbar{
@@ -391,107 +387,10 @@ select,button{
         gap:8px;
     }
 
-    select{
-        height:44px;
-        font-size:15px;
-        padding:8px;
-    }
-
-    .expire{
-        font-size:15px;
-        line-height:1.5;
-    }
-
-    .grid-top{
-        grid-template-columns:1fr;
-        gap:8px;
-    }
-
-    .grid-mid{
-        grid-template-columns:1fr;
-        gap:8px;
-    }
-
-    .card{
-        padding:12px;
-        border-radius:14px;
-    }
-
-    .title{
-        font-size:18px;
-        margin-bottom:8px;
-    }
-
-    .ai-result{
-        font-size:52px;
-        margin:6px 0;
-    }
-
-    .rate{
-        font-size:32px;
-    }
-
-    .road{
-        display:grid;
-
-        grid-template-rows:repeat(6,34px);
-
-        grid-auto-flow:column;
-
-        grid-auto-columns:34px;
-
-        gap:4px;
-
-        overflow-x:auto;
-        overflow-y:hidden;
-
-        padding:6px;
-
-        border-radius:12px;
-
-        max-width:100%;
-    }
-
-    .cell{
-        width:32px;
-        height:32px;
-
-        font-size:14px;
-
-        border-width:2px;
-
-        flex-shrink:0;
-    }
-
+    .grid-top,
+    .grid-mid,
     .input-box{
         grid-template-columns:1fr;
-        gap:10px;
-    }
-
-    .hint{
-        display:none;
-    }
-
-    .preview-number{
-        width:42px;
-        height:42px;
-        font-size:22px;
-    }
-
-    .keypad button{
-        height:54px;
-        font-size:22px;
-    }
-
-    .manual-buttons{
-        grid-template-columns:repeat(3,1fr);
-        margin-top:10px;
-        gap:10px;
-    }
-
-    .manual-buttons button{
-        height:56px;
-        font-size:22px;
     }
 
     .stats-row{
@@ -499,8 +398,45 @@ select,button{
         gap:8px;
     }
 
-    .stat-card{
+    .card{
         padding:10px;
+    }
+
+    .title{
+        font-size:18px;
+    }
+
+    .ai-result{
+        font-size:54px;
+    }
+
+    .rate{
+        font-size:32px;
+    }
+
+    .road{
+        grid-template-rows:repeat(6,34px);
+        grid-auto-columns:34px;
+    }
+
+    .cell{
+        width:32px;
+        height:32px;
+        font-size:14px;
+    }
+
+    .keypad button{
+        height:52px;
+        font-size:22px;
+    }
+
+    .manual-buttons{
+        grid-template-columns:repeat(3,1fr);
+    }
+
+    .manual-buttons button{
+        height:54px;
+        font-size:22px;
     }
 
     .stat-title{
@@ -509,11 +445,6 @@ select,button{
 
     .stat-value{
         font-size:22px;
-    }
-
-    .bottom-buttons button{
-        height:56px;
-        font-size:18px;
     }
 
 }
@@ -534,7 +465,7 @@ select,button{
 
         <select id="table" onchange="loadData()"></select>
 
-        <select id="viewMode">
+        <select id="viewMode" onchange="changeViewMode()">
             <option value="auto">自動</option>
             <option value="mobile">手機版</option>
             <option value="desktop">電腦版</option>
@@ -544,9 +475,7 @@ select,button{
 
     <div class="expire">
         會員到期時間：
-        <span id="memberExpire">
-            2025-06-30 23:59:59
-        </span>
+        <span id="memberExpire">2025-06-30 23:59:59</span>
     </div>
 
     <div class="grid-top">
@@ -598,7 +527,7 @@ select,button{
         <div class="card">
 
             <div class="title">
-                🎴 牌型輸入（手動添加）
+                🎴 牌型輸入
             </div>
 
             <div class="input-box">
@@ -609,17 +538,7 @@ select,button{
 
                         固定輸入順序：<br>
 
-                        <span class="blue">閒1</span>
-                        →
-                        <span class="red">莊1</span>
-                        →
-                        <span class="blue">閒2</span>
-                        →
-                        <span class="red">莊2</span>
-                        →
-                        <span class="blue">閒3</span>
-                        →
-                        <span class="red">莊3</span>
+                        閒1 → 莊1 → 閒2 → 莊2 → 閒3 → 莊3
 
                     </div>
 
@@ -657,10 +576,6 @@ select,button{
                             送出
                         </button>
 
-                    </div>
-
-                    <div class="center sub" style="margin-top:12px;">
-                        最少 4 張，最多 6 張
                     </div>
 
                 </div>
@@ -719,12 +634,12 @@ select,button{
 
         <div class="stat-card">
             <div class="stat-title">下注次數</div>
-            <div id="betCount" class="stat-value white-text">0</div>
+            <div id="betCount" class="stat-value">0</div>
         </div>
 
         <div class="stat-card">
             <div class="stat-title">分析量</div>
-            <div id="analysisCount" class="stat-value white-text">0</div>
+            <div id="analysisCount" class="stat-value">0</div>
         </div>
 
     </div>
@@ -744,11 +659,11 @@ select,button{
     <div class="footer">
 
         <div>
-            ♠ 百家樂 AI 輔助分析系統
+            ♠ 百家樂 AI 系統
         </div>
 
         <div>
-            Ver 2.2.0
+            Ver 2.3.0
         </div>
 
     </div>
@@ -758,6 +673,20 @@ select,button{
 <script>
 
 let cards = [];
+
+function changeViewMode(){
+
+    const mode =
+        document.getElementById("viewMode").value;
+
+    document.body.classList.remove("force-mobile");
+    document.body.classList.remove("force-desktop");
+
+    if(mode === "mobile"){
+        document.body.classList.add("force-mobile");
+    }
+
+}
 
 async function loadTables(){
 
@@ -1041,13 +970,6 @@ async function submitCards(){
         return;
     }
 
-    if(cards.length > 6){
-
-        alert("最多6張");
-
-        return;
-    }
-
     const platform =
         document.getElementById("platform").value;
 
@@ -1142,6 +1064,7 @@ async function clearTable(){
     loadData();
 }
 
+changeViewMode();
 loadTables();
 
 </script>
