@@ -177,22 +177,28 @@ def cards_add():
     table = body.get("table")
     cards = body.get("cards", [])
 
-    result = calc_cards(cards)
+    calc = calc_cards(cards)
 
-    if result is None:
+    if calc is None:
         return jsonify({"ok": False, "msg": "cards error"})
 
     key = table_key(platform, table)
 
     records[key].append({
-        "result": result,
+        "result": calc["result"],
         "cards": cards,
+        "playerPoint": calc["playerPoint"],
+        "bankerPoint": calc["bankerPoint"],
+        "playerPair": calc["playerPair"],
+        "bankerPair": calc["bankerPair"],
+        "lucky6": calc["lucky6"],
+        "tie": calc["tie"],
         "source": "card_button",
         "countBet": True,
         "aiLearn": True
     })
 
-    return jsonify({"ok": True, "result": result})
+    return jsonify({"ok": True, **calc})
 
 @app.route("/api/undo", methods=["POST"])
 def undo():
