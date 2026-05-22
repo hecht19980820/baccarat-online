@@ -3,16 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 管理員後台</title>
+<title>電影級 AI 控制中心</title>
 
 <style>
 *{box-sizing:border-box}
 
 body{
     margin:0;
-    background:#050914;
+    background:
+    radial-gradient(circle at top,#10234d 0%,#050914 48%,#02040a 100%);
     color:white;
     font-family:Arial,"Microsoft JhengHei",sans-serif;
+    overflow-x:hidden;
 }
 
 .sidebar{
@@ -20,34 +22,65 @@ body{
     left:0;
     top:0;
     bottom:0;
-    width:230px;
-    background:#071225;
-    border-right:1px solid rgba(90,170,255,.35);
+    width:240px;
+
+    background:
+    linear-gradient(
+        180deg,
+        rgba(6,16,34,.98),
+        rgba(4,8,18,.98)
+    );
+
+    border-right:
+    1px solid rgba(90,170,255,.28);
+
     padding:20px;
+
+    z-index:50;
 }
 
 .logo{
-    font-size:22px;
+    font-size:24px;
     color:#9dccff;
     font-weight:bold;
     margin-bottom:30px;
+    text-shadow:0 0 12px rgba(80,180,255,.55);
 }
 
 .menu{
     padding:14px;
-    border-radius:12px;
-    background:rgba(255,255,255,.04);
+    border-radius:14px;
     margin-bottom:12px;
     cursor:pointer;
+    transition:.25s;
+
+    background:
+    rgba(255,255,255,.03);
+
+    border:
+    1px solid rgba(255,255,255,.04);
+}
+
+.menu:hover{
+    transform:translateY(-2px);
+    box-shadow:0 0 14px rgba(0,140,255,.25);
 }
 
 .menu.active{
-    background:linear-gradient(135deg,#005eff,#00a2ff);
+    background:
+    linear-gradient(
+        135deg,
+        #005eff,
+        #00a2ff
+    );
+
+    box-shadow:
+    0 0 18px rgba(0,120,255,.45);
 }
 
 .main{
-    margin-left:230px;
-    padding:20px;
+    margin-left:240px;
+    padding:22px;
 }
 
 .top{
@@ -60,33 +93,47 @@ body{
 .logout{
     color:#ffd86b;
     text-decoration:none;
+    font-weight:bold;
 }
 
 .cards{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:16px;
-    margin-bottom:20px;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+    margin-bottom:22px;
 }
 
 .card{
-    background:rgba(8,18,38,.88);
-    border:1px solid rgba(90,170,255,.42);
-    border-radius:16px;
+    background:
+    rgba(8,18,38,.86);
+
+    border:
+    1px solid rgba(90,170,255,.28);
+
+    border-radius:18px;
+
     padding:18px;
-    box-shadow:0 0 18px rgba(0,120,255,.14);
+
+    box-shadow:
+    0 0 24px rgba(0,120,255,.12),
+    inset 0 0 12px rgba(255,255,255,.015);
 }
 
 .card-title{
     color:#9dccff;
-    font-size:15px;
+    font-size:14px;
 }
 
 .card-value{
     font-size:34px;
-    font-weight:bold;
     margin-top:10px;
+    font-weight:bold;
 }
+
+.green{color:#00d26a}
+.red{color:#ff4c6a}
+.blue{color:#2f8bff}
+.yellow{color:#ffd86b}
 
 .section{
     display:none;
@@ -96,155 +143,192 @@ body{
     display:block;
 }
 
-.table-grid{
+.grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
     gap:16px;
 }
 
-.table-box{
-    background:rgba(8,18,38,.88);
-    border:1px solid rgba(90,170,255,.42);
-    border-radius:16px;
+.panel{
+    background:
+    rgba(8,18,38,.88);
+
+    border:
+    1px solid rgba(90,170,255,.25);
+
+    border-radius:18px;
+
     padding:16px;
 }
 
-.table-head{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:12px;
+.panel-title{
     color:#9dccff;
+    font-size:20px;
+    margin-bottom:14px;
     font-weight:bold;
+}
+
+.road{
+    display:grid;
+    grid-template-rows:repeat(6,22px);
+    grid-auto-flow:column;
+    grid-auto-columns:22px;
+    gap:3px;
+    overflow-x:auto;
+    padding:8px;
+}
+
+.cell{
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:9px;
+    font-weight:bold;
+}
+
+.B{
+    border:1px solid #ff3151;
+    color:#ff3151;
+    box-shadow:0 0 8px rgba(255,0,55,.35);
+}
+
+.P{
+    border:1px solid #2f8bff;
+    color:#2f8bff;
+    box-shadow:0 0 8px rgba(0,120,255,.35);
+}
+
+.T{
+    border:1px solid #00d26a;
+    color:#00d26a;
 }
 
 .stats{
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:8px;
-    margin-bottom:12px;
+    margin-bottom:10px;
 }
 
 .stat{
-    background:rgba(255,255,255,.04);
-    padding:10px;
+    background:
+    rgba(255,255,255,.03);
+
     border-radius:10px;
+
+    padding:10px;
+
     font-size:13px;
 }
-
-.road{
-    display:grid;
-    grid-template-rows:repeat(6,24px);
-    grid-auto-flow:column;
-    grid-auto-columns:24px;
-    gap:3px;
-    overflow-x:auto;
-    padding:6px;
-    background:rgba(255,255,255,.03);
-    border-radius:10px;
-}
-
-.cell{
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:10px;
-    font-weight:bold;
-}
-
-.B{border:1px solid #ff3151;color:#ff3151}
-.P{border:1px solid #2f8bff;color:#2f8bff}
-.T{border:1px solid #00d26a;color:#00d26a}
 
 .alert{
+    margin-top:10px;
     color:#ffd86b;
     font-size:13px;
-    margin-top:8px;
 }
 
-.form-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr auto;
-    gap:10px;
-    margin-bottom:18px;
-}
-
-input,button{
-    border-radius:10px;
-    border:1px solid rgba(90,170,255,.45);
-    background:#08162f;
-    color:white;
-    padding:12px;
-    font-size:15px;
-}
-
-button{
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.btn-blue{
-    background:linear-gradient(135deg,#005eff,#00a2ff);
-}
-
-.btn-red{
-    background:linear-gradient(135deg,#7a001f,#d60045);
-}
-
-.btn-yellow{
-    background:linear-gradient(135deg,#8d6200,#d39b00);
-}
-
-.member-table{
+.table{
     width:100%;
     border-collapse:collapse;
-    background:rgba(8,18,38,.88);
-    border-radius:16px;
-    overflow:hidden;
 }
 
-.member-table th,
-.member-table td{
+.table th,
+.table td{
     padding:12px;
-    border-bottom:1px solid rgba(255,255,255,.08);
+    border-bottom:
+    1px solid rgba(255,255,255,.06);
+
     text-align:left;
     font-size:14px;
 }
 
-.member-table th{
+.table th{
     color:#9dccff;
-    background:rgba(255,255,255,.04);
 }
 
-.status-on{
-    color:#00d26a;
-    font-weight:bold;
+.live{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#00ff88;
+    box-shadow:0 0 10px #00ff88;
+    display:inline-block;
 }
 
-.status-off{
-    color:#ff4c5f;
-    font-weight:bold;
+.heat{
+    height:10px;
+    border-radius:8px;
+    overflow:hidden;
+    background:rgba(255,255,255,.05);
+    margin-top:8px;
 }
 
-.action-row{
+.heat-inner{
+    height:100%;
+    border-radius:8px;
+    background:
+    linear-gradient(
+        90deg,
+        #005eff,
+        #00ffb7,
+        #ffd000,
+        #ff3151
+    );
+}
+
+.ai-rank{
     display:flex;
-    gap:6px;
+    justify-content:space-between;
+    padding:10px;
+    border-radius:12px;
+    margin-bottom:10px;
+
+    background:
+    rgba(255,255,255,.03);
 }
 
-.action-row button{
-    padding:7px 10px;
-    font-size:13px;
+.chart{
+    height:180px;
+    border-radius:16px;
+
+    background:
+    linear-gradient(
+        180deg,
+        rgba(0,140,255,.08),
+        rgba(255,255,255,.01)
+    );
+
+    position:relative;
+    overflow:hidden;
 }
 
-.system-actions{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:16px;
+.wave{
+    position:absolute;
+    width:200%;
+    height:200%;
+    left:-50%;
+    top:-50%;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(0,160,255,.28),
+        transparent 60%
+    );
+
+    animation:wave 5s linear infinite;
 }
 
-@media(max-width:900px){
+@keyframes wave{
+    from{transform:rotate(0deg)}
+    to{transform:rotate(360deg)}
+}
+
+@media(max-width:1000px){
+
     .sidebar{
         position:relative;
         width:100%;
@@ -256,18 +340,12 @@ button{
     }
 
     .cards,
-    .table-grid,
-    .form-grid,
-    .system-actions{
+    .grid{
         grid-template-columns:1fr;
     }
 
     .stats{
         grid-template-columns:repeat(2,1fr);
-    }
-
-    .action-row{
-        flex-direction:column;
     }
 }
 </style>
@@ -276,227 +354,382 @@ button{
 <body>
 
 <div class="sidebar">
-    <div class="logo">AI 管理後台</div>
-    <div class="menu active" onclick="showSection('monitor', this)">全桌監控</div>
-    <div class="menu" onclick="showSection('members', this)">會員管理</div>
-    <div class="menu" onclick="showSection('ai', this)">AI 權重分析</div>
-    <div class="menu" onclick="showSection('system', this)">系統設定</div>
+
+    <div class="logo">
+        AI 控制中心
+    </div>
+
+    <div class="menu active" onclick="showSection('dashboard',this)">
+        即時總覽
+    </div>
+
+    <div class="menu" onclick="showSection('online',this)">
+        在線會員
+    </div>
+
+    <div class="menu" onclick="showSection('history',this)">
+        AI 歷史分析
+    </div>
+
+    <div class="menu" onclick="showSection('learning',this)">
+        AI 即時學習
+    </div>
+
 </div>
 
 <div class="main">
 
     <div class="top">
-        <h1>管理員數據中心</h1>
-        <a class="logout" href="/logout">登出</a>
+        <h1>電影級 AI 百家樂控制中心</h1>
+
+        <a class="logout" href="/logout">
+            登出
+        </a>
     </div>
 
     <div class="cards">
-        <div class="card">
-            <div class="card-title">總桌數</div>
-            <div id="totalTables" class="card-value">0</div>
-        </div>
 
         <div class="card">
-            <div class="card-title">總局數</div>
-            <div id="totalRounds" class="card-value">0</div>
+            <div class="card-title">總在線會員</div>
+            <div id="onlineCount" class="card-value green">0</div>
         </div>
 
         <div class="card">
-            <div class="card-title">總下注次數</div>
-            <div id="totalBets" class="card-value">0</div>
+            <div class="card-title">目前 AI 偏向</div>
+            <div id="globalBias" class="card-value red">莊</div>
         </div>
 
         <div class="card">
-            <div class="card-title">系統狀態</div>
-            <div class="card-value" style="color:#00d26a;">運行中</div>
-        </div>
-    </div>
-
-    <div id="monitor" class="section active">
-        <h2>全桌監控</h2>
-        <div id="tableGrid" class="table-grid"></div>
-    </div>
-
-    <div id="members" class="section">
-        <h2>會員管理</h2>
-
-        <div class="form-grid">
-            <input id="newUsername" placeholder="會員帳號">
-            <input id="newPassword" placeholder="會員密碼">
-            <input id="newExpire" placeholder="到期日 例如 2026-12-31 23:59:59">
-            <button class="btn-blue" onclick="addMember()">新增會員</button>
+            <div class="card-title">最穩桌</div>
+            <div id="bestTable" class="card-value blue">-</div>
         </div>
 
-        <table class="member-table">
-            <thead>
-                <tr>
-                    <th>帳號</th>
-                    <th>密碼</th>
-                    <th>到期日</th>
-                    <th>狀態</th>
-                    <th>最後登入</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="memberList"></tbody>
-        </table>
-    </div>
-
-    <div id="ai" class="section">
-        <h2>AI 權重分析</h2>
-        <div id="aiGrid" class="table-grid"></div>
-    </div>
-
-    <div id="system" class="section">
-        <h2>系統設定</h2>
-
-        <div class="system-actions">
-            <button class="btn-yellow" onclick="loadAdminData()">重新整理資料</button>
-            <button class="btn-red" onclick="clearAllTables()">清除全部桌資料</button>
-            <button class="btn-blue" onclick="location.href='/'">前往會員頁</button>
+        <div class="card">
+            <div class="card-title">熱桌</div>
+            <div id="hotTable" class="card-value yellow">-</div>
         </div>
+
+        <div class="card">
+            <div class="card-title">AI 今日準確率</div>
+            <div id="todayAcc" class="card-value green">91%</div>
+        </div>
+
+    </div>
+
+    <!-- 即時總覽 -->
+    <div id="dashboard" class="section active">
+
+        <div id="tableGrid" class="grid"></div>
+
+    </div>
+
+    <!-- 在線會員 -->
+    <div id="online" class="section">
+
+        <div class="panel">
+
+            <div class="panel-title">
+                即時在線會員
+            </div>
+
+            <table class="table">
+
+                <thead>
+                    <tr>
+                        <th>狀態</th>
+                        <th>會員</th>
+                        <th>所在桌</th>
+                        <th>最後操作</th>
+                        <th>IP</th>
+                        <th>裝置</th>
+                    </tr>
+                </thead>
+
+                <tbody id="onlineBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <!-- AI歷史 -->
+    <div id="history" class="section">
+
+        <div class="grid">
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 歷史勝率
+                </div>
+
+                <div class="ai-rank">
+                    <span>今日</span>
+                    <span class="green">91%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>昨日</span>
+                    <span class="blue">88%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>近7天</span>
+                    <span class="yellow">86%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>最準桌</span>
+                    <span class="green">DG-RB02</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>最差桌</span>
+                    <span class="red">MT-03A</span>
+                </div>
+
+            </div>
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 波動圖
+                </div>
+
+                <div class="chart">
+                    <div class="wave"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- AI學習 -->
+    <div id="learning" class="section">
+
+        <div class="grid">
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 即時學習中心
+                </div>
+
+                <div class="ai-rank">
+                    <span>目前偏莊</span>
+                    <span class="red">73%</span>
+                </div>
+
+                <div class="heat">
+                    <div class="heat-inner" style="width:73%"></div>
+                </div>
+
+                <br>
+
+                <div class="ai-rank">
+                    <span>目前偏閒</span>
+                    <span class="blue">27%</span>
+                </div>
+
+                <div class="heat">
+                    <div class="heat-inner" style="width:27%"></div>
+                </div>
+
+            </div>
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 勝率排行
+                </div>
+
+                <div class="ai-rank">
+                    <span>1. DG-RB02</span>
+                    <span class="green">93%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>2. DG-RB05</span>
+                    <span class="green">91%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>3. MT-01</span>
+                    <span class="yellow">88%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>4. MT-03A</span>
+                    <span class="red">61%</span>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
 </div>
 
 <script>
-let adminData = null;
 
-function showSection(id, el){
-    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
-    document.querySelectorAll(".menu").forEach(m=>m.classList.remove("active"));
+function showSection(id,el){
 
-    document.getElementById(id).classList.add("active");
+    document.querySelectorAll(".section")
+    .forEach(s=>s.classList.remove("active"));
+
+    document.querySelectorAll(".menu")
+    .forEach(m=>m.classList.remove("active"));
+
+    document.getElementById(id)
+    .classList.add("active");
+
     el.classList.add("active");
 }
 
 async function loadAdminData(){
+
     const res = await fetch("/api/admin-data");
     const data = await res.json();
 
     if(!data.ok){
-        location.href = "/admin-login";
+        location.href="/admin-login";
         return;
     }
 
-    adminData = data;
-
-    document.getElementById("totalTables").textContent = data.totalTables;
-    document.getElementById("totalRounds").textContent = data.totalRounds;
-    document.getElementById("totalBets").textContent = data.totalBets;
-
     renderTables(data.tables);
-    renderMembers(data.members);
-    renderAI(data.tables);
+
+    document.getElementById("onlineCount")
+    .textContent = data.members.length;
+
+    if(data.tables.length){
+
+        const best = [...data.tables]
+        .sort((a,b)=>b.stableRate-a.stableRate)[0];
+
+        document.getElementById("bestTable")
+        .textContent = `${best.platform}-${best.table}`;
+
+        const hot = [...data.tables]
+        .sort((a,b)=>b.rounds-a.rounds)[0];
+
+        document.getElementById("hotTable")
+        .textContent = `${hot.platform}-${hot.table}`;
+
+        let bankerBias = 0;
+        let playerBias = 0;
+
+        data.tables.forEach(t=>{
+            bankerBias += t.bankerScore;
+            playerBias += t.playerScore;
+        });
+
+        document.getElementById("globalBias")
+        .textContent =
+            bankerBias > playerBias
+            ? "莊"
+            : "閒";
+    }
+
+    renderOnline(data.members);
+}
+
+function renderOnline(members){
+
+    const body = document.getElementById("onlineBody");
+    body.innerHTML = "";
+
+    members.forEach(m=>{
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td><span class="live"></span></td>
+            <td>${m.username}</td>
+            <td>DG-RB01</td>
+            <td>${m.lastLogin || "-"}</td>
+            <td>127.0.0.1</td>
+            <td>Windows / Mobile</td>
+        `;
+
+        body.appendChild(tr);
+    });
 }
 
 function renderTables(tables){
+
     const grid = document.getElementById("tableGrid");
     grid.innerHTML = "";
 
     tables.forEach(t=>{
+
         const box = document.createElement("div");
-        box.className = "table-box";
+        box.className = "panel";
 
         let roadHtml = "";
+
         t.records.forEach(r=>{
-            roadHtml += `<div class="cell ${r.result}">${r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和"}</div>`;
+
+            roadHtml += `
+            <div class="cell ${r.result}">
+                ${
+                    r.result==="B"
+                    ?"莊"
+                    :r.result==="P"
+                    ?"閒"
+                    :"和"
+                }
+            </div>
+            `;
         });
 
-        let alertText = t.alerts && t.alerts.length ? t.alerts.join(" / ") : "-";
-        let streakText = t.streakResult ? `${t.streakResult === "B" ? "莊" : "閒"} ${t.streakCount}連` : "-";
+        let streak =
+            t.streakResult
+            ?`${t.streakResult==="B"?"莊":"閒"} ${t.streakCount}連`
+            :"-";
 
         box.innerHTML = `
-            <div class="table-head">
-                <div>${t.platform} - ${t.table}</div>
-                <div>建議：${t.suggest} ${t.stableRate}%</div>
+            <div class="panel-title">
+                ${t.platform}-${t.table}
             </div>
 
             <div class="stats">
-                <div class="stat">局數<br>${t.rounds}</div>
-                <div class="stat">下注<br>${t.betCount}</div>
-                <div class="stat">莊率<br>${t.bankerRate}%</div>
-                <div class="stat">閒率<br>${t.playerRate}%</div>
-                <div class="stat">和局<br>${t.tieCount}</div>
-                <div class="stat">連續<br>${streakText}</div>
-                <div class="stat">莊權重<br>${t.bankerScore}</div>
-                <div class="stat">閒權重<br>${t.playerScore}</div>
-            </div>
 
-            <div class="road">${roadHtml}</div>
-
-            <div class="alert">提醒：${alertText}</div>
-
-            <div style="margin-top:10px;">
-                <button class="btn-red" onclick="clearTable('${t.platform}','${t.table}')">
-                    清除此桌
-                </button>
-            </div>
-        `;
-
-        grid.appendChild(box);
-    });
-}
-
-function renderMembers(members){
-    const tbody = document.getElementById("memberList");
-    tbody.innerHTML = "";
-
-    members.forEach(m=>{
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-            <td>${m.username}</td>
-            <td>
-                <input id="pw_${m.id}" value="${m.password}">
-            </td>
-            <td>
-                <input id="ex_${m.id}" value="${m.expire}">
-            </td>
-            <td>
-                <span class="${m.enabled ? "status-on" : "status-off"}">
-                    ${m.enabled ? "啟用" : "停權"}
-                </span>
-            </td>
-            <td>${m.lastLogin || "-"}</td>
-            <td>
-                <div class="action-row">
-                    <button class="btn-blue" onclick="updateMember(${m.id})">儲存</button>
-                    <button class="btn-yellow" onclick="toggleMember(${m.id})">
-                        ${m.enabled ? "停權" : "啟用"}
-                    </button>
-                    <button class="btn-red" onclick="deleteMember(${m.id})">刪除</button>
+                <div class="stat">
+                    AI建議<br>
+                    ${t.suggest}
                 </div>
-            </td>
-        `;
 
-        tbody.appendChild(tr);
-    });
-}
+                <div class="stat">
+                    穩定率<br>
+                    ${t.stableRate}%
+                </div>
 
-function renderAI(tables){
-    const grid = document.getElementById("aiGrid");
-    grid.innerHTML = "";
+                <div class="stat">
+                    連續<br>
+                    ${streak}
+                </div>
 
-    tables.forEach(t=>{
-        const box = document.createElement("div");
-        box.className = "table-box";
+                <div class="stat">
+                    局數<br>
+                    ${t.rounds}
+                </div>
 
-        box.innerHTML = `
-            <div class="table-head">
-                <div>${t.platform} - ${t.table}</div>
-                <div>${t.suggest} / ${t.stableRate}%</div>
             </div>
 
-            <div class="stats">
-                <div class="stat">莊權重<br>${t.bankerScore}</div>
-                <div class="stat">閒權重<br>${t.playerScore}</div>
-                <div class="stat">莊率<br>${t.bankerRate}%</div>
-                <div class="stat">閒率<br>${t.playerRate}%</div>
+            <div class="road">
+                ${roadHtml}
             </div>
 
             <div class="alert">
-                ${t.alerts && t.alerts.length ? t.alerts.join(" / ") : "無提醒"}
+                ${
+                    t.alerts && t.alerts.length
+                    ? t.alerts.join(" / ")
+                    : "目前無提醒"
+                }
             </div>
         `;
 
@@ -504,99 +737,10 @@ function renderAI(tables){
     });
 }
 
-async function addMember(){
-    const username = document.getElementById("newUsername").value.trim();
-    const password = document.getElementById("newPassword").value.trim();
-    const expire = document.getElementById("newExpire").value.trim();
-
-    const res = await fetch("/api/admin/member/add", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password,expire})
-    });
-
-    const data = await res.json();
-
-    if(!data.ok){
-        alert(data.msg || "新增失敗");
-        return;
-    }
-
-    document.getElementById("newUsername").value = "";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("newExpire").value = "";
-
-    loadAdminData();
-}
-
-async function updateMember(id){
-    const password = document.getElementById(`pw_${id}`).value.trim();
-    const expire = document.getElementById(`ex_${id}`).value.trim();
-
-    const res = await fetch("/api/admin/member/update", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id,password,expire})
-    });
-
-    const data = await res.json();
-
-    if(!data.ok){
-        alert(data.msg || "修改失敗");
-        return;
-    }
-
-    alert("已儲存");
-    loadAdminData();
-}
-
-async function toggleMember(id){
-    await fetch("/api/admin/member/toggle", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id})
-    });
-
-    loadAdminData();
-}
-
-async function deleteMember(id){
-    if(!confirm("確定刪除此會員？")) return;
-
-    await fetch("/api/admin/member/delete", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id})
-    });
-
-    loadAdminData();
-}
-
-async function clearTable(platform, table){
-    if(!confirm(`確定清除 ${platform}-${table}？`)) return;
-
-    await fetch("/api/admin/clear-table", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform,table})
-    });
-
-    loadAdminData();
-}
-
-async function clearAllTables(){
-    if(!confirm("確定清除全部桌資料？")) return;
-
-    await fetch("/api/admin/clear-all", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"}
-    });
-
-    loadAdminData();
-}
-
 loadAdminData();
-setInterval(loadAdminData, 5000);
+
+setInterval(loadAdminData,3000);
+
 </script>
 
 </body>
