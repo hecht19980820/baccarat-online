@@ -189,6 +189,11 @@ body{
 
     <div class="cards">
         <div class="card">
+            <div class="card-title">總桌數</div>
+            <div id="totalTables" class="card-value">0</div>
+        </div>
+
+        <div class="card">
             <div class="card-title">總局數</div>
             <div id="totalRounds" class="card-value">0</div>
         </div>
@@ -196,11 +201,6 @@ body{
         <div class="card">
             <div class="card-title">總下注次數</div>
             <div id="totalBets" class="card-value">0</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">會員到期</div>
-            <div id="memberExpire" class="card-value" style="font-size:18px;">-</div>
         </div>
 
         <div class="card">
@@ -223,9 +223,9 @@ async function loadAdminData(){
         return;
     }
 
+    document.getElementById("totalTables").textContent = data.totalTables;
     document.getElementById("totalRounds").textContent = data.totalRounds;
     document.getElementById("totalBets").textContent = data.totalBets;
-    document.getElementById("memberExpire").textContent = data.memberExpireTime;
 
     const grid = document.getElementById("tableGrid");
     grid.innerHTML = "";
@@ -245,6 +245,11 @@ async function loadAdminData(){
             alertText = t.alerts.join(" / ");
         }
 
+        let streakText = "-";
+        if(t.streakResult){
+            streakText = `${t.streakResult === "B" ? "莊" : "閒"} ${t.streakCount}連`;
+        }
+
         box.innerHTML = `
             <div class="table-head">
                 <div>${t.platform} - ${t.table}</div>
@@ -256,12 +261,15 @@ async function loadAdminData(){
                 <div class="stat">下注<br>${t.betCount}</div>
                 <div class="stat">莊率<br>${t.bankerRate}%</div>
                 <div class="stat">閒率<br>${t.playerRate}%</div>
+                <div class="stat">和局<br>${t.tieCount}</div>
+                <div class="stat">連續<br>${streakText}</div>
+                <div class="stat">莊權重<br>${t.bankerScore}</div>
+                <div class="stat">閒權重<br>${t.playerScore}</div>
             </div>
 
             <div class="road">${roadHtml}</div>
 
             <div class="alert">提醒：${alertText}</div>
-            <div class="alert">AI權重：莊 ${t.bankerScore} / 閒 ${t.playerScore}</div>
         `;
 
         grid.appendChild(box);
