@@ -1,47 +1,109 @@
 from flask import Flask, render_template, request, jsonify, redirect, session
 from collections import defaultdict
 from datetime import datetime
+import sqlite3
+import json
+import os
 
 app = Flask(__name__)
 app.secret_key = "baccarat_admin_secret_2026"
 
-records = defaultdict(list)
+DB_PATH = "baccarat_system.db"
 
-DG_TABLES = [
-    "RB01","RB02","RB03","RB04","RB05",
-    "RB06","RB07","RB08","RB09","RB10"
-]
-
-MT_TABLES = [
-    "01","02","03","03A","05",
-    "06","07","08","09","10"
-]
-
-MEMBER_EXPIRE_TIME = "2026-12-31 23:59:59"
+DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07","RB08","RB09","RB10"]
+MT_TABLES = ["01","02","03","03A","05","06","07","08","09","10"]
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "Baccarat2026!"
 
-# 測試會員
-members = {
-    "test01": {
-        "password": "123456",
-        "expire": "2026-12-31 23:59:59",
-        "enabled": True
-    }
-}
+
+def db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    conn = db()
+    cur = conn.cursor()
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        expire TEXT NOT NULL,
+        enabled INTEGER DEFAULT 1,
+        created_at TEXT,
+        last_login TEXT
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        platform TEXT NOT NULL,
+        table_no TEXT NOT NULL,
+        result TEXT NOT NULL,
+        cards TEXT,
+        player_point INTEGER,
+        banker_point INTEGER,
+        player_pair INTEGER DEFAULT 0,
+        banker_pair INTEGER DEFAULT 0,
+        lucky6 INTEGER DEFAULT 0,
+        tie INTEGER DEFAULT 0,
+        source TEXT,
+        count_bet INTEGER DEFAULT 0,
+        ai_learn INTEGER DEFAULT 1,
+        created_at TEXT
+    )
+    """)
+
+    cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
+    if cur.fetchone()["c"] == 0:
+        cur.execute("""
+        INSERT INTO members (username,password,expire,enabled,created_at,last_login)
+        VALUES (?,?,?,?,?,?)
+        """, (
+            "test01",
+            "123456",
+            "2026-12-31 23:59:59",
+            1,
+            now(),
+            ""
+        ))
+
+    conn.commit()
+    conn.close()
+
+
+def now():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def table_key(platform, table):
     return f"{platform}_{table}"
 
 
-# 固定順序：
-# 閒1 莊1 閒2 莊2 閒3 莊3
+def get_member(username):
+    conn = db()
+    row = conn.execute(
+        "SELECT * FROM members WHERE username=?",
+        (username,)
+    ).fetchone()
+    conn.close()
+    return row
+
+
+def member_expire_time(username):
+    row = get_member(username)
+    if not row:
+        return "-"
+    return row["expire"]
+
+
 def calc_cards(cards):
-
     try:
-
         nums = [int(x) for x in cards]
 
         if len(nums) < 4 or len(nums) > 6:
@@ -50,8 +112,8 @@ def calc_cards(cards):
         player_cards = []
         banker_cards = []
 
+        # 固定順序：閒1、莊1、閒2、莊2、閒3、莊3
         for i, n in enumerate(nums):
-
             if i % 2 == 0:
                 player_cards.append(n)
             else:
@@ -62,27 +124,14 @@ def calc_cards(cards):
 
         if player_point > banker_point:
             result = "P"
-
         elif banker_point > player_point:
             result = "B"
-
         else:
             result = "T"
 
-        player_pair = (
-            len(player_cards) >= 2 and
-            player_cards[0] == player_cards[1]
-        )
-
-        banker_pair = (
-            len(banker_cards) >= 2 and
-            banker_cards[0] == banker_cards[1]
-        )
-
-        lucky6 = (
-            result == "B" and
-            banker_point == 6
-        )
+        player_pair = len(player_cards) >= 2 and player_cards[0] == player_cards[1]
+        banker_pair = len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1]
+        lucky6 = result == "B" and banker_point == 6
 
         return {
             "result": result,
@@ -98,111 +147,101 @@ def calc_cards(cards):
         return None
 
 
+def row_to_record(row):
+    return {
+        "id": row["id"],
+        "platform": row["platform"],
+        "table": row["table_no"],
+        "result": row["result"],
+        "cards": json.loads(row["cards"]) if row["cards"] else [],
+        "playerPoint": row["player_point"],
+        "bankerPoint": row["banker_point"],
+        "playerPair": bool(row["player_pair"]),
+        "bankerPair": bool(row["banker_pair"]),
+        "lucky6": bool(row["lucky6"]),
+        "tie": bool(row["tie"]),
+        "source": row["source"],
+        "countBet": bool(row["count_bet"]),
+        "aiLearn": bool(row["ai_learn"]),
+        "createdAt": row["created_at"]
+    }
+
+
+def get_records(platform, table):
+    conn = db()
+    rows = conn.execute("""
+        SELECT * FROM records
+        WHERE platform=? AND table_no=?
+        ORDER BY id ASC
+    """, (platform, table)).fetchall()
+    conn.close()
+    return [row_to_record(r) for r in rows]
+
+
 def road_stats(data):
+    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
+    bp = [x for x in valid if x.get("result") in ["B", "P"]]
 
-    valid = [
-        x for x in data
-        if x.get("result") in ["B","P","T"]
-    ]
-
-    bp = [
-        x for x in valid
-        if x.get("result") in ["B","P"]
-    ]
-
-    bet_count = len([
-        x for x in data
-        if x.get("countBet")
-    ])
-
-    b_count = len([
-        x for x in bp
-        if x["result"] == "B"
-    ])
-
-    p_count = len([
-        x for x in bp
-        if x["result"] == "P"
-    ])
-
-    t_count = len([
-        x for x in valid
-        if x["result"] == "T"
-    ])
+    bet_count = len([x for x in data if x.get("countBet")])
+    b_count = len([x for x in bp if x["result"] == "B"])
+    p_count = len([x for x in bp if x["result"] == "P"])
+    t_count = len([x for x in valid if x["result"] == "T"])
 
     total_bp = len(bp)
 
-    banker_rate = round(
-        (b_count / total_bp) * 100,
-        1
-    ) if total_bp else 0
-
-    player_rate = round(
-        (p_count / total_bp) * 100,
-        1
-    ) if total_bp else 0
+    banker_rate = round((b_count / total_bp) * 100, 1) if total_bp else 0
+    player_rate = round((p_count / total_bp) * 100, 1) if total_bp else 0
 
     recent = [x["result"] for x in bp][-20:]
+    recent10 = recent[-10:]
+    recent6 = recent[-6:]
 
     banker_score = 50
     player_score = 50
-
     alerts = []
 
     for i, r in enumerate(recent):
-
         weight = i + 1
-
         if r == "B":
-            banker_score += weight * .35
-
+            banker_score += weight * 0.35
         elif r == "P":
-            player_score += weight * .35
+            player_score += weight * 0.35
+
+    banker_score += recent10.count("B") * 1.8
+    player_score += recent10.count("P") * 1.8
 
     streak_result = None
     streak_count = 0
 
     for item in reversed(bp):
-
         r = item["result"]
-
         if streak_result is None:
             streak_result = r
             streak_count = 1
-
         elif r == streak_result:
             streak_count += 1
-
         else:
             break
 
     if streak_result == "B":
         banker_score += min(streak_count * 3, 18)
-
     elif streak_result == "P":
         player_score += min(streak_count * 3, 18)
 
+    if len(recent6) == 6:
+        if recent6 == ["B","P","B","P","B","P"]:
+            banker_score += 8
+            alerts.append("跳路偏莊")
+        elif recent6 == ["P","B","P","B","P","B"]:
+            player_score += 8
+            alerts.append("跳路偏閒")
+
     recent_cards = valid[-20:]
 
-    banker_pair_count = len([
-        x for x in recent_cards
-        if x.get("bankerPair")
-    ])
-
-    player_pair_count = len([
-        x for x in recent_cards
-        if x.get("playerPair")
-    ])
-
-    lucky6_count = len([
-        x for x in recent_cards
-        if x.get("lucky6")
-    ])
-
-    tie_count = len([
-        x for x in recent_cards
-        if x.get("tie")
-    ])
+    banker_pair_count = len([x for x in recent_cards if x.get("bankerPair")])
+    player_pair_count = len([x for x in recent_cards if x.get("playerPair")])
+    lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
+    tie_count = len([x for x in recent_cards if x.get("tie")])
 
     if banker_pair_count >= 3:
         banker_score += 3
@@ -222,28 +261,19 @@ def road_stats(data):
     diff = abs(banker_score - player_score)
 
     if total_bp < 6:
-
         suggest = "觀望"
         stable_rate = 0
-
         alerts.append("資料不足")
-
     elif diff < 6:
-
         suggest = "觀望"
-        stable_rate = round(50 + diff,1)
-
+        stable_rate = round(50 + diff, 1)
         alerts.append("莊閒不明顯")
-
     elif banker_score > player_score:
-
         suggest = "莊"
-        stable_rate = round(min(92,50+diff),1)
-
+        stable_rate = round(min(92, 50 + diff), 1)
     else:
-
         suggest = "閒"
-        stable_rate = round(min(92,50+diff),1)
+        stable_rate = round(min(92, 50 + diff), 1)
 
     return {
         "totalAnalysis": total_bp,
@@ -256,387 +286,422 @@ def road_stats(data):
         "suggest": suggest,
         "stableRate": stable_rate,
         "alerts": alerts[:3],
-        "bankerScore": round(banker_score,1),
-        "playerScore": round(player_score,1)
+        "bankerScore": round(banker_score, 1),
+        "playerScore": round(player_score, 1)
     }
 
 
-# =====================
-# 會員登入
-# =====================
-
-@app.route("/login", methods=["GET","POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
-
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        member = members.get(username)
+        member = get_member(username)
 
         if not member:
-
-            return render_template(
-                "login.html",
-                error="帳號不存在"
-            )
+            return render_template("login.html", error="帳號不存在")
 
         if not member["enabled"]:
-
-            return render_template(
-                "login.html",
-                error="會員已停權"
-            )
+            return render_template("login.html", error="會員已停權")
 
         if member["password"] != password:
+            return render_template("login.html", error="密碼錯誤")
 
-            return render_template(
-                "login.html",
-                error="密碼錯誤"
-            )
-
-        expire_time = datetime.strptime(
-            member["expire"],
-            "%Y-%m-%d %H:%M:%S"
-        )
+        expire_time = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
 
         if datetime.now() > expire_time:
+            return render_template("login.html", error="會員已到期")
 
-            return render_template(
-                "login.html",
-                error="會員已到期"
-            )
+        conn = db()
+        conn.execute(
+            "UPDATE members SET last_login=? WHERE username=?",
+            (now(), username)
+        )
+        conn.commit()
+        conn.close()
 
         session["member"] = username
-
         return redirect("/")
 
     return render_template("login.html")
 
 
-# =====================
-# 會員首頁
-# =====================
-
 @app.route("/")
 def index():
-
     if not session.get("member"):
         return redirect("/login")
-
     return render_template("index.html")
 
 
-# =====================
-# 管理員登入
-# =====================
-
-@app.route("/admin-login", methods=["GET","POST"])
+@app.route("/admin-login", methods=["GET", "POST"])
 def admin_login():
-
     if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
 
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        if (
-            username == ADMIN_USER and
-            password == ADMIN_PASS
-        ):
-
+        if username == ADMIN_USER and password == ADMIN_PASS:
             session["admin"] = True
-
             return redirect("/admin")
 
-        return render_template(
-            "admin_login.html",
-            error="帳號或密碼錯誤"
-        )
+        return render_template("admin_login.html", error="帳號或密碼錯誤")
 
     return render_template("admin_login.html")
 
 
-# =====================
-# 管理員後台
-# =====================
-
 @app.route("/admin")
 def admin():
-
     if not session.get("admin"):
         return redirect("/admin-login")
-
     return render_template("admin.html")
 
 
-# =====================
-# 登出
-# =====================
-
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/login")
 
 
-# =====================
-# 桌號
-# =====================
-
 @app.route("/api/tables")
 def tables():
+    platform = request.args.get("platform", "DG")
+    return jsonify(MT_TABLES if platform == "MT" else DG_TABLES)
 
-    platform = request.args.get("platform","DG")
-
-    if platform == "MT":
-        return jsonify(MT_TABLES)
-
-    return jsonify(DG_TABLES)
-
-
-# =====================
-# 前台資料
-# =====================
 
 @app.route("/api/data")
 def get_data():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
-    platform = request.args.get("platform","DG")
-    table = request.args.get("table","RB01")
+    platform = request.args.get("platform", "DG")
+    table = request.args.get("table", "RB01")
 
-    key = table_key(platform, table)
-
-    data = records[key]
+    data = get_records(platform, table)
 
     return jsonify({
+        "ok": True,
         "records": data,
-        "betCount": len([
-            x for x in data
-            if x.get("countBet")
-        ]),
-        "memberExpireTime": MEMBER_EXPIRE_TIME,
+        "betCount": len([x for x in data if x.get("countBet")]),
+        "memberExpireTime": member_expire_time(session.get("member")),
         "stats": road_stats(data)
     })
 
 
-# =====================
-# 後台資料
-# =====================
-
 @app.route("/api/admin-data")
 def admin_data():
-
     if not session.get("admin"):
-        return jsonify({"ok":False}),403
+        return jsonify({"ok": False}), 403
 
     all_tables = []
-
     total_rounds = 0
     total_bets = 0
 
-    for platform, tables in {
-
-        "DG":DG_TABLES,
-        "MT":MT_TABLES
-
-    }.items():
-
+    for platform, tables in {"DG": DG_TABLES, "MT": MT_TABLES}.items():
         for table in tables:
-
-            key = table_key(platform, table)
-
-            data = records[key]
-
+            data = get_records(platform, table)
             stats = road_stats(data)
 
             total_rounds += len(data)
             total_bets += stats["betCount"]
 
             all_tables.append({
-
                 "platform": platform,
                 "table": table,
-
                 "rounds": len(data),
-
                 "betCount": stats["betCount"],
-
                 "suggest": stats["suggest"],
-
                 "stableRate": stats["stableRate"],
-
                 "bankerRate": stats["bankerRate"],
-
                 "playerRate": stats["playerRate"],
-
                 "tieCount": stats["tieCount"],
-
                 "streakResult": stats["streakResult"],
-
                 "streakCount": stats["streakCount"],
-
                 "bankerScore": stats["bankerScore"],
-
                 "playerScore": stats["playerScore"],
-
                 "alerts": stats["alerts"],
-
                 "records": data[-36:]
             })
 
+    conn = db()
+    members = conn.execute(
+        "SELECT * FROM members ORDER BY id DESC"
+    ).fetchall()
+    conn.close()
+
+    member_list = []
+    for m in members:
+        member_list.append({
+            "id": m["id"],
+            "username": m["username"],
+            "password": m["password"],
+            "expire": m["expire"],
+            "enabled": bool(m["enabled"]),
+            "createdAt": m["created_at"],
+            "lastLogin": m["last_login"]
+        })
+
     return jsonify({
-
         "ok": True,
-
-        "memberExpireTime": MEMBER_EXPIRE_TIME,
-
         "totalRounds": total_rounds,
-
         "totalBets": total_bets,
-
         "totalTables": len(all_tables),
-
-        "tables": all_tables
+        "tables": all_tables,
+        "members": member_list
     })
 
 
-# =====================
-# 手動新增
-# =====================
+@app.route("/api/admin/member/add", methods=["POST"])
+def admin_member_add():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    expire = body.get("expire", "").strip()
+
+    if not username or not password or not expire:
+        return jsonify({"ok": False, "msg": "資料不完整"})
+
+    conn = db()
+    try:
+        conn.execute("""
+        INSERT INTO members (username,password,expire,enabled,created_at,last_login)
+        VALUES (?,?,?,?,?,?)
+        """, (username, password, expire, 1, now(), ""))
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return jsonify({"ok": False, "msg": "帳號已存在"})
+
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/member/update", methods=["POST"])
+def admin_member_update():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json
+    member_id = body.get("id")
+    password = body.get("password", "").strip()
+    expire = body.get("expire", "").strip()
+
+    if not member_id or not password or not expire:
+        return jsonify({"ok": False, "msg": "資料不完整"})
+
+    conn = db()
+    conn.execute("""
+    UPDATE members
+    SET password=?, expire=?
+    WHERE id=?
+    """, (password, expire, member_id))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/member/toggle", methods=["POST"])
+def admin_member_toggle():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json
+    member_id = body.get("id")
+
+    conn = db()
+    m = conn.execute(
+        "SELECT enabled FROM members WHERE id=?",
+        (member_id,)
+    ).fetchone()
+
+    if not m:
+        conn.close()
+        return jsonify({"ok": False})
+
+    new_status = 0 if m["enabled"] else 1
+
+    conn.execute(
+        "UPDATE members SET enabled=? WHERE id=?",
+        (new_status, member_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/member/delete", methods=["POST"])
+def admin_member_delete():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json
+    member_id = body.get("id")
+
+    conn = db()
+    conn.execute("DELETE FROM members WHERE id=?", (member_id,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/clear-table", methods=["POST"])
+def admin_clear_table():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json
+    platform = body.get("platform")
+    table = body.get("table")
+
+    conn = db()
+    conn.execute(
+        "DELETE FROM records WHERE platform=? AND table_no=?",
+        (platform, table)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/clear-all", methods=["POST"])
+def admin_clear_all():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    conn = db()
+    conn.execute("DELETE FROM records")
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
 
 @app.route("/api/manual", methods=["POST"])
 def manual_add():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json
-
     platform = body.get("platform")
     table = body.get("table")
     result = body.get("result")
 
-    if result not in ["B","P","T"]:
-        return jsonify({"ok":False})
+    if result not in ["B", "P", "T"]:
+        return jsonify({"ok": False})
 
-    key = table_key(platform, table)
+    conn = db()
+    conn.execute("""
+    INSERT INTO records
+    (platform,table_no,result,cards,player_point,banker_point,
+     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        platform, table, result, "",
+        None, None,
+        0, 0, 0, 1 if result == "T" else 0,
+        "manual", 0, 1, now()
+    ))
+    conn.commit()
+    conn.close()
 
-    records[key].append({
+    return jsonify({"ok": True})
 
-        "result": result,
-
-        "source": "manual",
-
-        "countBet": False,
-
-        "aiLearn": True,
-
-        "playerPair": False,
-
-        "bankerPair": False,
-
-        "lucky6": False,
-
-        "tie": result == "T"
-    })
-
-    return jsonify({"ok":True})
-
-
-# =====================
-# 牌型輸入
-# =====================
 
 @app.route("/api/cards", methods=["POST"])
 def cards_add():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json
-
     platform = body.get("platform")
     table = body.get("table")
-
     cards = body.get("cards", [])
 
     calc = calc_cards(cards)
 
     if calc is None:
-        return jsonify({"ok":False})
+        return jsonify({"ok": False})
 
-    key = table_key(platform, table)
+    conn = db()
+    conn.execute("""
+    INSERT INTO records
+    (platform,table_no,result,cards,player_point,banker_point,
+     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        platform,
+        table,
+        calc["result"],
+        json.dumps(cards),
+        calc["playerPoint"],
+        calc["bankerPoint"],
+        1 if calc["playerPair"] else 0,
+        1 if calc["bankerPair"] else 0,
+        1 if calc["lucky6"] else 0,
+        1 if calc["tie"] else 0,
+        "card_button",
+        1,
+        1,
+        now()
+    ))
+    conn.commit()
+    conn.close()
 
-    records[key].append({
+    return jsonify({"ok": True, **calc})
 
-        "result": calc["result"],
-
-        "cards": cards,
-
-        "playerPoint": calc["playerPoint"],
-
-        "bankerPoint": calc["bankerPoint"],
-
-        "playerPair": calc["playerPair"],
-
-        "bankerPair": calc["bankerPair"],
-
-        "lucky6": calc["lucky6"],
-
-        "tie": calc["tie"],
-
-        "source": "card_button",
-
-        "countBet": True,
-
-        "aiLearn": True
-    })
-
-    return jsonify({
-        "ok":True,
-        **calc
-    })
-
-
-# =====================
-# 撤回
-# =====================
 
 @app.route("/api/undo", methods=["POST"])
 def undo():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json
+    platform = body.get("platform")
+    table = body.get("table")
 
-    key = table_key(
-        body.get("platform"),
-        body.get("table")
-    )
+    conn = db()
+    row = conn.execute("""
+        SELECT id FROM records
+        WHERE platform=? AND table_no=?
+        ORDER BY id DESC
+        LIMIT 1
+    """, (platform, table)).fetchone()
 
-    if records[key]:
-        records[key].pop()
+    if row:
+        conn.execute("DELETE FROM records WHERE id=?", (row["id"],))
+        conn.commit()
 
-    return jsonify({"ok":True})
+    conn.close()
+    return jsonify({"ok": True})
 
-
-# =====================
-# 清空桌號
-# =====================
 
 @app.route("/api/clear", methods=["POST"])
 def clear():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json
+    platform = body.get("platform")
+    table = body.get("table")
 
-    key = table_key(
-        body.get("platform"),
-        body.get("table")
+    conn = db()
+    conn.execute(
+        "DELETE FROM records WHERE platform=? AND table_no=?",
+        (platform, table)
     )
+    conn.commit()
+    conn.close()
 
-    records[key] = []
+    return jsonify({"ok": True})
 
-    return jsonify({"ok":True})
 
+init_db()
 
 if __name__ == "__main__":
-
-    app.run(
-        host="0.0.0.0",
-        port=5000
-    )
+    app.run(host="0.0.0.0", port=5000)
