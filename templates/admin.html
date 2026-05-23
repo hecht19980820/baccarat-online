@@ -42,11 +42,11 @@ body:after{
 }
 
 .topbar{
-    height:86px;
     padding:14px 24px;
     display:flex;
     align-items:center;
     justify-content:space-between;
+    gap:16px;
     border-bottom:1px solid rgba(0,190,255,.35);
     background:rgba(3,13,28,.9);
     box-shadow:0 0 30px rgba(0,180,255,.14);
@@ -87,15 +87,16 @@ body:after{
 .nav{
     display:flex;
     gap:8px;
+    flex-wrap:wrap;
 }
 
 .nav button{
-    min-width:120px;
-    height:46px;
+    min-width:110px;
+    height:44px;
     border:1px solid rgba(0,190,255,.45);
     background:linear-gradient(180deg,rgba(0,80,140,.42),rgba(0,20,45,.68));
     color:#bfefff;
-    border-radius:4px;
+    border-radius:5px;
     cursor:pointer;
     font-weight:bold;
 }
@@ -110,12 +111,13 @@ body:after{
     color:#7eeeff;
     line-height:1.6;
     font-weight:bold;
+    min-width:150px;
 }
 
 .logout{
     color:#ffd86b;
     text-decoration:none;
-    margin-left:18px;
+    margin-left:12px;
 }
 
 .container{
@@ -132,7 +134,7 @@ body:after{
 
 .dashboard{
     display:grid;
-    grid-template-columns:360px 1fr 450px;
+    grid-template-columns:340px 1fr 420px;
     gap:14px;
 }
 
@@ -146,11 +148,9 @@ body:after{
     position:relative;
     background:rgba(4,18,38,.82);
     border:1px solid rgba(0,190,255,.46);
-    border-radius:6px;
+    border-radius:8px;
     padding:16px;
-    box-shadow:
-        0 0 20px rgba(0,180,255,.16),
-        inset 0 0 22px rgba(0,120,255,.06);
+    box-shadow:0 0 20px rgba(0,180,255,.16), inset 0 0 22px rgba(0,120,255,.06);
     overflow:hidden;
 }
 
@@ -182,14 +182,14 @@ body:after{
 }
 
 .holo{
-    width:150px;
-    height:150px;
+    width:120px;
+    height:120px;
     border-radius:50%;
     border:2px solid rgba(0,210,255,.65);
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:42px;
+    font-size:38px;
     font-weight:bold;
     color:#39dcff;
     box-shadow:0 0 28px rgba(0,210,255,.45), inset 0 0 30px rgba(0,210,255,.12);
@@ -205,16 +205,16 @@ body:after{
 }
 
 .big-predict{
-    min-height:360px;
+    min-height:330px;
     display:grid;
-    grid-template-columns:1fr 210px 1fr;
+    grid-template-columns:1fr 190px 1fr;
     align-items:center;
-    gap:16px;
+    gap:14px;
     text-align:center;
 }
 
 .side-card{
-    min-height:230px;
+    min-height:210px;
     border:1px solid rgba(0,160,255,.35);
     background:rgba(0,40,80,.23);
     display:flex;
@@ -229,7 +229,7 @@ body:after{
 }
 
 .side-label{
-    font-size:46px;
+    font-size:42px;
     font-weight:bold;
     text-shadow:0 0 18px currentColor;
 }
@@ -240,15 +240,16 @@ body:after{
 .yellow{color:#ffd86b}
 .green{color:#00ff9d}
 .red{color:#ff4d6d}
+.blue{color:#4aa3ff}
 
 .side-percent{
-    font-size:40px;
+    font-size:36px;
     margin-top:18px;
 }
 
 .ai-circle{
-    width:190px;
-    height:190px;
+    width:170px;
+    height:170px;
     border-radius:50%;
     margin:auto;
     display:flex;
@@ -260,7 +261,7 @@ body:after{
 }
 
 .ai-circle .num{
-    font-size:52px;
+    font-size:46px;
     font-weight:bold;
     color:#b8fbff;
 }
@@ -270,15 +271,15 @@ body:after{
 }
 
 .center-suggest{
-    font-size:26px;
+    font-size:24px;
     color:#56f7ff;
-    margin-top:20px;
+    margin-top:18px;
     font-weight:bold;
 }
 
 .table-monitor-row{
     display:grid;
-    grid-template-columns:58px 80px 70px 1fr 70px 110px;
+    grid-template-columns:48px 70px 60px 1fr 70px;
     align-items:center;
     gap:8px;
     padding:8px;
@@ -288,7 +289,7 @@ body:after{
 }
 
 .monitor-no{
-    font-size:22px;
+    font-size:20px;
     color:#8fe8ff;
 }
 
@@ -296,7 +297,7 @@ body:after{
     text-align:center;
     padding:4px 0;
     border-radius:4px;
-    font-size:22px;
+    font-size:20px;
     font-weight:bold;
 }
 
@@ -326,12 +327,6 @@ body:after{
 .mini-dot.B{border:1px solid #ff3151}
 .mini-dot.P{border:1px solid #2f8bff}
 .mini-dot.T{border:1px solid #00d26a}
-
-.spark{
-    height:28px;
-    border-bottom:1px solid rgba(0,255,180,.55);
-    background:linear-gradient(135deg,transparent 40%,rgba(0,255,180,.25));
-}
 
 .road{
     display:grid;
@@ -528,31 +523,157 @@ button{
     gap:16px;
 }
 
-@media(max-width:1100px){
+@media(max-width:900px){
     .topbar{
-        height:auto;
+        padding:10px;
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .brand{
+        justify-content:center;
+    }
+
+    .brand-title{
+        font-size:20px;
+    }
+
+    .ai-logo{
+        width:42px;
+        height:42px;
+        font-size:20px;
+    }
+
+    .nav{
+        display:grid;
+        grid-template-columns:repeat(2,1fr);
+        gap:6px;
+    }
+
+    .nav button{
+        min-width:0;
+        height:38px;
+        font-size:13px;
+    }
+
+    .top-right{
+        text-align:center;
+        font-size:13px;
+    }
+
+    .container{
+        padding:8px;
+    }
+
+    .cards{
+        grid-template-columns:repeat(2,1fr);
+        gap:8px;
+    }
+
+    .card{
+        padding:10px;
+    }
+
+    .card-value{
+        font-size:24px;
+    }
+
+    .dashboard{
+        grid-template-columns:1fr;
+        gap:8px;
+    }
+
+    .panel{
+        padding:10px;
+        border-radius:8px;
+    }
+
+    .panel-title{
+        font-size:16px;
+    }
+
+    .status-core{
         flex-direction:column;
         align-items:flex-start;
     }
 
-    .nav{
-        flex-wrap:wrap;
+    .holo{
+        width:80px;
+        height:80px;
+        font-size:24px;
     }
 
-    .dashboard,
+    .big-predict{
+        grid-template-columns:1fr;
+        min-height:auto;
+    }
+
+    .side-card{
+        min-height:100px;
+    }
+
+    .side-label{
+        font-size:30px;
+    }
+
+    .side-percent{
+        font-size:26px;
+        margin-top:6px;
+    }
+
+    .ai-circle{
+        width:130px;
+        height:130px;
+    }
+
+    .ai-circle .num{
+        font-size:32px;
+    }
+
+    .center-suggest{
+        font-size:18px;
+    }
+
+    .table-monitor-row{
+        grid-template-columns:36px 52px 48px 1fr;
+        font-size:12px;
+    }
+
+    .table-monitor-row .green{
+        display:none;
+    }
+
     .table-grid,
-    .cards,
     .form-grid,
     .system-actions{
         grid-template-columns:1fr;
     }
 
-    .big-predict{
-        grid-template-columns:1fr;
+    .stats-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
+    .member-table{
+        display:block;
+        overflow-x:auto;
+        white-space:nowrap;
     }
 
     .action-row{
         flex-direction:column;
+    }
+
+    .road{
+        grid-template-rows:repeat(6,20px);
+        grid-auto-columns:20px;
+        gap:3px;
+        padding:6px;
+    }
+
+    .cell{
+        width:18px;
+        height:18px;
+        font-size:9px;
     }
 }
 </style>
@@ -881,7 +1002,6 @@ function renderMonitor(tables){
             <div>${t.stableRate}%</div>
             <div class="monitor-road">${dots}</div>
             <div class="green">連勝：${t.streakCount || 0}</div>
-            <div class="spark"></div>
         `;
         list.appendChild(row);
 
@@ -1060,37 +1180,71 @@ async function toggleMember(id){
     loadAdminData();
 }
 
-async function deleteMember(id){
-    if(!confirm("確定刪除此會員？")) return;
+async function askAdminPassword(){
+    const p = prompt("請輸入管理員密碼");
+    if(!p) return null;
+    return p;
+}
 
-    await fetch("/api/admin/member/delete", {
+async function deleteMember(id){
+    if(!confirm("刪除會員會永久移除，確定？")) return;
+
+    const adminPassword = await askAdminPassword();
+    if(!adminPassword) return;
+
+    const res = await fetch("/api/admin/member/delete", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({id})
+        body:JSON.stringify({id, adminPassword})
     });
+
+    const data = await res.json();
+    if(!data.ok){
+        alert(data.msg || "刪除失敗");
+        return;
+    }
 
     loadAdminData();
 }
 
 async function clearTable(platform, table){
-    if(!confirm(`確定清除 ${platform}-${table}？`)) return;
+    if(!confirm(`清除 ${platform}-${table} 會刪除該桌資料，確定？`)) return;
 
-    await fetch("/api/admin/clear-table", {
+    const adminPassword = await askAdminPassword();
+    if(!adminPassword) return;
+
+    const res = await fetch("/api/admin/clear-table", {
         method:"POST",
         headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform,table})
+        body:JSON.stringify({platform,table,adminPassword})
     });
+
+    const data = await res.json();
+    if(!data.ok){
+        alert(data.msg || "清除失敗");
+        return;
+    }
 
     loadAdminData();
 }
 
 async function clearAllTables(){
-    if(!confirm("確定清除全部桌資料？")) return;
+    if(!confirm("清除全部桌資料會永久刪除所有路單，確定？")) return;
 
-    await fetch("/api/admin/clear-all", {
+    const adminPassword = await askAdminPassword();
+    if(!adminPassword) return;
+
+    const res = await fetch("/api/admin/clear-all", {
         method:"POST",
-        headers:{"Content-Type":"application/json"}
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({adminPassword})
     });
+
+    const data = await res.json();
+    if(!data.ok){
+        alert(data.msg || "清除失敗");
+        return;
+    }
 
     loadAdminData();
 }
