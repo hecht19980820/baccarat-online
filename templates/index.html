@@ -525,16 +525,21 @@ body.force-mobile .rate{
             </div>
         </div>
 
-        <div class="card">
-            <div class="title">♠ 手動加入大路結果</div>
-            <div class="manual-buttons">
-                <button class="banker" onclick="manualAdd('B')">莊</button>
-                <button class="player" onclick="manualAdd('P')">閒</button>
-                <button class="tie" onclick="manualAdd('T')">和</button>
-                <button onclick="undo()">↩ </button>
-            </div>
-        </div>
+        <<div class="card">
+    <div class="title">⚙ 大路盤</div>
+    <div id="road" class="road"></div>
+</div>
+
+<div class="card">
+    <div class="title">♠ 手動加入大路結果</div>
+
+    <div class="manual-buttons">
+        <button class="banker" onclick="manualAdd('B')">莊</button>
+        <button class="player" onclick="manualAdd('P')">閒</button>
+        <button class="tie" onclick="manualAdd('T')">和</button>
+        <button onclick="undo()">↩</button>
     </div>
+</div>
 
     <div class="stats-row">
         <div class="stat"><div class="stat-title">莊勝率</div><div id="bankerRate" class="stat-value banker-text">0%</div></div>
