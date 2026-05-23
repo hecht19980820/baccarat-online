@@ -326,10 +326,6 @@ def road_stats(data):
         "stableRate": stable,
         "betCount": len(valid)
     }
-@app.route("/login")
-def login_page():
-    return render_template("login.html")
-
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
