@@ -3,263 +3,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>百家樂 AI 系統</title>
+<title>Baccarat AI</title>
 
 <style>
-*{box-sizing:border-box}
-
 body{
     margin:0;
-    background:radial-gradient(circle at top,#172c58 0%,#07111f 45%,#01040a 100%);
+    background:#07111f;
     color:white;
-    font-family:Arial,"Microsoft JhengHei",sans-serif;
+    font-family:Arial;
+    padding:20px;
 }
 
-.container{
-    max-width:1450px;
-    margin:auto;
-    padding:10px;
+button{
+    padding:12px 20px;
+    margin:5px;
+    font-size:20px;
 }
 
-.topbar{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr;
-    gap:10px;
-    margin-bottom:10px;
-}
-
-select,button{
-    border:none;
-    outline:none;
-    border-radius:14px;
-    background:#08162d;
-    border:1px solid rgba(90,170,255,.35);
-    color:white;
-    padding:11px;
-    font-size:15px;
-    font-weight:bold;
-}
-
-.card{
-    background:rgba(5,16,34,.9);
-    border:1px solid rgba(0,180,255,.25);
-    border-radius:18px;
-    padding:12px;
-    margin-bottom:10px;
-    box-shadow:0 0 22px rgba(0,120,255,.16), inset 0 0 12px rgba(255,255,255,.03);
-}
-
-.grid-top{
-    display:grid;
-    grid-template-columns:280px 1fr 280px;
-    gap:10px;
-}
-
-.grid-mid{
-    display:grid;
-    grid-template-columns:1fr 320px;
-    gap:10px;
-}
-
-.title{
-    color:#9dccff;
-    font-size:18px;
-    font-weight:bold;
-    margin-bottom:8px;
-}
-
-.ai-result{
-    text-align:center;
-    font-size:76px;
-    font-weight:bold;
-    margin-top:10px;
-    text-shadow:0 0 22px currentColor;
-}
-
-.banker-text{color:#ff4763}
-.player-text{color:#39a2ff}
-.wait-text{color:#ff9fc0}
-
-.rate{
-    text-align:center;
-    font-size:38px;
-    color:#ffd86b;
-    margin-top:10px;
-    font-weight:bold;
-}
-
-.road{
-    display:grid;
-    grid-template-rows:repeat(6,34px);
-    grid-auto-flow:column;
-    grid-auto-columns:34px;
-    gap:4px;
-    overflow-x:auto;
-    background:rgba(255,255,255,.035);
-    padding:8px;
-    border-radius:14px;
-    min-height:230px;
+#road{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin-top:20px;
 }
 
 .cell{
-    width:30px;
-    height:30px;
+    width:42px;
+    height:42px;
     border-radius:50%;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:12px;
     font-weight:bold;
 }
 
 .B{
-    border:2px solid #ff3151;
-    color:#ff3151;
-    background:rgba(255,0,50,.15);
+    background:red;
 }
 
 .P{
-    border:2px solid #2f8bff;
-    color:#2f8bff;
-    background:rgba(0,90,255,.15);
+    background:blue;
 }
 
 .T{
-    border:2px solid #00d26a;
-    color:#00d26a;
-    background:rgba(0,210,106,.15);
+    background:green;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Baccarat AI System</h1>
+
+<button onclick="manual('B')">莊</button>
+<button onclick="manual('P')">閒</button>
+<button onclick="manual('T')">和</button>
+
+<button onclick="undo()">撤回</button>
+<button onclick="clearRoad()">清除</button>
+
+<div id="road"></div>
+
+<script>
+
+async function load(){
+
+    const res = await fetch("/api/data?platform=DG&table=RB01");
+    const data = await res.json();
+
+    const road = document.getElementById("road");
+
+    road.innerHTML = "";
+
+    data.records.forEach(r=>{
+
+        const div = document.createElement("div");
+
+        div.className = "cell " + r.result;
+
+        div.innerText =
+            r.result==="B" ? "莊" :
+            r.result==="P" ? "閒" : "和";
+
+        road.appendChild(div);
+
+    });
+
 }
 
-.alert-box{
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:12px;
-    padding:10px;
-    margin-bottom:8px;
-    color:#ffd86b;
-    background:rgba(255,255,255,.03);
+async function manual(result){
+
+    await fetch("/api/manual",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform:"DG",
+            table:"RB01",
+            result:result
+        })
+    });
+
+    load();
+
 }
 
-.manual-buttons{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-    margin-top:10px;
+async function undo(){
+
+    await fetch("/api/undo",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform:"DG",
+            table:"RB01"
+        })
+    });
+
+    load();
+
 }
 
-.manual-buttons button{
-    height:58px;
-    font-size:24px;
+async function clearRoad(){
+
+    await fetch("/api/clear",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform:"DG",
+            table:"RB01"
+        })
+    });
+
+    load();
+
 }
 
-.banker{background:linear-gradient(135deg,#8f0028,#ff2f67)}
-.player{background:linear-gradient(135deg,#0047d0,#0099ff)}
-.tie{background:linear-gradient(135deg,#00784b,#00d49a)}
-.warn{background:linear-gradient(135deg,#8d6200,#d39b00)}
-.danger{background:linear-gradient(135deg,#4b0018,#b00038)}
+load();
 
-.keypad{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:8px;
-}
+</script>
 
-.keypad button{
-    height:54px;
-    font-size:23px;
-}
-
-.card-preview{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:10px;
-    margin-bottom:10px;
-}
-
-.preview-wrap{
-    text-align:center;
-}
-
-.preview-number{
-    width:44px;
-    height:44px;
-    border-radius:9px;
-    border:1px solid rgba(90,170,255,.45);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:21px;
-    font-weight:bold;
-}
-
-.preview-label{
-    font-size:11px;
-    color:#9dccff;
-    margin-top:4px;
-}
-
-.stats-row{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:10px;
-}
-
-.stat-card{
-    background:rgba(5,16,34,.9);
-    border:1px solid rgba(0,180,255,.22);
-    border-radius:15px;
-    padding:10px;
-}
-
-.stat-title{
-    color:#a8d3ff;
-    font-size:14px;
-}
-
-.stat-value{
-    margin-top:10px;
-    font-size:28px;
-    font-weight:bold;
-}
-
-.bottom-buttons{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:10px;
-}
-
-.bottom-buttons button{
-    height:58px;
-    font-size:22px;
-}
-
-.expire{
-    color:#ffd86b;
-    font-size:15px;
-    margin-bottom:10px;
-    font-weight:bold;
-}
-
-.footer{
-    margin-top:12px;
-    opacity:.6;
-    display:flex;
-    justify-content:space-between;
-    font-size:13px;
-}
-
-body.force-mobile{
-    zoom:.82;
-}
-
-body.force-mobile .container{
-    padding:4px !important;
-}
-
-body.force-mobile .grid-top,
-body.force-mobile .grid-mid{
-    grid-template-columns:1fr !important;
-}
-
-body
+</body>
+</html>
