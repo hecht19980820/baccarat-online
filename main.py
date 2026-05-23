@@ -921,6 +921,262 @@ def clear_all():
     return jsonify({"ok": True})
 
 
+@app.route("/api/manual", methods=["POST"])
+def api_manual():
+
+    if "user" not in session:
+        return jsonify({"ok":False})
+
+    data = request.json
+
+    platform = data.get("platform")
+    table = data.get("table")
+    result = data.get("result")
+
+    if result not in ["B","P","T"]:
+        return jsonify({"ok":False,"msg":"錯誤結果"})
+
+    conn = get_db()
+
+    conn.execute("""
+    INSERT INTO records(
+        platform,
+        table_name,
+        result,
+        source,
+        created_at
+    )
+    VALUES(?,?,?,?,?)
+    """,(
+        platform,
+        table,
+        result,
+        "manual",
+        now()
+    ))
+
+    conn.commit()
+    conn.close()
+
+    update_online(platform, table)
+
+    return jsonify({"ok":True})
+
+
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+
+    if "user" not in session:
+        return jsonify({"ok":False})
+
+    data = request.json
+
+    platform = data.get("platform")
+    table = data.get("table")
+    cards = data.get("cards", [])
+
+    resultData = calc_cards(cards)
+
+    if not resultData:
+        return jsonify({
+            "ok":False,
+            "msg":"牌型錯誤"
+        })
+
+    result = resultData["result"]
+
+    conn = get_db()
+
+    rows = conn.execute("""
+    SELECT result
+    FROM records
+    WHERE platform=? AND table_name=?
+    ORDER BY id DESC
+    LIMIT 20
+    """,(platform,table)).fetchall()
+
+    recent = [r["result"] for r in rows]
+
+    suggest = "觀望"
+
+    if recent:
+        banker = recent.count("B")
+        player = recent.count("P")
+
+        if banker > player:
+            suggest = "莊"
+        elif player > banker:
+            suggest = "閒"
+
+    aiHit = 0
+
+    if (
+        (suggest == "莊" and result == "B") or
+        (suggest == "閒" and result == "P")
+    ):
+        aiHit = 1
+
+    conn.execute("""
+    INSERT INTO records(
+        platform,
+        table_name,
+        result,
+        cards,
+        source,
+        countBet,
+        aiSuggest,
+        aiHit,
+        created_at
+    )
+    VALUES(?,?,?,?,?,?,?,?,?)
+    """,(
+        platform,
+        table,
+        result,
+        json.dumps(cards),
+        "cards",
+        1,
+        suggest,
+        aiHit,
+        now()
+    ))
+
+    learn = conn.execute("""
+    SELECT *
+    FROM ai_learning
+    WHERE platform=? AND table_name=?
+    """,(platform,table)).fetchone()
+
+    if learn:
+
+        totalPredict = learn["totalPredict"] + 1
+        totalHit = learn["totalHit"] + aiHit
+
+        bankerScore = learn["bankerScore"]
+        playerScore = learn["playerScore"]
+
+        if result == "B":
+            bankerScore += 1.5
+            playerScore -= .8
+
+        elif result == "P":
+            playerScore += 1.5
+            bankerScore -= .8
+
+        bankerScore = max(1, bankerScore)
+        playerScore = max(1, playerScore)
+
+        conn.execute("""
+        UPDATE ai_learning
+        SET
+            bankerScore=?,
+            playerScore=?,
+            totalPredict=?,
+            totalHit=?,
+            updatedAt=?
+        WHERE id=?
+        """,(
+            bankerScore,
+            playerScore,
+            totalPredict,
+            totalHit,
+            now(),
+            learn["id"]
+        ))
+
+    else:
+
+        conn.execute("""
+        INSERT INTO ai_learning(
+            platform,
+            table_name,
+            bankerScore,
+            playerScore,
+            totalPredict,
+            totalHit,
+            updatedAt
+        )
+        VALUES(?,?,?,?,?,?,?)
+        """,(
+            platform,
+            table,
+            50,
+            50,
+            1,
+            aiHit,
+            now()
+        ))
+
+    conn.commit()
+    conn.close()
+
+    update_online(platform, table)
+
+    return jsonify({
+        "ok":True,
+        "result":result
+    })
+
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+
+    if "user" not in session:
+        return jsonify({"ok":False})
+
+    data = request.json
+
+    platform = data.get("platform")
+    table = data.get("table")
+
+    conn = get_db()
+
+    row = conn.execute("""
+    SELECT id
+    FROM records
+    WHERE platform=? AND table_name=?
+    ORDER BY id DESC
+    LIMIT 1
+    """,(platform,table)).fetchone()
+
+    if row:
+
+        conn.execute("""
+        DELETE FROM records
+        WHERE id=?
+        """,(row["id"],))
+
+        conn.commit()
+
+    conn.close()
+
+    return jsonify({"ok":True})
+
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+
+    if "user" not in session:
+        return jsonify({"ok":False})
+
+    data = request.json
+
+    platform = data.get("platform")
+    table = data.get("table")
+
+    conn = get_db()
+
+    conn.execute("""
+    DELETE FROM records
+    WHERE platform=? AND table_name=?
+    """,(platform,table))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok":True})
+
+
 init_db()
 
 if __name__ == "__main__":
