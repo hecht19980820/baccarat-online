@@ -247,7 +247,7 @@ def get_shared_records(platform, table):
 
     conn.close()
 
-        return [
+    return [
         {
             "result": r["result"],
             "source": r["source"],
