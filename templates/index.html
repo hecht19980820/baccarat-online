@@ -50,6 +50,12 @@ select,button{
     grid-template-columns:330px 1fr 330px;
     gap:16px;
 }
+.ai-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    align-items:center;   
+}    
 .grid-mid{
     display:grid;
     grid-template-columns:1fr 420px;
@@ -219,13 +225,7 @@ body.force-desktop .stats-row{
     
 @media(max-width:900px){
 
-    .ai-row{
-    min-height:130px !important;
-}
 
-.ai-row > div{
-    min-height:120px !important;
-}
     .container{
         padding:8px;
     }
