@@ -365,7 +365,36 @@ body.force-mobile .rate{
         font-size:12px;
     }
 
-}
+    /* 手機版強制壓縮大路盤 */
+@media(max-width:900px){
+    body.force-mobile .road,
+    .road{
+        grid-template-rows:repeat(6,18px) !important;
+        grid-auto-columns:18px !important;
+        gap:2px !important;
+        min-height:120px !important;
+        max-height:130px !important;
+        padding:4px !important;
+    }
+
+    body.force-mobile .cell,
+    .cell{
+        width:16px !important;
+        height:16px !important;
+        font-size:8px !important;
+    }
+
+    body.force-mobile .card,
+    .card{
+        padding:8px !important;
+    }
+
+    body.force-mobile .title,
+    .title{
+        font-size:16px !important;
+        margin-bottom:6px !important;
+    }
+    
 </style>
 </head>
 
