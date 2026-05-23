@@ -602,6 +602,7 @@ def api_admin_toggle_member():
     conn.close()
 
     return jsonify({"ok": True})
+    
 @app.route("/api/tables")
 def api_tables():
     platform = request.args.get("platform", "DG")
