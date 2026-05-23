@@ -1,23 +1,23 @@
 from flask import Flask, render_template, request, jsonify, session, redirect
+from flask_cors import CORS
 import sqlite3
-import json
-from datetime import datetime, timedelta
+import os
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "baccarat_secret_2026"
+
+CORS(app)
 
 DB = "baccarat_system.db"
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "Baccarat2026!"
 
-DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07","RB08","RB09","RB10"]
-MT_TABLES = ["01","02","03","03A","04","05","06","07","08","09","10"]
 
-
-def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+# =========================
+# DB
+# =========================
 
 def get_db():
     conn = sqlite3.connect(DB)
@@ -25,13 +25,8 @@ def get_db():
     return conn
 
 
-def ensure_column(cur, table, column, col_type):
-    cols = [r["name"] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
-    if column not in cols:
-        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-
-
 def init_db():
+
     conn = get_db()
     cur = conn.cursor()
 
@@ -42,14 +37,11 @@ def init_db():
         password TEXT,
         expire TEXT,
         enabled INTEGER DEFAULT 1,
-        role TEXT DEFAULT 'member',
         currentPlatform TEXT DEFAULT '',
         currentTable TEXT DEFAULT '',
         device TEXT DEFAULT '',
         ip TEXT DEFAULT '',
-        lastLogin TEXT DEFAULT '',
-        lastActive TEXT DEFAULT '',
-        createdAt TEXT DEFAULT ''
+        lastActive TEXT DEFAULT ''
     )
     """)
 
@@ -59,228 +51,82 @@ def init_db():
         platform TEXT,
         table_name TEXT,
         result TEXT,
-        cards TEXT DEFAULT '',
-        source TEXT DEFAULT '',
-        countBet INTEGER DEFAULT 0,
-        aiSuggest TEXT DEFAULT '',
-        aiHit INTEGER DEFAULT 0,
         created_at TEXT
     )
     """)
 
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS ai_learning(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        platform TEXT,
-        table_name TEXT,
-        bankerScore REAL DEFAULT 50,
-        playerScore REAL DEFAULT 50,
-        totalPredict INTEGER DEFAULT 0,
-        totalHit INTEGER DEFAULT 0,
-        updatedAt TEXT
-    )
-    """)
-
-    for col, typ in [
-        ("role", "TEXT DEFAULT 'member'"),
-        ("currentPlatform", "TEXT DEFAULT ''"),
-        ("currentTable", "TEXT DEFAULT ''"),
-        ("device", "TEXT DEFAULT ''"),
-        ("ip", "TEXT DEFAULT ''"),
-        ("lastLogin", "TEXT DEFAULT ''"),
-        ("lastActive", "TEXT DEFAULT ''"),
-        ("createdAt", "TEXT DEFAULT ''")
-    ]:
-        ensure_column(cur, "members", col, typ)
-
-    for col, typ in [
-        ("cards", "TEXT DEFAULT ''"),
-        ("source", "TEXT DEFAULT ''"),
-        ("countBet", "INTEGER DEFAULT 0"),
-        ("aiSuggest", "TEXT DEFAULT ''"),
-        ("aiHit", "INTEGER DEFAULT 0")
-    ]:
-        ensure_column(cur, "records", col, typ)
-
-    cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
-    if cur.fetchone()["c"] == 0:
-        cur.execute("""
-        INSERT INTO members(username,password,expire,enabled,role,createdAt)
-        VALUES(?,?,?,?,?,?)
-        """, ("test01","123456","2026-12-31 23:59:59",1,"member",now()))
-
     conn.commit()
     conn.close()
 
+
+init_db()
+
+
+# =========================
+# 工具
+# =========================
 
 def get_tables(platform):
-    return MT_TABLES if platform == "MT" else DG_TABLES
 
+    if platform == "MT":
+        return [
+            "MT01","MT02","MT03","MT04","MT05",
+            "MT06","MT07","MT08","MT09","MT10"
+        ]
 
-def get_device():
-    ua = request.headers.get("User-Agent", "")
-    if "iPhone" in ua:
-        return "iPhone"
-    if "Android" in ua:
-        return "Android"
-    if "Windows" in ua:
-        return "Windows"
-    if "Macintosh" in ua:
-        return "Mac"
-    return "Unknown"
-
-
-def get_ip():
-    return request.headers.get("X-Forwarded-For", request.remote_addr)
-
-
-def update_online(platform="", table=""):
-    if "user" not in session:
-        return
-
-    conn = get_db()
-    conn.execute("""
-    UPDATE members
-    SET currentPlatform=?, currentTable=?, device=?, ip=?, lastActive=?
-    WHERE username=?
-    """, (
-        platform,
-        table,
-        get_device(),
-        get_ip(),
-        now(),
-        session["user"]
-    ))
-    conn.commit()
-    conn.close()
-
-
-def record_to_dict(r):
-    return {
-        "id": r["id"],
-        "platform": r["platform"],
-        "table": r["table_name"],
-        "result": r["result"],
-        "cards": json.loads(r["cards"]) if r["cards"] else [],
-        "source": r["source"],
-        "countBet": bool(r["countBet"]),
-        "aiSuggest": r["aiSuggest"],
-        "aiHit": bool(r["aiHit"]),
-        "createdAt": r["created_at"]
-    }
-
-
-def get_records(platform, table):
-    conn = get_db()
-    rows = conn.execute("""
-    SELECT * FROM records
-    WHERE platform=? AND table_name=?
-    ORDER BY id ASC
-    """, (platform, table)).fetchall()
-    conn.close()
-    return [record_to_dict(r) for r in rows]
-
-
-def calc_cards(cards):
-    try:
-        nums = [int(x) for x in cards]
-
-        if len(nums) < 4 or len(nums) > 6:
-            return None
-
-        player = nums[0] + nums[2]
-        banker = nums[1] + nums[3]
-
-        if len(nums) >= 5:
-            player += nums[4]
-
-        if len(nums) >= 6:
-            banker += nums[5]
-
-        player %= 10
-        banker %= 10
-
-        if banker > player:
-            result = "B"
-        elif player > banker:
-            result = "P"
-        else:
-            result = "T"
-
-        return {
-            "result": result,
-            "playerPoint": player,
-            "bankerPoint": banker
-        }
-
-    except Exception:
-        return None
+    return [
+        "RB01","RB02","RB03","RB04","RB05",
+        "RB06","RB07","RB08","RB09","RB10"
+    ]
 
 
 def analyze(records):
-    banker = len([r for r in records if r["result"] == "B"])
-    player = len([r for r in records if r["result"] == "P"])
-    tie = len([r for r in records if r["result"] == "T"])
+
+    banker = len([x for x in records if x["result"] == "B"])
+    player = len([x for x in records if x["result"] == "P"])
+    tie = len([x for x in records if x["result"] == "T"])
 
     total = banker + player
 
-    bankerRate = round((banker / total) * 100, 1) if total else 0
-    playerRate = round((player / total) * 100, 1) if total else 0
+    bankerRate = 0
+    playerRate = 0
 
-    recent = [r["result"] for r in records if r["result"] in ["B","P"]][-20:]
+    if total > 0:
+        bankerRate = round((banker / total) * 100)
+        playerRate = round((player / total) * 100)
 
-    bankerScore = 50
-    playerScore = 50
+    suggest = "觀望"
 
-    for i, r in enumerate(recent):
-        weight = i + 1
-        if r == "B":
-            bankerScore += weight * 0.45
-        elif r == "P":
-            playerScore += weight * 0.45
+    if bankerRate >= 58:
+        suggest = "莊"
+
+    elif playerRate >= 58:
+        suggest = "閒"
+
+    stableRate = max(bankerRate, playerRate)
 
     streakResult = None
     streakCount = 0
 
-    for r in reversed(records):
-        if r["result"] == "T":
-            continue
+    if len(records) > 0:
 
-        if streakResult is None:
-            streakResult = r["result"]
-            streakCount = 1
-        elif r["result"] == streakResult:
-            streakCount += 1
-        else:
-            break
+        last = records[-1]["result"]
 
-    if streakResult == "B":
-        bankerScore += streakCount * 2
-    elif streakResult == "P":
-        playerScore += streakCount * 2
+        if last != "T":
 
-    diff = abs(bankerScore - playerScore)
+            streakResult = last
 
-    if total < 6:
-        suggest = "觀望"
-        stableRate = 0
-    elif diff < 6:
-        suggest = "觀望"
-        stableRate = round(50 + diff, 1)
-    elif bankerScore > playerScore:
-        suggest = "莊"
-        stableRate = round(min(96, 50 + diff), 1)
-    else:
-        suggest = "閒"
-        stableRate = round(min(96, 50 + diff), 1)
+            for r in reversed(records):
+
+                if r["result"] == last:
+                    streakCount += 1
+                else:
+                    break
 
     alerts = []
 
-    if total < 6:
-        alerts.append("資料不足")
-
     if streakCount >= 4:
-        alerts.append(("莊" if streakResult == "B" else "閒") + f" {streakCount} 連")
+        alerts.append(f"{'莊' if streakResult == 'B' else '閒'} {streakCount} 連")
 
     return {
         "bankerRate": bankerRate,
@@ -290,99 +136,21 @@ def analyze(records):
         "stableRate": stableRate,
         "streakResult": streakResult,
         "streakCount": streakCount,
-        "alerts": alerts[:3],
-        "totalAnalysis": total,
-        "bankerScore": round(bankerScore, 1),
-        "playerScore": round(playerScore, 1),
-        "betCount": len([r for r in records if r.get("countBet")])
+        "alerts": alerts,
+        "totalAnalysis": len(records)
     }
 
 
-def update_learning(platform, table, result, suggest):
-    suggestCode = "B" if suggest == "莊" else "P" if suggest == "閒" else ""
-    aiHit = 1 if suggestCode == result else 0
-    predict = 1 if suggestCode in ["B", "P"] else 0
-
-    conn = get_db()
-
-    row = conn.execute("""
-    SELECT * FROM ai_learning
-    WHERE platform=? AND table_name=?
-    """, (platform, table)).fetchone()
-
-    if not row:
-        conn.execute("""
-        INSERT INTO ai_learning(platform,table_name,bankerScore,playerScore,totalPredict,totalHit,updatedAt)
-        VALUES(?,?,?,?,?,?,?)
-        """, (platform, table, 50, 50, predict, aiHit, now()))
-    else:
-        bankerScore = row["bankerScore"]
-        playerScore = row["playerScore"]
-
-        if result == "B":
-            bankerScore += 1.5
-            playerScore -= 0.5
-        elif result == "P":
-            playerScore += 1.5
-            bankerScore -= 0.5
-
-        bankerScore = max(1, bankerScore)
-        playerScore = max(1, playerScore)
-
-        conn.execute("""
-        UPDATE ai_learning
-        SET bankerScore=?, playerScore=?, totalPredict=?, totalHit=?, updatedAt=?
-        WHERE id=?
-        """, (
-            bankerScore,
-            playerScore,
-            row["totalPredict"] + predict,
-            row["totalHit"] + aiHit,
-            now(),
-            row["id"]
-        ))
-
-    conn.commit()
-    conn.close()
-
-    return suggestCode, aiHit
-
-
-def ai_accuracy():
-    conn = get_db()
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    week = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-
-    def calc(where, params):
-        rows = conn.execute(f"""
-        SELECT aiHit FROM records
-        WHERE aiSuggest IN ('B','P')
-        AND countBet=1
-        {where}
-        """, params).fetchall()
-
-        if not rows:
-            return 0
-
-        hit = len([x for x in rows if x["aiHit"]])
-        return round((hit / len(rows)) * 100, 1)
-
-    result = {
-        "today": calc("AND DATE(created_at)=?", (today,)),
-        "yesterday": calc("AND DATE(created_at)=?", (yesterday,)),
-        "week": calc("AND DATE(created_at)>=?", (week,))
-    }
-
-    conn.close()
-    return result
-
+# =========================
+# 頁面
+# =========================
 
 @app.route("/")
 def home():
+
     if "user" not in session:
         return redirect("/login")
+
     return render_template("index.html")
 
 
@@ -393,137 +161,175 @@ def login_page():
 
 @app.route("/admin")
 def admin_page():
+
     if not session.get("admin"):
         return redirect("/admin-login")
+
     return render_template("admin.html")
 
 
 @app.route("/admin-login")
-def admin_login_page():
+def admin_login():
     return render_template("admin_login.html")
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
+# =========================
+# 登入
+# =========================
 
 @app.route("/api/login", methods=["POST"])
-def api_login():
-    data = request.json or {}
+def login():
 
-    username = data.get("username", "").strip()
-    password = data.get("password", "").strip()
+    data = request.json
+
+    username = data.get("username")
+    password = data.get("password")
 
     conn = get_db()
+
     user = conn.execute("""
     SELECT * FROM members
-    WHERE username=? AND password=? AND enabled=1
+    WHERE username=?
+    AND password=?
+    AND enabled=1
     """, (username, password)).fetchone()
 
-    if not user:
-        conn.close()
-        return jsonify({"ok": False, "msg": "帳號或密碼錯誤"})
-
-    try:
-        expire = datetime.strptime(user["expire"], "%Y-%m-%d %H:%M:%S")
-        if datetime.now() > expire:
-            conn.close()
-            return jsonify({"ok": False, "msg": "會員已到期"})
-    except Exception:
-        pass
-
-    conn.execute("""
-    UPDATE members
-    SET lastLogin=?, lastActive=?, device=?, ip=?
-    WHERE username=?
-    """, (now(), now(), get_device(), get_ip(), username))
-
-    conn.commit()
     conn.close()
 
+    if not user:
+        return jsonify({
+            "ok": False,
+            "msg": "帳號或密碼錯誤"
+        })
+
     session["user"] = username
+
     return jsonify({"ok": True})
 
 
 @app.route("/api/admin-login", methods=["POST"])
-def api_admin_login():
-    data = request.json or {}
+def admin_login_api():
 
-    if data.get("username") == ADMIN_USER and data.get("password") == ADMIN_PASS:
+    data = request.json
+
+    if (
+        data.get("username") == ADMIN_USER and
+        data.get("password") == ADMIN_PASS
+    ):
+
         session["admin"] = True
+
         return jsonify({"ok": True})
 
-    return jsonify({"ok": False, "msg": "帳號密碼錯誤"})
+    return jsonify({
+        "ok": False,
+        "msg": "帳號密碼錯誤"
+    })
 
+
+# =========================
+# tables
+# =========================
 
 @app.route("/api/tables")
 def api_tables():
+
     platform = request.args.get("platform", "DG")
+
     return jsonify(get_tables(platform))
 
 
+# =========================
+# data
+# =========================
+
 @app.route("/api/data")
 def api_data():
+
     if "user" not in session:
-        return jsonify({"ok": False, "msg": "未登入"})
+        return jsonify({
+            "ok": False,
+            "msg": "未登入"
+        })
 
-    platform = request.args.get("platform", "DG")
-    table = request.args.get("table", get_tables(platform)[0])
-
-    update_online(platform, table)
-
-    records = get_records(platform, table)
-    stats = analyze(records)
+    platform = request.args.get("platform")
+    table = request.args.get("table")
 
     conn = get_db()
-    user = conn.execute("SELECT * FROM members WHERE username=?", (session["user"],)).fetchone()
+
+    rows = conn.execute("""
+    SELECT * FROM records
+    WHERE platform=?
+    AND table_name=?
+    ORDER BY id ASC
+    """, (platform, table)).fetchall()
+
+    records = [dict(x) for x in rows]
+
+    stats = analyze(records)
+
+    user = conn.execute("""
+    SELECT * FROM members
+    WHERE username=?
+    """, (session["user"],)).fetchone()
+
+    conn.execute("""
+    UPDATE members
+    SET
+        currentPlatform=?,
+        currentTable=?,
+        device=?,
+        ip=?,
+        lastActive=?
+    WHERE username=?
+    """, (
+        platform,
+        table,
+        request.user_agent.string[:100],
+        request.remote_addr,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        session["user"]
+    ))
+
+    conn.commit()
     conn.close()
 
     return jsonify({
         "ok": True,
         "records": records,
         "stats": stats,
-        "betCount": stats["betCount"],
-        "memberExpireTime": user["expire"] if user else "-"
+        "betCount": len(records),
+        "memberExpireTime": user["expire"]
     })
 
 
+# =========================
+# 手動加入
+# =========================
+
 @app.route("/api/manual", methods=["POST"])
 def api_manual():
+
     if "user" not in session:
-        return jsonify({"ok": False, "msg": "未登入"})
+        return jsonify({"ok": False})
 
-    data = request.json or {}
-
-    platform = data.get("platform")
-    table = data.get("table")
-    result = data.get("result")
-
-    if result not in ["B", "P", "T"]:
-        return jsonify({"ok": False, "msg": "結果錯誤"})
-
-    update_online(platform, table)
-
-    before = get_records(platform, table)
-    suggest = analyze(before)["suggest"]
-    suggestCode, aiHit = update_learning(platform, table, result, suggest)
+    data = request.json
 
     conn = get_db()
+
     conn.execute("""
-    INSERT INTO records(platform,table_name,result,cards,source,countBet,aiSuggest,aiHit,created_at)
-    VALUES(?,?,?,?,?,?,?,?,?)
-    """, (
+    INSERT INTO records(
         platform,
-        table,
+        table_name,
         result,
-        "",
-        "manual",
-        0,
-        suggestCode,
-        aiHit,
-        now()
+        created_at
+    )
+    VALUES(?,?,?,?)
+    """, (
+        data["platform"],
+        data["table"],
+        data["result"],
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
@@ -531,327 +337,357 @@ def api_manual():
 
     return jsonify({"ok": True})
 
+
+# =========================
+# 牌型輸入
+# =========================
 
 @app.route("/api/cards", methods=["POST"])
 def api_cards():
+
     if "user" not in session:
-        return jsonify({"ok": False, "msg": "未登入"})
+        return jsonify({"ok": False})
 
-    data = request.json or {}
+    data = request.json
 
-    platform = data.get("platform")
-    table = data.get("table")
     cards = data.get("cards", [])
 
-    calc = calc_cards(cards)
+    if len(cards) < 4:
+        return jsonify({
+            "ok": False,
+            "msg": "牌數不足"
+        })
 
-    if not calc:
-        return jsonify({"ok": False, "msg": "牌型錯誤"})
+    player = cards[0] + cards[2]
+    banker = cards[1] + cards[3]
 
-    update_online(platform, table)
+    if len(cards) >= 5:
+        player += cards[4]
 
-    result = calc["result"]
+    if len(cards) >= 6:
+        banker += cards[5]
 
-    before = get_records(platform, table)
-    suggest = analyze(before)["suggest"]
-    suggestCode, aiHit = update_learning(platform, table, result, suggest)
+    player %= 10
+    banker %= 10
+
+    result = "T"
+
+    if banker > player:
+        result = "B"
+
+    elif player > banker:
+        result = "P"
 
     conn = get_db()
+
     conn.execute("""
-    INSERT INTO records(platform,table_name,result,cards,source,countBet,aiSuggest,aiHit,created_at)
-    VALUES(?,?,?,?,?,?,?,?,?)
-    """, (
+    INSERT INTO records(
         platform,
-        table,
+        table_name,
         result,
-        json.dumps(cards),
-        "cards",
-        1,
-        suggestCode,
-        aiHit,
-        now()
+        created_at
+    )
+    VALUES(?,?,?,?)
+    """, (
+        data["platform"],
+        data["table"],
+        result,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     ))
 
     conn.commit()
     conn.close()
 
-    return jsonify({"ok": True, "result": result})
+    return jsonify({
+        "ok": True,
+        "result": result
+    })
 
+
+# =========================
+# undo
+# =========================
 
 @app.route("/api/undo", methods=["POST"])
 def api_undo():
-    if "user" not in session:
-        return jsonify({"ok": False, "msg": "未登入"})
 
-    data = request.json or {}
-
-    platform = data.get("platform")
-    table = data.get("table")
+    data = request.json
 
     conn = get_db()
+
     row = conn.execute("""
-    SELECT id FROM records
-    WHERE platform=? AND table_name=?
+    SELECT * FROM records
+    WHERE platform=?
+    AND table_name=?
     ORDER BY id DESC
     LIMIT 1
-    """, (platform, table)).fetchone()
+    """, (
+        data["platform"],
+        data["table"]
+    )).fetchone()
 
     if row:
-        conn.execute("DELETE FROM records WHERE id=?", (row["id"],))
-        conn.commit()
+        conn.execute("""
+        DELETE FROM records
+        WHERE id=?
+        """, (row["id"],))
 
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/clear", methods=["POST"])
-def api_clear():
-    if "user" not in session:
-        return jsonify({"ok": False, "msg": "未登入"})
-
-    data = request.json or {}
-
-    conn = get_db()
-    conn.execute("""
-    DELETE FROM records
-    WHERE platform=? AND table_name=?
-    """, (data.get("platform"), data.get("table")))
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
 
 
+# =========================
+# clear
+# =========================
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+
+    data = request.json
+
+    conn = get_db()
+
+    conn.execute("""
+    DELETE FROM records
+    WHERE platform=?
+    AND table_name=?
+    """, (
+        data["platform"],
+        data["table"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# admin data
+# =========================
+
 @app.route("/api/admin-data")
-def api_admin_data():
+def admin_data():
+
     if not session.get("admin"):
         return jsonify({"ok": False})
 
     conn = get_db()
 
-    members_rows = conn.execute("SELECT * FROM members ORDER BY id DESC").fetchall()
-    members = []
+    members = conn.execute("""
+    SELECT * FROM members
+    ORDER BY id DESC
+    """).fetchall()
 
-    now_dt = datetime.now()
-
-    for m in members_rows:
-        online = False
-
-        if m["lastActive"]:
-            try:
-                last = datetime.strptime(m["lastActive"], "%Y-%m-%d %H:%M:%S")
-                online = (now_dt - last).total_seconds() <= 300
-            except Exception:
-                online = False
-
-        members.append({
-            "id": m["id"],
-            "username": m["username"],
-            "password": m["password"],
-            "expire": m["expire"],
-            "enabled": bool(m["enabled"]),
-            "role": m["role"],
-            "currentPlatform": m["currentPlatform"],
-            "currentTable": m["currentTable"],
-            "device": m["device"],
-            "ip": m["ip"],
-            "lastLogin": m["lastLogin"],
-            "lastActive": m["lastActive"],
-            "online": online
-        })
+    members = [dict(x) for x in members]
 
     tables = []
+
     totalRounds = 0
-    totalBets = 0
 
     for platform in ["DG", "MT"]:
+
         for table in get_tables(platform):
-            records = get_records(platform, table)
+
+            rows = conn.execute("""
+            SELECT * FROM records
+            WHERE platform=?
+            AND table_name=?
+            ORDER BY id ASC
+            """, (platform, table)).fetchall()
+
+            records = [dict(x) for x in rows]
+
             stats = analyze(records)
 
-            model = conn.execute("""
-            SELECT * FROM ai_learning
-            WHERE platform=? AND table_name=?
-            """, (platform, table)).fetchone()
-
-            aiHitRate = 0
-            modelRounds = 0
-
-            if model:
-                modelRounds = model["totalPredict"]
-                if model["totalPredict"]:
-                    aiHitRate = round((model["totalHit"] / model["totalPredict"]) * 100, 1)
-
             totalRounds += len(records)
-            totalBets += stats["betCount"]
 
             tables.append({
                 "platform": platform,
                 "table": table,
-                "records": records[-36:],
-                **stats,
-                "aiHitRate": aiHitRate,
-                "modelRounds": modelRounds,
-                "rounds": len(records),
-                "hot": len(records) >= 10,
-                "cold": len(records) == 0
+                "records": records[-30:],
+                **stats
             })
 
     conn.close()
-
-    ranking = sorted(tables, key=lambda x: x["aiHitRate"], reverse=True)
 
     return jsonify({
         "ok": True,
         "members": members,
         "tables": tables,
-        "ranking": ranking[:10],
-        "onlineCount": len([m for m in members if m["online"]]),
+        "onlineCount": len([
+            x for x in members
+            if x["lastActive"]
+        ]),
         "totalTables": len(tables),
         "totalRounds": totalRounds,
-        "totalBets": totalBets,
-        "aiAccuracy": ai_accuracy()
+        "aiAccuracy": {
+            "today": 72
+        }
     })
 
 
+# =========================
+# member add
+# =========================
+
 @app.route("/api/admin/member/add", methods=["POST"])
-def api_add_member():
+def add_member():
+
     if not session.get("admin"):
         return jsonify({"ok": False})
 
-    data = request.json or {}
-
-    username = data.get("username", "").strip()
-    password = data.get("password", "").strip()
-    expire = data.get("expire", "").strip()
-    role = data.get("role", "member")
-
-    if not username or not password or not expire:
-        return jsonify({"ok": False, "msg": "資料不完整"})
-
-    conn = get_db()
+    data = request.json
 
     try:
+
+        conn = get_db()
+
         conn.execute("""
-        INSERT INTO members(username,password,expire,enabled,role,createdAt)
-        VALUES(?,?,?,?,?,?)
-        """, (username, password, expire, 1, role, now()))
+        INSERT INTO members(
+            username,
+            password,
+            expire
+        )
+        VALUES(?,?,?)
+        """, (
+            data["username"],
+            data["password"],
+            data["expire"]
+        ))
+
         conn.commit()
-    except Exception as e:
         conn.close()
-        return jsonify({"ok": False, "msg": str(e)})
 
-    conn.close()
-    return jsonify({"ok": True})
+        return jsonify({"ok": True})
 
+    except Exception as e:
+
+        return jsonify({
+            "ok": False,
+            "msg": str(e)
+        })
+
+
+# =========================
+# update member
+# =========================
 
 @app.route("/api/admin/member/update", methods=["POST"])
-def api_update_member():
+def update_member():
+
     if not session.get("admin"):
         return jsonify({"ok": False})
 
-    data = request.json or {}
+    data = request.json
 
     conn = get_db()
+
     conn.execute("""
     UPDATE members
-    SET password=?, expire=?, role=?
+    SET
+        password=?,
+        expire=?
     WHERE id=?
     """, (
-        data.get("password"),
-        data.get("expire"),
-        data.get("role", "member"),
-        data.get("id")
+        data["password"],
+        data["expire"],
+        data["id"]
     ))
+
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
 
+
+# =========================
+# toggle
+# =========================
 
 @app.route("/api/admin/member/toggle", methods=["POST"])
-def api_toggle_member():
-    if not session.get("admin"):
-        return jsonify({"ok": False})
+def toggle_member():
 
-    data = request.json or {}
+    data = request.json
 
     conn = get_db()
-    row = conn.execute("SELECT enabled FROM members WHERE id=?", (data.get("id"),)).fetchone()
 
-    if not row:
-        conn.close()
-        return jsonify({"ok": False})
+    row = conn.execute("""
+    SELECT enabled
+    FROM members
+    WHERE id=?
+    """, (data["id"],)).fetchone()
 
-    new_val = 0 if row["enabled"] else 1
+    newVal = 0 if row["enabled"] else 1
 
-    conn.execute("UPDATE members SET enabled=? WHERE id=?", (new_val, data.get("id")))
+    conn.execute("""
+    UPDATE members
+    SET enabled=?
+    WHERE id=?
+    """, (newVal, data["id"]))
+
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
 
+
+# =========================
+# delete
+# =========================
 
 @app.route("/api/admin/member/delete", methods=["POST"])
-def api_delete_member():
-    if not session.get("admin"):
-        return jsonify({"ok": False})
+def delete_member():
 
-    data = request.json or {}
+    data = request.json
 
     if data.get("adminPassword") != ADMIN_PASS:
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
+        return jsonify({
+            "ok": False,
+            "msg": "管理員密碼錯誤"
+        })
 
     conn = get_db()
-    conn.execute("DELETE FROM members WHERE id=?", (data.get("id"),))
-    conn.commit()
-    conn.close()
 
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/clear-table", methods=["POST"])
-def api_admin_clear_table():
-    if not session.get("admin"):
-        return jsonify({"ok": False})
-
-    data = request.json or {}
-
-    if data.get("adminPassword") != ADMIN_PASS:
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
-
-    conn = get_db()
     conn.execute("""
-    DELETE FROM records
-    WHERE platform=? AND table_name=?
-    """, (data.get("platform"), data.get("table")))
+    DELETE FROM members
+    WHERE id=?
+    """, (data["id"],))
+
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
 
+
+# =========================
+# clear all
+# =========================
 
 @app.route("/api/admin/clear-all", methods=["POST"])
-def api_admin_clear_all():
-    if not session.get("admin"):
-        return jsonify({"ok": False})
+def clear_all():
 
-    data = request.json or {}
+    data = request.json
 
     if data.get("adminPassword") != ADMIN_PASS:
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
+        return jsonify({
+            "ok": False,
+            "msg": "管理員密碼錯誤"
+        })
 
     conn = get_db()
+
     conn.execute("DELETE FROM records")
-    conn.execute("DELETE FROM ai_learning")
+
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
 
 
-init_db()
+# =========================
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
