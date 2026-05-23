@@ -355,6 +355,15 @@ def api_admin_login():
     return jsonify({"ok": False})
 
 
+@app.route("/api/tables")
+def api_tables():
+    platform = request.args.get("platform", "DG")
+
+    if platform == "MT":
+        return jsonify(MT_TABLES)
+
+    return jsonify(DG_TABLES)
+
 @app.route("/api/data")
 def api_data():
     if not session.get("member"):
@@ -363,14 +372,20 @@ def api_data():
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
 
+    update_member_active(platform, table)
+
     data = get_records(platform, table)
+    stats = road_stats(data)
+
+    member = get_member(session.get("member"))
 
     return jsonify({
         "ok": True,
         "records": data,
-        "stats": road_stats(data)
+        "stats": stats,
+        "betCount": stats.get("betCount", 0),
+        "memberExpireTime": member["expire"] if member else "-"
     })
-
 
 @app.route("/api/manual", methods=["POST"])
 def api_manual():
