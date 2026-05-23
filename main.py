@@ -326,7 +326,46 @@ def road_stats(data):
         "stableRate": stable,
         "betCount": len(valid)
     }
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
 
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+
+    body = request.json or {}
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    member = get_member(username)
+
+    if not member:
+        return jsonify({
+            "ok": False,
+            "msg": "帳號不存在"
+        })
+
+    if not member["enabled"]:
+        return jsonify({
+            "ok": False,
+            "msg": "會員停權"
+        })
+
+    if member["password"] != password:
+        return jsonify({
+            "ok": False,
+            "msg": "密碼錯誤"
+        })
+
+    session["member"] = username
+
+    update_member_active()
+
+    return jsonify({
+        "ok": True
+    })
 
 @app.route("/")
 def index():
