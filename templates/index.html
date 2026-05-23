@@ -643,25 +643,56 @@ function renderRoad(records){
 
 function renderStats(data){
     const s = data.stats || {};
-    const suggest = document.getElementById("suggest");
 
-    suggest.textContent = s.suggest || "觀望";
-    suggest.className = "ai-result";
+    const aiResult = document.getElementById("aiResult");
+    const confidence = document.getElementById("confidence");
+    const aiAlert = document.getElementById("aiAlert");
 
-    if(s.suggest==="莊") suggest.classList.add("banker-text");
-    else if(s.suggest==="閒") suggest.classList.add("player-text");
-    else suggest.classList.add("wait-text");
+    const suggestText = s.suggest || "觀望";
 
-    document.getElementById("stableRate").textContent = s.stableRate || 0;
-    document.getElementById("bankerRate").textContent = (s.bankerRate || 0) + "%";
-    document.getElementById("playerRate").textContent = (s.playerRate || 0) + "%";
-    document.getElementById("tieCount").textContent = s.tieCount || 0;
-    document.getElementById("betCount").textContent = data.betCount || 0;
-    document.getElementById("analysisCount").textContent = s.totalAnalysis || 0;
+    if(aiResult){
+        aiResult.textContent = suggestText;
+        aiResult.className = "ai-result";
 
-    document.getElementById("streak").textContent =
-        s.streakResult ? `${resultText(s.streakResult)} ${s.streakCount}連` : "-";
+        if(suggestText === "莊"){
+            aiResult.classList.add("banker-text");
+        }else if(suggestText === "閒"){
+            aiResult.classList.add("player-text");
+        }else{
+            aiResult.classList.add("wait-text");
+        }
+    }
 
+    if(confidence){
+        confidence.textContent = (s.stableRate || 0) + "%";
+    }
+
+    if(aiAlert){
+        if(s.alerts && s.alerts.length){
+            aiAlert.textContent = s.alerts[0];
+        }else{
+            aiAlert.textContent = "目前無提醒";
+        }
+    }
+
+    const bankerRate = document.getElementById("bankerRate");
+    const playerRate = document.getElementById("playerRate");
+    const tieCount = document.getElementById("tieCount");
+    const streak = document.getElementById("streak");
+    const betCount = document.getElementById("betCount");
+    const analysisCount = document.getElementById("analysisCount");
+
+    if(bankerRate) bankerRate.textContent = (s.bankerRate || 0) + "%";
+    if(playerRate) playerRate.textContent = (s.playerRate || 0) + "%";
+    if(tieCount) tieCount.textContent = s.tieCount || 0;
+    if(betCount) betCount.textContent = data.betCount || 0;
+    if(analysisCount) analysisCount.textContent = s.totalAnalysis || 0;
+
+    if(streak){
+        streak.textContent =
+            s.streakResult ? `${resultText(s.streakResult)} ${s.streakCount}連` : "-";
+    }
+}
     const alerts = document.getElementById("alerts");
     alerts.innerHTML = "";
 
