@@ -50,6 +50,12 @@ select,button{
     grid-template-columns:330px 1fr 330px;
     gap:16px;
 }
+    .ai-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    align-items:center;
+}
 .grid-mid{
     display:grid;
     grid-template-columns:1fr 420px;
@@ -421,22 +427,30 @@ body.force-mobile .rate{
     </div>
 
     <div class="grid-top">
-        <div class="card">
-            <div class="title">✦ AI 建議方向</div>
-            <div id="suggest" class="ai-result wait-text">觀望</div>
-            <div class="rate"><span id="stableRate">0</span>%</div>
+       <div class="card">
+    <div class="ai-row">
+
+        <div class="ai-row">
+            <div class="title">AI 建議方向</div>
+
+            <div class="ai-result wait-text" id="aiResult">
+                觀望
+            </div>
+
+            <div class="rate" id="confidence">
+                0%
+            </div>
         </div>
 
-        <div class="card">
-            <div class="title">⚙ 大路盤</div>
-            <div id="road" class="road"></div>
-        </div>
+        <div>
+            <div class="title">AI 提醒</div>
 
-        <div class="card">
-            <div class="title">🔔 AI 提醒</div>
-            <div id="alerts"></div>
+            <div class="alert-box" id="aiAlert">
+                目前無提醒
+            </div>
         </div>
     </div>
+</div>
 
     <div class="grid-mid">
         <div class="card">
@@ -483,7 +497,7 @@ body.force-mobile .rate{
                 <button class="banker" onclick="manualAdd('B')">莊</button>
                 <button class="player" onclick="manualAdd('P')">閒</button>
                 <button class="tie" onclick="manualAdd('T')">和</button>
-                <button onclick="undo()">↩ 撤回</button>
+                <button onclick="undo()">↩ </button>
             </div>
         </div>
     </div>
