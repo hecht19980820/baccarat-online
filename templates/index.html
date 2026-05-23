@@ -373,6 +373,11 @@ body.force-mobile .rate{
         grid-template-columns:1fr 1fr !important;
         gap:8px !important;
         align-items:center !important;
+        min-height:140px !important;
+    }
+
+    .ai-row > div{
+        min-height:140px !important;
     }
 
     .ai-result,
@@ -387,30 +392,39 @@ body.force-mobile .rate{
     #confidence,
     #stableRate{
         font-size:18px !important;
-        line-height:1.1 !important;
+    }
+
+    .alert-box{
+        font-size:14px !important;
+        padding:8px !important;
     }
 
     .road,
     #road{
         display:grid !important;
-        grid-template-rows:repeat(6,22px) !important;
+        grid-template-rows:repeat(6,20px) !important;
         grid-auto-flow:column !important;
-        grid-auto-columns:22px !important;
-        gap:3px !important;
-        min-height:150px !important;
-        max-height:160px !important;
-        padding:6px !important;
+        grid-auto-columns:20px !important;
+        gap:2px !important;
+
+        min-height:135px !important;
+        max-height:140px !important;
+
+        padding:5px !important;
+
         background:rgba(255,255,255,.045) !important;
+
         overflow-x:auto !important;
         overflow-y:hidden !important;
     }
 
     .cell{
-        width:19px !important;
-        height:19px !important;
+        width:18px !important;
+        height:18px !important;
         font-size:9px !important;
     }
 
+}
     .title{
         font-size:15px !important;
         margin-bottom:5px !important;
