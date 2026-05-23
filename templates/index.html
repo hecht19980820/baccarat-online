@@ -370,36 +370,72 @@ body.force-mobile .rate{
         font-size:12px;
     }
 
-    /* 手機版強制壓縮大路盤 */
+/* 最終強制手機版壓縮修正 */
 @media(max-width:900px){
-    body.force-mobile .road,
-    .road{
-        grid-template-rows:repeat(6,18px) !important;
-        grid-auto-columns:18px !important;
-        gap:2px !important;
-        min-height:120px !important;
-        max-height:130px !important;
-        padding:4px !important;
+
+    .ai-row{
+        display:grid !important;
+        grid-template-columns:1fr 1fr !important;
+        gap:8px !important;
+        align-items:center !important;
     }
 
-    body.force-mobile .cell,
+    .ai-result,
+    #aiResult,
+    #suggest{
+        font-size:28px !important;
+        line-height:1.1 !important;
+        text-shadow:0 0 14px currentColor !important;
+    }
+
+    .rate,
+    #confidence,
+    #stableRate{
+        font-size:18px !important;
+        line-height:1.1 !important;
+    }
+
+    .road,
+    #road{
+        display:grid !important;
+        grid-template-rows:repeat(6,22px) !important;
+        grid-auto-flow:column !important;
+        grid-auto-columns:22px !important;
+        gap:3px !important;
+        min-height:150px !important;
+        max-height:160px !important;
+        padding:6px !important;
+        background:rgba(255,255,255,.045) !important;
+        overflow-x:auto !important;
+        overflow-y:hidden !important;
+    }
+
     .cell{
-        width:16px !important;
-        height:16px !important;
-        font-size:8px !important;
+        width:19px !important;
+        height:19px !important;
+        font-size:9px !important;
     }
 
-    body.force-mobile .card,
+    .title{
+        font-size:15px !important;
+        margin-bottom:5px !important;
+    }
+
     .card{
         padding:8px !important;
+        margin-bottom:8px !important;
     }
 
-    body.force-mobile .title,
-    .title{
-        font-size:16px !important;
-        margin-bottom:6px !important;
+    .manual-buttons{
+        grid-template-columns:repeat(4,1fr) !important;
+        gap:6px !important;
     }
-    
+
+    .manual-buttons button{
+        height:42px !important;
+        font-size:18px !important;
+    }
+}
 </style>
 </head>
 
