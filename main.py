@@ -254,8 +254,13 @@ def row_to_record(row):
 
 def get_records(platform, table):
     conn = db()
+
     rows = conn.execute("""
         SELECT * FROM records
         WHERE platform=? AND table_no=?
         ORDER BY id ASC
-    """, (platform,
+    """, (platform, table)).fetchall()
+
+    conn.close()
+
+    return [row_to_record(r) for r in rows]
