@@ -3,479 +3,167 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>AI 百家樂控制中心</title>
 
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
-body{
-    background:#020817;
-    color:white;
-    font-family:Arial,sans-serif;
-}
-
-.wrap{
-    padding:20px;
-}
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
-    flex-wrap:wrap;
-    gap:15px;
-}
-
-.logo{
-    font-size:38px;
-    font-weight:bold;
-    color:#dbeafe;
-}
-
-.time{
-    text-align:right;
-    color:#38bdf8;
-    font-size:20px;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:320px 1fr 420px;
-    gap:20px;
-}
-
-.card{
-    background:#071226;
-    border:1px solid #16345f;
-    border-radius:22px;
-    padding:20px;
-    box-shadow:0 0 25px rgba(0,140,255,.12);
-}
-
-.card-title{
-    font-size:24px;
-    margin-bottom:20px;
-    color:#dbeafe;
-}
-
-.ai-circle{
-    width:180px;
-    height:180px;
-    border-radius:50%;
-    border:10px solid #0ea5e9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:50px;
-    font-weight:bold;
-    margin:auto;
-    margin-top:20px;
-    margin-bottom:20px;
-    box-shadow:0 0 40px rgba(14,165,233,.4);
-}
-
-.stat{
-    display:flex;
-    justify-content:space-between;
-    margin-top:12px;
-    font-size:18px;
-}
-
-.green{
-    color:#22c55e;
-}
-
-.red{
-    color:#ef4444;
-}
-
-.blue{
-    color:#38bdf8;
-}
-
-.yellow{
-    color:#facc15;
-}
-
-.big-center{
-    text-align:center;
-}
-
-.predict-wrap{
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    margin-top:30px;
-    flex-wrap:wrap;
-    gap:20px;
-}
-
-.predict-box{
-    width:180px;
-    height:220px;
-    border-radius:20px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    font-size:60px;
-    font-weight:bold;
-}
-
-.player{
-    border:2px solid #2563eb;
-    color:#60a5fa;
-    box-shadow:0 0 30px rgba(37,99,235,.3);
-}
-
-.banker{
-    border:2px solid #ef4444;
-    color:#fb7185;
-    box-shadow:0 0 30px rgba(239,68,68,.3);
-}
-
-.center-rate{
-    text-align:center;
-}
-
-.center-rate .num{
-    font-size:70px;
-    color:#34d399;
-    font-weight:bold;
-}
-
-.center-rate .txt{
-    margin-top:10px;
-    font-size:28px;
-}
-
-.table-box{
-    margin-top:15px;
-    border:1px solid #1e3a5f;
-    border-radius:15px;
-    overflow:hidden;
-}
-
-.table-row{
-    display:grid;
-    grid-template-columns:80px 80px 80px 1fr 100px;
-    padding:14px;
-    border-bottom:1px solid #132944;
-    align-items:center;
-}
-
-.table-row.head{
-    background:#0b1730;
-    font-weight:bold;
-}
-
-.member{
-    background:#08101f;
-    border:1px solid #16345f;
-    border-radius:16px;
-    padding:15px;
-    margin-top:15px;
-}
-
-input{
-    width:100%;
-    background:#0b1730;
-    border:none;
-    border-radius:12px;
-    padding:14px;
-    color:white;
-    margin-top:10px;
-    font-size:16px;
-}
-
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:14px;
-    margin-top:15px;
-    background:linear-gradient(90deg,#2563eb,#38bdf8);
-    color:white;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.small-btn{
-    padding:10px;
-    font-size:14px;
-    margin-top:10px;
-}
-
-.logout{
-    position:fixed;
-    top:20px;
-    right:20px;
-    color:#ffd54f;
-    text-decoration:none;
-    font-size:22px;
-}
-
-.online{
-    color:#22c55e;
-    font-weight:bold;
-}
-
-.offline{
-    color:#ef4444;
-    font-weight:bold;
-}
-
-@media(max-width:1200px){
-
-    .grid{
-        grid-template-columns:1fr;
-    }
-
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#020817;color:white;font-family:Arial,sans-serif}
+.wrap{padding:20px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:15px}
+.logo{font-size:38px;font-weight:bold;color:#dbeafe}
+.time{color:#38bdf8;font-size:20px}
+.grid{display:grid;grid-template-columns:320px 1fr 420px;gap:20px}
+.card{background:#071226;border:1px solid #16345f;border-radius:22px;padding:20px;box-shadow:0 0 25px rgba(0,140,255,.12);margin-bottom:20px}
+.card-title{font-size:24px;margin-bottom:20px;color:#dbeafe}
+.ai-circle{width:180px;height:180px;border-radius:50%;border:10px solid #0ea5e9;display:flex;justify-content:center;align-items:center;font-size:50px;font-weight:bold;margin:20px auto;box-shadow:0 0 40px rgba(14,165,233,.4)}
+.stat{display:flex;justify-content:space-between;margin-top:12px;font-size:18px;gap:10px}
+.green,.online{color:#22c55e;font-weight:bold}
+.red,.offline{color:#ef4444;font-weight:bold}
+.blue{color:#38bdf8}
+.yellow{color:#facc15}
+.big-center{text-align:center}
+.predict-wrap{display:flex;justify-content:space-around;align-items:center;margin-top:30px;flex-wrap:wrap;gap:20px}
+.predict-box{width:180px;height:220px;border-radius:20px;display:flex;flex-direction:column;justify-content:center;align-items:center;font-size:60px;font-weight:bold}
+.player{border:2px solid #2563eb;color:#60a5fa;box-shadow:0 0 30px rgba(37,99,235,.3)}
+.banker{border:2px solid #ef4444;color:#fb7185;box-shadow:0 0 30px rgba(239,68,68,.3)}
+.center-rate{text-align:center}
+.center-rate .num{font-size:70px;color:#34d399;font-weight:bold}
+.center-rate .txt{margin-top:10px;font-size:28px}
+.table-box{margin-top:15px;border:1px solid #1e3a5f;border-radius:15px;overflow:hidden}
+.table-row{display:grid;grid-template-columns:80px 80px 80px 1fr 100px;padding:14px;border-bottom:1px solid #132944;align-items:center}
+.table-row.head{background:#0b1730;font-weight:bold}
+.member{background:#08101f;border:1px solid #16345f;border-radius:16px;padding:15px;margin-top:15px}
+input{width:100%;background:#0b1730;border:none;border-radius:12px;padding:14px;color:white;margin-top:10px;font-size:16px}
+button{width:100%;padding:14px;border:none;border-radius:14px;margin-top:15px;background:linear-gradient(90deg,#2563eb,#38bdf8);color:white;font-size:18px;font-weight:bold}
+.small-btn{padding:10px;font-size:14px;margin-top:10px}
+.logout{position:fixed;top:20px;right:20px;color:#ffd54f;text-decoration:none;font-size:22px}
+@media(max-width:1200px){.grid{grid-template-columns:1fr}.table-row{grid-template-columns:70px 60px 60px 1fr 70px;font-size:15px}.logo{font-size:30px}}
 </style>
 </head>
 
 <body>
-
-<a class="logout" href="/logout">
-登出
-</a>
+<a class="logout" href="/logout">登出</a>
 
 <div class="wrap">
-
 <div class="topbar">
-
-<div class="logo">
-AI 百家樂控制中心
-</div>
-
-<div class="time" id="timeNow">
---:--:--
-</div>
-
+    <div class="logo">AI 百家樂控制中心</div>
+    <div class="time" id="timeNow">--:--:--</div>
 </div>
 
 <div class="grid">
 
 <div>
+    <div class="card">
+        <div class="card-title">系統狀態</div>
+        <div class="ai-circle">AI</div>
+        <div class="stat"><span>AI 模型</span><span class="green">運行中</span></div>
+        <div class="stat"><span>共享資料庫</span><span class="blue">已同步</span></div>
+        <div class="stat"><span>即時監控</span><span class="green">正常</span></div>
+        <div class="stat"><span>系統穩定度</span><span class="yellow">98%</span></div>
+    </div>
 
-<div class="card">
+    <div class="card">
+        <div class="card-title">AI 核心數據</div>
+        <div class="stat"><span>總預測次數</span><span id="totalRecords">0</span></div>
+        <div class="stat"><span>共享學習筆數</span><span id="totalShared">0</span></div>
+        <div class="stat"><span>資料同步率</span><span class="green" id="accuracy">0%</span></div>
+        <div class="stat"><span>在線會員</span><span class="blue" id="onlineMembers">0</span></div>
+    </div>
 
-<div class="card-title">
-系統狀態
-</div>
-
-<div class="ai-circle">
-AI
-</div>
-
-<div class="stat">
-<span>AI 模型</span>
-<span class="green">運行中</span>
-</div>
-
-<div class="stat">
-<span>共享資料庫</span>
-<span class="blue">已同步</span>
-</div>
-
-<div class="stat">
-<span>即時監控</span>
-<span class="green">正常</span>
-</div>
-
-<div class="stat">
-<span>系統穩定度</span>
-<span class="yellow">98%</span>
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="card-title">
-AI 核心數據
-</div>
-
-<div class="stat">
-<span>總預測次數</span>
-<span>15823</span>
-</div>
-
-<div class="stat">
-<span>總正確次數</span>
-<span>9842</span>
-</div>
-
-<div class="stat">
-<span>整體準確率</span>
-<span class="green">62.1%</span>
-</div>
-
-<div class="stat">
-<span>AI 信心平均</span>
-<span class="blue">71.3%</span>
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="card-title">
-新增會員
-</div>
-
-<input id="username" placeholder="帳號">
-
-<input id="password" placeholder="密碼">
-
-<input id="expire" placeholder="到期時間 2026-12-31 23:59:59">
-
-<button onclick="createMember()">
-新增會員
-</button>
-
-</div>
-
+    <div class="card">
+        <div class="card-title">新增會員</div>
+        <input id="username" placeholder="帳號">
+        <input id="password" placeholder="密碼">
+        <input id="expire" placeholder="到期時間 2026-12-31 23:59:59">
+        <button onclick="createMember()">新增會員</button>
+    </div>
 </div>
 
 <div>
+    <div class="card">
+        <div class="card-title">AI 即時預測</div>
+        <div class="big-center">即時分析中</div>
+        <div class="predict-wrap">
+            <div class="predict-box player">閒<div style="font-size:36px;" id="playerPredict">0%</div></div>
+            <div class="center-rate">
+                <div class="num" id="mainConfidence">0%</div>
+                <div class="txt" id="mainSuggest">建議：觀望</div>
+            </div>
+            <div class="predict-box banker">莊<div style="font-size:36px;" id="bankerPredict">0%</div></div>
+        </div>
+    </div>
 
-<div class="card">
-
-<div class="card-title">
-AI 即時預測
-</div>
-
-<div class="big-center">
-桌號 01
-</div>
-
-<div class="predict-wrap">
-
-<div class="predict-box player">
-閒
-<div style="font-size:36px;">
-58%
-</div>
-</div>
-
-<div class="center-rate">
-<div class="num">
-72%
-</div>
-
-<div class="txt">
-建議下注：閒
-</div>
-</div>
-
-<div class="predict-box banker">
-莊
-<div style="font-size:36px;">
-42%
-</div>
-</div>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="card-title">
-桌號即時監控
-</div>
-
-<div class="table-box">
-
-<div class="table-row head">
-<div>桌號</div>
-<div>平台</div>
-<div>AI</div>
-<div>路線</div>
-<div>狀態</div>
-</div>
-
-<div class="table-row">
-<div>RB01</div>
-<div class="green">DG</div>
-<div class="blue">閒</div>
-<div>莊莊閒閒莊</div>
-<div class="online">在線</div>
-</div>
-
-<div class="table-row">
-<div>RB02</div>
-<div class="green">DG</div>
-<div class="red">莊</div>
-<div>閒莊莊莊</div>
-<div class="online">在線</div>
-</div>
-
-<div class="table-row">
-<div>03A</div>
-<div class="yellow">MT</div>
-<div class="blue">閒</div>
-<div>閒閒莊閒</div>
-<div class="offline">離線</div>
-</div>
-
-</div>
-
-</div>
-
+    <div class="card">
+        <div class="card-title">桌號即時監控</div>
+        <div class="table-box" id="tableMonitor">讀取中...</div>
+    </div>
 </div>
 
 <div>
-
-<div class="card">
-
-<div class="card-title">
-會員列表
-</div>
-
-<div id="memberList">
-讀取中...
+    <div class="card">
+        <div class="card-title">會員列表</div>
+        <div id="memberList">讀取中...</div>
+    </div>
 </div>
 
 </div>
-
-</div>
-
-</div>
-
 </div>
 
 <script>
-
 function updateClock(){
-
-    let d = new Date()
-
-    document.getElementById("timeNow").innerHTML =
-        d.toLocaleTimeString()
+    document.getElementById("timeNow").innerHTML = new Date().toLocaleTimeString()
 }
-
 setInterval(updateClock,1000)
-
 updateClock()
 
-async function loadMembers(){
+async function loadCoreStats(){
+    let r = await fetch("/api/admin/core-stats")
+    let data = await r.json()
+    if(!data.ok) return
 
+    document.getElementById("totalRecords").innerHTML = data.totalRecords
+    document.getElementById("totalShared").innerHTML = data.totalShared
+    document.getElementById("accuracy").innerHTML = data.accuracy + "%"
+    document.getElementById("onlineMembers").innerHTML = data.onlineMembers
+}
+
+async function loadTables(){
+    let r = await fetch("/api/admin/tables-monitor")
+    let data = await r.json()
+    if(!data.ok) return
+
+    let html = `
+    <div class="table-row head">
+        <div>桌號</div><div>平台</div><div>AI</div><div>路線</div><div>狀態</div>
+    </div>`
+
+    data.tables.forEach(t=>{
+        html += `
+        <div class="table-row">
+            <div>${t.table}</div>
+            <div class="green">${t.platform}</div>
+            <div class="${t.ai=='莊'?'red':'blue'}">${t.ai}</div>
+            <div>${t.road}</div>
+            <div class="${t.online?'online':'offline'}">${t.online?'在線':'離線'}</div>
+        </div>`
+    })
+
+    document.getElementById("tableMonitor").innerHTML = html
+
+    if(data.tables.length){
+        let first = data.tables[0]
+        document.getElementById("mainSuggest").innerHTML = "建議：" + first.ai
+        document.getElementById("mainConfidence").innerHTML = first.road == "-" ? "0%" : "60%"
+        document.getElementById("bankerPredict").innerHTML = first.ai == "莊" ? "60%" : "40%"
+        document.getElementById("playerPredict").innerHTML = first.ai == "閒" ? "60%" : "40%"
+    }
+}
+
+async function loadMembers(){
     let r = await fetch("/api/admin/members")
     let data = await r.json()
 
     if(!data.ok){
-
         document.getElementById("memberList").innerHTML = "讀取失敗"
         return
     }
@@ -483,118 +171,65 @@ async function loadMembers(){
     let html = ""
 
     data.members.forEach(m=>{
-
         html += `
         <div class="member">
-
-            <div class="stat">
-                <span>帳號</span>
-                <span>${m.username}</span>
-            </div>
-
-            <div class="stat">
-                <span>狀態</span>
-                <span class="${m.enabled ? 'online':'offline'}">
-                ${m.enabled ? '啟用':'停權'}
-                </span>
-            </div>
-
-            <div class="stat">
-                <span>到期</span>
-                <span>${m.expire || '-'}</span>
-            </div>
-
-            <div class="stat">
-                <span>裝置</span>
-                <span>${m.device || '-'}</span>
-            </div>
-
-            <div class="stat">
-                <span>IP</span>
-                <span>${m.ip || '-'}</span>
-            </div>
-
-            <div class="stat">
-                <span>所在桌</span>
-                <span>
-                ${m.current_platform || '-'}
-                ${m.current_table || ''}
-                </span>
-            </div>
-
-            <div class="stat">
-                <span>最後操作</span>
-                <span>${m.last_active || '-'}</span>
-            </div>
-
-            <button
-                class="small-btn"
-                onclick="toggleMember('${m.username}')"
-            >
-                ${m.enabled ? '停權會員':'啟用會員'}
-            </button>
-
-        </div>
-        `
+            <div class="stat"><span>帳號</span><span>${m.username}</span></div>
+            <div class="stat"><span>狀態</span><span class="${m.enabled ? 'online':'offline'}">${m.enabled ? '啟用':'停權'}</span></div>
+            <div class="stat"><span>到期</span><span>${m.expire || '-'}</span></div>
+            <div class="stat"><span>裝置</span><span>${m.device || '-'}</span></div>
+            <div class="stat"><span>IP</span><span>${m.ip || '-'}</span></div>
+            <div class="stat"><span>所在桌</span><span>${m.current_platform || '-'} ${m.current_table || ''}</span></div>
+            <div class="stat"><span>最後操作</span><span>${m.last_active || '-'}</span></div>
+            <button class="small-btn" onclick="toggleMember('${m.username}')">${m.enabled ? '停權會員':'啟用會員'}</button>
+        </div>`
     })
 
     document.getElementById("memberList").innerHTML = html
 }
 
 async function createMember(){
-
     let username = document.getElementById("username").value
     let password = document.getElementById("password").value
     let expire = document.getElementById("expire").value
 
     let r = await fetch("/api/admin/create-member",{
         method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            username,
-            password,
-            expire
-        })
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,password,expire})
     })
 
     let data = await r.json()
-
     alert(data.msg)
 
     if(data.ok){
-
         document.getElementById("username").value = ""
         document.getElementById("password").value = ""
-
         loadMembers()
+        loadCoreStats()
     }
 }
 
 async function toggleMember(username){
-
     let r = await fetch("/api/admin/toggle-member",{
         method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            username
-        })
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username})
     })
 
     let data = await r.json()
-
     if(data.ok){
         loadMembers()
+        loadCoreStats()
     }
 }
 
+loadCoreStats()
+loadTables()
 loadMembers()
 
+setInterval(loadCoreStats,5000)
+setInterval(loadTables,3000)
 setInterval(loadMembers,5000)
-
 </script>
 
 </body>
