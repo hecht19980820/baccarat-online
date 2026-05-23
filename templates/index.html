@@ -3,224 +3,113 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>百家樂 AI 系統</title>
-
+<title>Baccarat AI</title>
 <style>
-*{box-sizing:border-box}
+body{margin:0;background:#07111f;color:white;font-family:Arial;padding:20px}
+button,select{padding:12px;margin:5px;font-size:18px}
+#road{display:flex;flex-wrap:wrap;gap:6px;margin-top:20px}
+.cell{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold}
+.B{background:red}.P{background:blue}.T{background:green}
+</style>
+</head>
+<body>
 
-body{
-    margin:0;
-    background:radial-gradient(circle at top,#10264d,#030812 60%,#01030a);
-    color:#fff;
-    font-family:Arial,"Microsoft JhengHei",sans-serif;
+<h1>Baccarat AI System</h1>
+
+<select id="platform" onchange="loadTables()">
+<option value="DG">DG</option>
+<option value="MT">MT</option>
+</select>
+
+<select id="table" onchange="load()"></select>
+
+<br>
+
+<button onclick="manual('B')">莊</button>
+<button onclick="manual('P')">閒</button>
+<button onclick="manual('T')">和</button>
+<button onclick="undo()">撤回</button>
+<button onclick="clearRoad()">清除</button>
+
+<div id="road"></div>
+
+<script>
+async function loadTables(){
+    const platform=document.getElementById("platform").value;
+    const res=await fetch(`/api/tables?platform=${platform}`);
+    const tables=await res.json();
+    const table=document.getElementById("table");
+    table.innerHTML="";
+    tables.forEach(t=>{
+        const op=document.createElement("option");
+        op.value=t;
+        op.textContent=t;
+        table.appendChild(op);
+    });
+    load();
 }
 
-.container{
-    max-width:1450px;
-    margin:auto;
-    padding:18px;
+async function load(){
+    const platform=document.getElementById("platform").value;
+    const table=document.getElementById("table").value || "RB01";
+
+    const res=await fetch(`/api/data?platform=${platform}&table=${table}`);
+    const data=await res.json();
+
+    if(!data.ok){
+        location.href="/login";
+        return;
+    }
+
+    const road=document.getElementById("road");
+    road.innerHTML="";
+
+    data.records.forEach(r=>{
+        const div=document.createElement("div");
+        div.className="cell "+r.result;
+        div.innerText=r.result==="B"?"莊":r.result==="P"?"閒":"和";
+        road.appendChild(div);
+    });
 }
 
-.topbar{
-    display:grid;
-    grid-template-columns:180px 180px 1fr;
-    gap:14px;
-    align-items:center;
-    margin-bottom:16px;
+async function manual(result){
+    const platform=document.getElementById("platform").value;
+    const table=document.getElementById("table").value || "RB01";
+
+    await fetch("/api/manual",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform,table,result})
+    });
+    load();
 }
 
-select,button{
-    border:none;
-    outline:none;
-    border-radius:14px;
-    background:#07182f;
-    border:1px solid #1368aa;
-    color:white;
-    padding:14px;
-    font-size:18px;
-    font-weight:bold;
+async function undo(){
+    const platform=document.getElementById("platform").value;
+    const table=document.getElementById("table").value || "RB01";
+
+    await fetch("/api/undo",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform,table})
+    });
+    load();
 }
 
-.expire{
-    color:#ffd84d;
-    font-weight:bold;
-    font-size:17px;
+async function clearRoad(){
+    const platform=document.getElementById("platform").value;
+    const table=document.getElementById("table").value || "RB01";
+
+    await fetch("/api/clear",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform,table})
+    });
+    load();
 }
 
-.card{
-    background:rgba(3,16,34,.92);
-    border:1px solid #0b72b7;
-    border-radius:18px;
-    padding:18px;
-    box-shadow:0 0 22px rgba(0,120,255,.22);
-}
+loadTables();
+</script>
 
-.grid-top{
-    display:grid;
-    grid-template-columns:330px 1fr 330px;
-    gap:16px;
-}
-
-.grid-mid{
-    display:grid;
-    grid-template-columns:1fr 420px;
-    gap:16px;
-    margin-top:16px;
-}
-
-.title{
-    font-size:25px;
-    color:#9edcff;
-    font-weight:bold;
-    margin-bottom:16px;
-}
-
-.ai-result{
-    text-align:center;
-    font-size:120px;
-    font-weight:bold;
-    text-shadow:0 0 26px currentColor;
-}
-
-.banker-text{color:#ff405e}
-.player-text{color:#147dff}
-.wait-text{color:#ff9fd2}
-
-.rate{
-    text-align:center;
-    font-size:54px;
-    color:#ff6f91;
-    font-weight:bold;
-}
-
-.road{
-    display:grid;
-    grid-template-rows:repeat(6,54px);
-    grid-auto-flow:column;
-    grid-auto-columns:54px;
-    gap:6px;
-    overflow-x:auto;
-    padding:8px;
-    min-height:355px;
-    background:rgba(255,255,255,.035);
-    border-radius:14px;
-}
-
-.cell{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.B{
-    background:rgba(180,0,32,.9);
-    border:2px solid #ff3b57;
-    box-shadow:0 0 10px rgba(255,50,80,.55);
-}
-
-.P{
-    background:rgba(0,55,180,.9);
-    border:2px solid #2d85ff;
-    box-shadow:0 0 10px rgba(45,133,255,.55);
-}
-
-.T{
-    background:rgba(0,140,78,.9);
-    border:2px solid #00d986;
-    box-shadow:0 0 10px rgba(0,217,134,.55);
-}
-
-.alert-box{
-    padding:18px;
-    border-radius:16px;
-    border:1px solid rgba(255,255,255,.15);
-    background:rgba(255,255,255,.04);
-    margin-bottom:14px;
-    font-size:20px;
-    color:#ffd84d;
-}
-
-.input-layout{
-    display:grid;
-    grid-template-columns:1fr 360px;
-    gap:18px;
-}
-
-.help{
-    border:1px solid rgba(80,170,255,.3);
-    border-radius:14px;
-    padding:14px;
-    color:#b8d7ff;
-    line-height:1.8;
-    font-size:17px;
-}
-
-.card-preview{
-    display:flex;
-    gap:10px;
-    margin:16px 0;
-    flex-wrap:wrap;
-}
-
-.preview-wrap{text-align:center}
-
-.preview-number{
-    width:58px;
-    height:58px;
-    border-radius:10px;
-    border:2px solid #247ee8;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:26px;
-    font-weight:bold;
-}
-
-.preview-label{
-    margin-top:5px;
-    color:#9edcff;
-    font-size:14px;
-}
-
-.keypad{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-}
-
-.keypad button{
-    height:68px;
-    font-size:28px;
-}
-
-.manual-buttons{
-    display:grid;
-    gap:18px;
-}
-
-.manual-buttons button{
-    height:82px;
-    font-size:30px;
-}
-
-.banker{background:linear-gradient(135deg,#8c0025,#e60042)}
-.player{background:linear-gradient(135deg,#0034b8,#006dff)}
-.tie{background:linear-gradient(135deg,#006b3c,#00b86b)}
-.warn{background:linear-gradient(135deg,#a57400,#e2ad00)}
-.danger{background:linear-gradient(135deg,#5a001b,#cc0044)}
-
-.stats-row{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:14px;
-    margin-top:16px;
-}
-
-.stat{
-    background:rgba(3,16,34,.92);
-    border:1
+</body>
+</html>
