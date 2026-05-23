@@ -189,6 +189,33 @@ select,button{
     display:flex;
     justify-content:space-between;
 }
+    
+  body.force-mobile .grid-top,
+body.force-mobile .grid-mid,
+body.force-mobile .input-layout{
+    grid-template-columns:1fr !important;
+}
+
+body.force-mobile .stats-row{
+    grid-template-columns:repeat(2,1fr) !important;
+}
+
+body.force-desktop .grid-top{
+    grid-template-columns:330px 1fr 330px !important;
+}
+
+body.force-desktop .grid-mid{
+    grid-template-columns:1fr 420px !important;
+}
+
+body.force-desktop .input-layout{
+    grid-template-columns:1fr 360px !important;
+}
+
+body.force-desktop .stats-row{
+    grid-template-columns:repeat(6,1fr) !important;
+}  
+    
 @media(max-width:900px){
     .container{padding:10px}
     .topbar{grid-template-columns:1fr 1fr}
@@ -217,6 +244,12 @@ select,button{
             <option value="MT">MT</option>
         </select>
 
+        <select id="viewMode" onchange="changeViewMode()">
+    <option value="auto">自動版</option>
+    <option value="mobile">手機版</option>
+    <option value="desktop">電腦版</option>
+    </select>
+        
         <select id="table" onchange="loadData()"></select>
 
         <div class="expire">會員到期時間：<span id="memberExpire">-</span></div>
@@ -314,6 +347,23 @@ select,button{
 <script>
 let cards = [];
 
+ function changeViewMode(){
+    const mode = document.getElementById("viewMode").value;
+
+    document.body.classList.remove(
+        "force-mobile",
+        "force-desktop"
+    );
+
+    if(mode === "mobile"){
+        document.body.classList.add("force-mobile");
+    }
+
+    if(mode === "desktop"){
+        document.body.classList.add("force-desktop");
+    }
+}  
+    
 function resultText(r){
     if(r==="B") return "莊";
     if(r==="P") return "閒";
@@ -519,6 +569,7 @@ async function clearTable(){
     await loadData();
 }
 
+changeViewMode();
 loadTables();
 setInterval(loadData,3000);
 </script>
