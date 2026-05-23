@@ -328,7 +328,7 @@ def road_stats(data):
     }
 
 @app.route("/api/login", methods=["POST"])
-
+def api_login():
     body = request.json or {}
 
     username = body.get("username", "").strip()
@@ -386,26 +386,6 @@ def admin():
         return redirect("/admin-login")
 
     return render_template("admin.html")
-
-
-@app.route("/api/login", methods=["POST"])
-def api_login():
-    body = request.json
-
-    username = body.get("username", "").strip()
-    password = body.get("password", "").strip()
-
-    member = get_member(username)
-
-    if not member:
-        return jsonify({"ok": False})
-
-    if member["password"] != password:
-        return jsonify({"ok": False})
-
-    session["member"] = username
-
-    return jsonify({"ok": True})
 
 def api_admin_login():
     body = request.json
