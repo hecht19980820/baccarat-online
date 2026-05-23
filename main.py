@@ -201,14 +201,43 @@ def calc_cards(cards):
         if len(nums) < 4 or len(nums) > 6:
             return None
 
-        player_cards = []
-        banker_cards = []
+        for n in nums:
+            if n < 0 or n > 9:
+                return None
 
-        for i, n in enumerate(nums):
-            if i % 2 == 0:
-                player_cards.append(n)
+        player_cards = [nums[0], nums[2]]
+        banker_cards = [nums[1], nums[3]]
+
+        player_two = sum(player_cards) % 10
+        banker_two = sum(banker_cards) % 10
+
+        if player_two < 8 and banker_two < 8:
+            if player_two <= 5:
+                if len(nums) >= 5:
+                    player_cards.append(nums[4])
+                    player_third = nums[4]
+                else:
+                    player_third = None
+
+                banker_draw = False
+
+                if banker_two <= 2:
+                    banker_draw = True
+                elif banker_two == 3 and player_third != 8:
+                    banker_draw = True
+                elif banker_two == 4 and player_third in [2,3,4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 5 and player_third in [4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 6 and player_third in [6,7]:
+                    banker_draw = True
+
+                if banker_draw and len(nums) >= 6:
+                    banker_cards.append(nums[5])
+
             else:
-                banker_cards.append(n)
+                if banker_two <= 5 and len(nums) >= 5:
+                    banker_cards.append(nums[4])
 
         player_point = sum(player_cards) % 10
         banker_point = sum(banker_cards) % 10
@@ -224,11 +253,12 @@ def calc_cards(cards):
             "result": result,
             "playerPoint": player_point,
             "bankerPoint": banker_point,
-            "playerPair": len(player_cards) >= 2 and player_cards[0] == player_cards[1],
-            "bankerPair": len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1],
+            "playerPair": nums[0] == nums[2],
+            "bankerPair": nums[1] == nums[3],
             "lucky6": result == "B" and banker_point == 6,
             "tie": result == "T"
         }
+
     except:
         return None
 
