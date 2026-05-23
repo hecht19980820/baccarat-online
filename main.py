@@ -602,6 +602,88 @@ def api_admin_toggle_member():
     conn.close()
 
     return jsonify({"ok": True})
+ @app.route("/api/admin/tables-monitor")
+def api_admin_tables_monitor():
+
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    conn = db()
+
+    result = []
+
+    for table in DG_TABLES:
+
+        rows = conn.execute("""
+        SELECT result
+        FROM records
+        WHERE platform='DG' AND table_no=?
+        ORDER BY id DESC
+        LIMIT 6
+        """, (table,)).fetchall()
+
+        road = "".join([r["result"] for r in reversed(rows)])
+
+        result.append({
+            "platform":"DG",
+            "table":table,
+            "road":road if road else "-",
+            "ai":"莊" if road.count("B") >= road.count("P") else "閒",
+            "online":True
+        })
+
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "tables": result
+    })
+
+
+@app.route("/api/admin/core-stats")
+def api_admin_core_stats():
+
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    conn = db()
+
+    total_records = conn.execute("""
+    SELECT COUNT(*) c
+    FROM records
+    """).fetchone()["c"]
+
+    total_shared = conn.execute("""
+    SELECT COUNT(*) c
+    FROM shared_ai_stats
+    """).fetchone()["c"]
+
+    total_members = conn.execute("""
+    SELECT COUNT(*) c
+    FROM members
+    """).fetchone()["c"]
+
+    online_members = conn.execute("""
+    SELECT COUNT(*) c
+    FROM members
+    WHERE last_active >= datetime('now','-5 minutes')
+    """).fetchone()["c"]
+
+    conn.close()
+
+    accuracy = round(
+        (total_shared / total_records) * 100,
+        1
+    ) if total_records else 0
+
+    return jsonify({
+        "ok": True,
+        "totalRecords": total_records,
+        "totalShared": total_shared,
+        "accuracy": accuracy,
+        "totalMembers": total_members,
+        "onlineMembers": online_members
+    })   
     
 @app.route("/api/tables")
 def api_tables():
