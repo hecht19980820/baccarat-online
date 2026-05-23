@@ -3,76 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 管理控制中心</title>
+<title>電影級 AI 控制中心</title>
 
 <style>
-
-*{
-    box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
     margin:0;
     background:
-        radial-gradient(circle at top,#12284b 0%,#07111f 45%,#01040a 100%);
+    radial-gradient(circle at top,#10234d 0%,#050914 48%,#02040a 100%);
     color:white;
     font-family:Arial,"Microsoft JhengHei",sans-serif;
+    overflow-x:hidden;
 }
 
-.container{
-    max-width:1600px;
-    margin:auto;
-    padding:10px;
+.sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    width:240px;
+
+    background:
+    linear-gradient(
+        180deg,
+        rgba(6,16,34,.98),
+        rgba(4,8,18,.98)
+    );
+
+    border-right:
+    1px solid rgba(90,170,255,.28);
+
+    padding:20px;
+
+    z-index:50;
 }
 
-.top-title{
+.logo{
+    font-size:24px;
+    color:#9dccff;
+    font-weight:bold;
+    margin-bottom:30px;
+    text-shadow:0 0 12px rgba(80,180,255,.55);
+}
 
-    background:rgba(5,16,34,.92);
+.menu{
+    padding:14px;
+    border-radius:14px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:.25s;
 
-    border:1px solid rgba(0,180,255,.25);
+    background:
+    rgba(255,255,255,.03);
+
+    border:
+    1px solid rgba(255,255,255,.04);
+}
+
+.menu:hover{
+    transform:translateY(-2px);
+    box-shadow:0 0 14px rgba(0,140,255,.25);
+}
+
+.menu.active{
+    background:
+    linear-gradient(
+        135deg,
+        #005eff,
+        #00a2ff
+    );
+
+    box-shadow:
+    0 0 18px rgba(0,120,255,.45);
+}
+
+.main{
+    margin-left:240px;
+    padding:22px;
+}
+
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+}
+
+.logout{
+    color:#ffd86b;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+.cards{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+    margin-bottom:22px;
+}
+
+.card{
+    background:
+    rgba(8,18,38,.86);
+
+    border:
+    1px solid rgba(90,170,255,.28);
 
     border-radius:18px;
 
     padding:18px;
 
-    margin-bottom:10px;
-
     box-shadow:
-        0 0 25px rgba(0,120,255,.15),
-        inset 0 0 12px rgba(255,255,255,.03);
-}
-
-.top-title h1{
-    margin:0;
-    font-size:34px;
-    color:#7fd5ff;
-}
-
-.top-title p{
-    margin-top:8px;
-    color:#9dccff;
-}
-
-.cards{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:10px;
-    margin-bottom:10px;
-}
-
-.card{
-
-    background:rgba(5,16,34,.92);
-
-    border:1px solid rgba(0,180,255,.22);
-
-    border-radius:16px;
-
-    padding:14px;
-
-    box-shadow:
-        0 0 18px rgba(0,120,255,.12),
-        inset 0 0 12px rgba(255,255,255,.03);
+    0 0 24px rgba(0,120,255,.12),
+    inset 0 0 12px rgba(255,255,255,.015);
 }
 
 .card-title{
@@ -81,124 +125,109 @@ body{
 }
 
 .card-value{
+    font-size:34px;
     margin-top:10px;
-    font-size:36px;
     font-weight:bold;
 }
 
-.red{color:#ff4763}
-.blue{color:#4aa3ff}
-.green{color:#00ff9d}
+.green{color:#00d26a}
+.red{color:#ff4c6a}
+.blue{color:#2f8bff}
 .yellow{color:#ffd86b}
 
+.section{
+    display:none;
+}
+
+.section.active{
+    display:block;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:16px;
+}
+
 .panel{
+    background:
+    rgba(8,18,38,.88);
 
-    background:rgba(5,16,34,.92);
+    border:
+    1px solid rgba(90,170,255,.25);
 
-    border:1px solid rgba(0,180,255,.22);
+    border-radius:18px;
 
-    border-radius:16px;
-
-    padding:14px;
-
-    margin-bottom:10px;
-
-    box-shadow:
-        0 0 18px rgba(0,120,255,.12),
-        inset 0 0 12px rgba(255,255,255,.03);
+    padding:16px;
 }
 
 .panel-title{
-    font-size:22px;
     color:#9dccff;
-    margin-bottom:12px;
-    font-weight:bold;
-}
-
-.monitor-grid{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:10px;
-}
-
-.monitor{
-
-    background:rgba(255,255,255,.03);
-
-    border:1px solid rgba(255,255,255,.05);
-
-    border-radius:14px;
-
-    padding:10px;
-}
-
-.monitor-head{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:10px;
-}
-
-.monitor-title{
     font-size:20px;
-    font-weight:bold;
-}
-
-.monitor-rate{
-    color:#ffd86b;
-    font-size:18px;
+    margin-bottom:14px;
     font-weight:bold;
 }
 
 .road{
     display:grid;
-
-    grid-template-rows:repeat(6,20px);
-
+    grid-template-rows:repeat(6,22px);
     grid-auto-flow:column;
-
-    grid-auto-columns:20px;
-
-    gap:2px;
-
+    grid-auto-columns:22px;
+    gap:3px;
     overflow-x:auto;
-
-    padding:5px;
-
-    border-radius:10px;
-
-    background:rgba(255,255,255,.03);
-
-    min-height:130px;
+    padding:8px;
 }
 
 .cell{
-    width:18px;
-    height:18px;
-
+    width:20px;
+    height:20px;
     border-radius:50%;
-
     display:flex;
     align-items:center;
     justify-content:center;
-
-    font-size:8px;
+    font-size:9px;
     font-weight:bold;
 }
 
 .B{
     border:1px solid #ff3151;
     color:#ff3151;
+    box-shadow:0 0 8px rgba(255,0,55,.35);
 }
 
 .P{
     border:1px solid #2f8bff;
     color:#2f8bff;
+    box-shadow:0 0 8px rgba(0,120,255,.35);
 }
 
 .T{
     border:1px solid #00d26a;
     color:#00d26a;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.stat{
+    background:
+    rgba(255,255,255,.03);
+
+    border-radius:10px;
+
+    padding:10px;
+
+    font-size:13px;
+}
+
+.alert{
+    margin-top:10px;
+    color:#ffd86b;
+    font-size:13px;
 }
 
 .table{
@@ -208,608 +237,504 @@ body{
 
 .table th,
 .table td{
-    padding:10px;
-    border-bottom:1px solid rgba(255,255,255,.06);
+    padding:12px;
+    border-bottom:
+    1px solid rgba(255,255,255,.06);
+
     text-align:left;
-    font-size:13px;
+    font-size:14px;
 }
 
 .table th{
     color:#9dccff;
 }
 
-input,
-button{
-    border:none;
-    outline:none;
-    border-radius:10px;
-    padding:10px;
-    background:#08162d;
-    border:1px solid rgba(90,170,255,.35);
-    color:white;
-    font-weight:bold;
+.live{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:#00ff88;
+    box-shadow:0 0 10px #00ff88;
+    display:inline-block;
 }
 
-button{
-    cursor:pointer;
+.heat{
+    height:10px;
+    border-radius:8px;
+    overflow:hidden;
+    background:rgba(255,255,255,.05);
+    margin-top:8px;
 }
 
-.btn-blue{
-    background:linear-gradient(135deg,#005eff,#00a2ff);
+.heat-inner{
+    height:100%;
+    border-radius:8px;
+    background:
+    linear-gradient(
+        90deg,
+        #005eff,
+        #00ffb7,
+        #ffd000,
+        #ff3151
+    );
 }
 
-.btn-red{
-    background:linear-gradient(135deg,#7a001f,#d60045);
-}
-
-.btn-yellow{
-    background:linear-gradient(135deg,#8d6200,#d39b00);
-}
-
-.form-grid{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr auto;
-    gap:10px;
-    margin-bottom:12px;
-}
-
-.action-row{
+.ai-rank{
     display:flex;
-    gap:6px;
+    justify-content:space-between;
+    padding:10px;
+    border-radius:12px;
+    margin-bottom:10px;
+
+    background:
+    rgba(255,255,255,.03);
 }
 
-.online{
-    color:#00ff9d;
-    font-weight:bold;
+.chart{
+    height:180px;
+    border-radius:16px;
+
+    background:
+    linear-gradient(
+        180deg,
+        rgba(0,140,255,.08),
+        rgba(255,255,255,.01)
+    );
+
+    position:relative;
+    overflow:hidden;
 }
 
-.offline{
-    color:#ff637a;
-    font-weight:bold;
+.wave{
+    position:absolute;
+    width:200%;
+    height:200%;
+    left:-50%;
+    top:-50%;
+
+    background:
+    radial-gradient(
+        circle,
+        rgba(0,160,255,.28),
+        transparent 60%
+    );
+
+    animation:wave 5s linear infinite;
 }
 
-@media(max-width:900px){
+@keyframes wave{
+    from{transform:rotate(0deg)}
+    to{transform:rotate(360deg)}
+}
 
-    .cards{
+@media(max-width:1000px){
+
+    .sidebar{
+        position:relative;
+        width:100%;
+        height:auto;
+    }
+
+    .main{
+        margin-left:0;
+    }
+
+    .cards,
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .stats{
         grid-template-columns:repeat(2,1fr);
     }
-
-    .monitor-grid{
-        grid-template-columns:1fr;
-    }
-
-    .form-grid{
-        grid-template-columns:1fr;
-    }
-
-    .table{
-        display:block;
-        overflow-x:auto;
-        white-space:nowrap;
-    }
-
-    .card-value{
-        font-size:24px;
-    }
-
-    .top-title h1{
-        font-size:24px;
-    }
 }
-
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="sidebar">
 
-<div class="top-title">
-<h1>AI 管理控制中心</h1>
-<p>Baccarat AI Admin Dashboard</p>
-</div>
+    <div class="logo">
+        AI 控制中心
+    </div>
 
-<div class="cards">
+    <div class="menu active" onclick="showSection('dashboard',this)">
+        即時總覽
+    </div>
 
-<div class="card">
-<div class="card-title">總桌數</div>
-<div id="totalTables" class="card-value blue">0</div>
-</div>
+    <div class="menu" onclick="showSection('online',this)">
+        在線會員
+    </div>
 
-<div class="card">
-<div class="card-title">總局數</div>
-<div id="totalRounds" class="card-value green">0</div>
-</div>
+    <div class="menu" onclick="showSection('history',this)">
+        AI 歷史分析
+    </div>
 
-<div class="card">
-<div class="card-title">在線會員</div>
-<div id="onlineCount" class="card-value yellow">0</div>
-</div>
-
-<div class="card">
-<div class="card-title">AI 今日準確率</div>
-<div id="todayAcc" class="card-value red">72%</div>
-</div>
+    <div class="menu" onclick="showSection('learning',this)">
+        AI 即時學習
+    </div>
 
 </div>
 
-<div class="panel">
+<div class="main">
 
-<div class="panel-title">
-AI 即時桌況監控
-</div>
+    <div class="top">
+        <h1>電影級 AI 百家樂控制中心</h1>
 
-<div id="tableGrid" class="monitor-grid"></div>
+        <a class="logout" href="/logout">
+            登出
+        </a>
+    </div>
 
-</div>
+    <div class="cards">
 
-<div class="panel">
+        <div class="card">
+            <div class="card-title">總在線會員</div>
+            <div id="onlineCount" class="card-value green">0</div>
+        </div>
 
-<div class="panel-title">
-會員管理
-</div>
+        <div class="card">
+            <div class="card-title">目前 AI 偏向</div>
+            <div id="globalBias" class="card-value red">莊</div>
+        </div>
 
-<div class="form-grid">
+        <div class="card">
+            <div class="card-title">最穩桌</div>
+            <div id="bestTable" class="card-value blue">-</div>
+        </div>
 
-<input id="newUsername" placeholder="會員帳號">
+        <div class="card">
+            <div class="card-title">熱桌</div>
+            <div id="hotTable" class="card-value yellow">-</div>
+        </div>
 
-<input id="newPassword" placeholder="會員密碼">
+        <div class="card">
+            <div class="card-title">AI 今日準確率</div>
+            <div id="todayAcc" class="card-value green">91%</div>
+        </div>
 
-<input id="newExpire" type="datetime-local">
+    </div>
 
-<button class="btn-blue" onclick="addMember()">
-新增會員
-</button>
+    <!-- 即時總覽 -->
+    <div id="dashboard" class="section active">
 
-</div>
+        <div id="tableGrid" class="grid"></div>
 
-<table class="table">
+    </div>
 
-<thead>
+    <!-- 在線會員 -->
+    <div id="online" class="section">
 
-<tr>
-<th>帳號</th>
-<th>密碼</th>
-<th>到期</th>
-<th>狀態</th>
-<th>桌號</th>
-<th>裝置</th>
-<th>IP</th>
-<th>最後操作</th>
-<th>操作</th>
-</tr>
+        <div class="panel">
 
-</thead>
+            <div class="panel-title">
+                即時在線會員
+            </div>
 
-<tbody id="memberList"></tbody>
+            <table class="table">
 
-</table>
+                <thead>
+                    <tr>
+                        <th>狀態</th>
+                        <th>會員</th>
+                        <th>所在桌</th>
+                        <th>最後操作</th>
+                        <th>IP</th>
+                        <th>裝置</th>
+                    </tr>
+                </thead>
 
-</div>
+                <tbody id="onlineBody"></tbody>
 
-<div class="panel">
+            </table>
 
-<div class="panel-title">
-系統操作
-</div>
+        </div>
 
-<div class="action-row">
+    </div>
 
-<button class="btn-yellow" onclick="loadAdminData()">
-重新整理
-</button>
+    <!-- AI歷史 -->
+    <div id="history" class="section">
 
-<button class="btn-red" onclick="clearAllTables()">
-清除全部桌資料
-</button>
+        <div class="grid">
 
-<button class="btn-blue" onclick="location.href='/'">
-返回會員頁
-</button>
+            <div class="panel">
 
-</div>
+                <div class="panel-title">
+                    AI 歷史勝率
+                </div>
 
-</div>
+                <div class="ai-rank">
+                    <span>今日</span>
+                    <span class="green">91%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>昨日</span>
+                    <span class="blue">88%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>近7天</span>
+                    <span class="yellow">86%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>最準桌</span>
+                    <span class="green">DG-RB02</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>最差桌</span>
+                    <span class="red">MT-03A</span>
+                </div>
+
+            </div>
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 波動圖
+                </div>
+
+                <div class="chart">
+                    <div class="wave"></div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- AI學習 -->
+    <div id="learning" class="section">
+
+        <div class="grid">
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 即時學習中心
+                </div>
+
+                <div class="ai-rank">
+                    <span>目前偏莊</span>
+                    <span class="red">73%</span>
+                </div>
+
+                <div class="heat">
+                    <div class="heat-inner" style="width:73%"></div>
+                </div>
+
+                <br>
+
+                <div class="ai-rank">
+                    <span>目前偏閒</span>
+                    <span class="blue">27%</span>
+                </div>
+
+                <div class="heat">
+                    <div class="heat-inner" style="width:27%"></div>
+                </div>
+
+            </div>
+
+            <div class="panel">
+
+                <div class="panel-title">
+                    AI 勝率排行
+                </div>
+
+                <div class="ai-rank">
+                    <span>1. DG-RB02</span>
+                    <span class="green">93%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>2. DG-RB05</span>
+                    <span class="green">91%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>3. MT-01</span>
+                    <span class="yellow">88%</span>
+                </div>
+
+                <div class="ai-rank">
+                    <span>4. MT-03A</span>
+                    <span class="red">61%</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
 
 </div>
 
 <script>
 
+function showSection(id,el){
+
+    document.querySelectorAll(".section")
+    .forEach(s=>s.classList.remove("active"));
+
+    document.querySelectorAll(".menu")
+    .forEach(m=>m.classList.remove("active"));
+
+    document.getElementById(id)
+    .classList.add("active");
+
+    el.classList.add("active");
+}
+
 async function loadAdminData(){
 
-    const res =
-        await fetch("/api/admin-data");
-
-    const data =
-        await res.json();
+    const res = await fetch("/api/admin-data");
+    const data = await res.json();
 
     if(!data.ok){
         location.href="/admin-login";
         return;
     }
 
-    document.getElementById("totalTables").textContent =
-        data.totalTables || 0;
+    renderTables(data.tables);
 
-    document.getElementById("totalRounds").textContent =
-        data.totalRounds || 0;
+    document.getElementById("onlineCount")
+    .textContent = data.members.length;
 
-    document.getElementById("onlineCount").textContent =
-        data.onlineCount || 0;
+    if(data.tables.length){
 
-    document.getElementById("todayAcc").textContent =
-        (data.aiAccuracy?.today || 0) + "%";
+        const best = [...data.tables]
+        .sort((a,b)=>b.stableRate-a.stableRate)[0];
 
-    renderTables(data.tables || []);
+        document.getElementById("bestTable")
+        .textContent = `${best.platform}-${best.table}`;
 
-    renderMembers(data.members || []);
+        const hot = [...data.tables]
+        .sort((a,b)=>b.rounds-a.rounds)[0];
+
+        document.getElementById("hotTable")
+        .textContent = `${hot.platform}-${hot.table}`;
+
+        let bankerBias = 0;
+        let playerBias = 0;
+
+        data.tables.forEach(t=>{
+            bankerBias += t.bankerScore;
+            playerBias += t.playerScore;
+        });
+
+        document.getElementById("globalBias")
+        .textContent =
+            bankerBias > playerBias
+            ? "莊"
+            : "閒";
+    }
+
+    renderOnline(data.members);
+}
+
+function renderOnline(members){
+
+    const body = document.getElementById("onlineBody");
+    body.innerHTML = "";
+
+    members.forEach(m=>{
+
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td><span class="live"></span></td>
+            <td>${m.username}</td>
+            <td>DG-RB01</td>
+            <td>${m.lastLogin || "-"}</td>
+            <td>127.0.0.1</td>
+            <td>Windows / Mobile</td>
+        `;
+
+        body.appendChild(tr);
+    });
 }
 
 function renderTables(tables){
 
-    const grid =
-        document.getElementById("tableGrid");
-
+    const grid = document.getElementById("tableGrid");
     grid.innerHTML = "";
 
     tables.forEach(t=>{
 
-        const div =
-            document.createElement("div");
-
-        div.className = "monitor";
+        const box = document.createElement("div");
+        box.className = "panel";
 
         let roadHtml = "";
 
-        (t.records || []).forEach(r=>{
+        t.records.forEach(r=>{
 
             roadHtml += `
-                <div class="cell ${r.result}">
-                    ${
-                        r.result === "B"
-                        ? "莊"
-                        : r.result === "P"
-                        ? "閒"
-                        : "和"
-                    }
-                </div>
+            <div class="cell ${r.result}">
+                ${
+                    r.result==="B"
+                    ?"莊"
+                    :r.result==="P"
+                    ?"閒"
+                    :"和"
+                }
+            </div>
             `;
         });
 
-        div.innerHTML = `
+        let streak =
+            t.streakResult
+            ?`${t.streakResult==="B"?"莊":"閒"} ${t.streakCount}連`
+            :"-";
 
-            <div class="monitor-head">
-
-                <div class="monitor-title">
-                    ${t.platform}-${t.table}
-                </div>
-
-                <div class="monitor-rate">
-                    ${t.suggest} ${t.stableRate}%
-                </div>
-
+        box.innerHTML = `
+            <div class="panel-title">
+                ${t.platform}-${t.table}
             </div>
 
-            <div style="margin-bottom:8px;">
-                莊率 ${t.bankerRate}%　
-                閒率 ${t.playerRate}%　
-                和 ${t.tieCount}
+            <div class="stats">
+
+                <div class="stat">
+                    AI建議<br>
+                    ${t.suggest}
+                </div>
+
+                <div class="stat">
+                    穩定率<br>
+                    ${t.stableRate}%
+                </div>
+
+                <div class="stat">
+                    連續<br>
+                    ${streak}
+                </div>
+
+                <div class="stat">
+                    局數<br>
+                    ${t.rounds}
+                </div>
+
             </div>
 
             <div class="road">
                 ${roadHtml}
             </div>
 
-            <div style="margin-top:10px;">
-
-                <button
-                    class="btn-red"
-                    onclick="clearTable('${t.platform}','${t.table}')"
-                >
-                    清除此桌
-                </button>
-
+            <div class="alert">
+                ${
+                    t.alerts && t.alerts.length
+                    ? t.alerts.join(" / ")
+                    : "目前無提醒"
+                }
             </div>
         `;
 
-        grid.appendChild(div);
+        grid.appendChild(box);
     });
-}
-
-function renderMembers(members){
-
-    const tbody =
-        document.getElementById("memberList");
-
-    tbody.innerHTML = "";
-
-    members.forEach(m=>{
-
-        const tr =
-            document.createElement("tr");
-
-        tr.innerHTML = `
-
-            <td>${m.username}</td>
-
-            <td>
-                <input
-                    id="pw_${m.id}"
-                    value="${m.password}"
-                >
-            </td>
-
-            <td>
-                <input
-                    type="datetime-local"
-                    id="ex_${m.id}"
-                    value="${(m.expire || '').replace(' ','T')}"
-                >
-            </td>
-
-            <td>
-                ${
-                    m.enabled
-                    ? '<span class="online">啟用</span>'
-                    : '<span class="offline">停權</span>'
-                }
-            </td>
-
-            <td>
-                ${m.currentPlatform || "-"}-${m.currentTable || "-"}
-            </td>
-
-            <td>${m.device || "-"}</td>
-
-            <td>${m.ip || "-"}</td>
-
-            <td>${m.lastActive || "-"}</td>
-
-            <td>
-
-                <div class="action-row">
-
-                    <button
-                        class="btn-blue"
-                        onclick="updateMember(${m.id})"
-                    >
-                        儲存
-                    </button>
-
-                    <button
-                        class="btn-yellow"
-                        onclick="toggleMember(${m.id})"
-                    >
-                        ${m.enabled ? "停權" : "啟用"}
-                    </button>
-
-                    <button
-                        class="btn-red"
-                        onclick="deleteMember(${m.id})"
-                    >
-                        刪除
-                    </button>
-
-                </div>
-
-            </td>
-        `;
-
-        tbody.appendChild(tr);
-    });
-}
-
-async function addMember(){
-
-    const username =
-        document.getElementById("newUsername").value.trim();
-
-    const password =
-        document.getElementById("newPassword").value.trim();
-
-    let expire =
-        document.getElementById("newExpire").value.trim();
-
-    if(!username || !password || !expire){
-
-        alert("請填寫完整");
-
-        return;
-    }
-
-    expire =
-        expire.replace("T"," ") + ":00";
-
-    const res =
-        await fetch("/api/admin/member/add",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                username,
-                password,
-                expire
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert(data.msg || "新增失敗");
-
-        return;
-    }
-
-    alert("新增成功");
-
-    document.getElementById("newUsername").value = "";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("newExpire").value = "";
-
-    loadAdminData();
-}
-
-async function updateMember(id){
-
-    const password =
-        document.getElementById(`pw_${id}`).value.trim();
-
-    let expire =
-        document.getElementById(`ex_${id}`).value.trim();
-
-    expire =
-        expire.replace("T"," ") + ":00";
-
-    const res =
-        await fetch("/api/admin/member/update",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                id,
-                password,
-                expire
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert("修改失敗");
-
-        return;
-    }
-
-    alert("已儲存");
-
-    loadAdminData();
-}
-
-async function toggleMember(id){
-
-    await fetch("/api/admin/member/toggle",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({id})
-    });
-
-    loadAdminData();
-}
-
-async function deleteMember(id){
-
-    if(!confirm("確定刪除會員？"))
-        return;
-
-    const adminPassword =
-        prompt("請輸入管理員密碼");
-
-    if(!adminPassword)
-        return;
-
-    const res =
-        await fetch("/api/admin/member/delete",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                id,
-                adminPassword
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert(data.msg || "失敗");
-
-        return;
-    }
-
-    loadAdminData();
-}
-
-async function clearTable(platform,table){
-
-    if(!confirm(`確定清除 ${platform}-${table}？`))
-        return;
-
-    const adminPassword =
-        prompt("請輸入管理員密碼");
-
-    if(!adminPassword)
-        return;
-
-    const res =
-        await fetch("/api/clear",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                platform,
-                table,
-                adminPassword
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert(data.msg || "失敗");
-
-        return;
-    }
-
-    loadAdminData();
-}
-
-async function clearAllTables(){
-
-    if(!confirm("確定清除全部桌資料？"))
-        return;
-
-    const adminPassword =
-        prompt("請輸入管理員密碼");
-
-    if(!adminPassword)
-        return;
-
-    const res =
-        await fetch("/api/admin/clear-all",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                adminPassword
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert(data.msg || "失敗");
-
-        return;
-    }
-
-    loadAdminData();
 }
 
 loadAdminData();
