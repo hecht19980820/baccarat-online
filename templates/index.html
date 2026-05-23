@@ -6,67 +6,58 @@
 <title>百家樂 AI 系統</title>
 
 <style>
-
-*{
-    box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
     margin:0;
-    background:
-        radial-gradient(circle at top,#13294d 0%,#07111f 45%,#01040a 100%);
+    background:radial-gradient(circle at top,#172c58 0%,#07111f 45%,#01040a 100%);
     color:white;
     font-family:Arial,"Microsoft JhengHei",sans-serif;
 }
 
 .container{
-    max-width:1400px;
+    max-width:1450px;
     margin:auto;
     padding:10px;
 }
 
 .topbar{
     display:grid;
-    grid-template-columns:150px 150px 150px;
+    grid-template-columns:1fr 1fr 1fr;
     gap:10px;
     margin-bottom:10px;
 }
 
-select,
-button,
-input{
+select,button{
     border:none;
     outline:none;
-    border-radius:12px;
+    border-radius:14px;
     background:#08162d;
     border:1px solid rgba(90,170,255,.35);
     color:white;
-    padding:10px;
+    padding:11px;
     font-size:15px;
     font-weight:bold;
 }
 
 .card{
-    background:rgba(5,16,34,.88);
-    border:1px solid rgba(0,180,255,.22);
-    border-radius:16px;
+    background:rgba(5,16,34,.9);
+    border:1px solid rgba(0,180,255,.25);
+    border-radius:18px;
     padding:12px;
     margin-bottom:10px;
-
-    box-shadow:
-        0 0 18px rgba(0,120,255,.15),
-        inset 0 0 12px rgba(255,255,255,.03);
+    box-shadow:0 0 22px rgba(0,120,255,.16), inset 0 0 12px rgba(255,255,255,.03);
 }
 
 .grid-top{
     display:grid;
-    grid-template-columns:260px 1fr 260px;
+    grid-template-columns:280px 1fr 280px;
     gap:10px;
 }
 
 .grid-mid{
     display:grid;
-    grid-template-columns:1fr 300px;
+    grid-template-columns:1fr 320px;
     gap:10px;
 }
 
@@ -79,27 +70,19 @@ input{
 
 .ai-result{
     text-align:center;
-    font-size:72px;
+    font-size:76px;
     font-weight:bold;
-    margin-top:8px;
-    text-shadow:0 0 18px currentColor;
+    margin-top:10px;
+    text-shadow:0 0 22px currentColor;
 }
 
-.banker-text{
-    color:#ff4763;
-}
-
-.player-text{
-    color:#39a2ff;
-}
-
-.wait-text{
-    color:#ff9fc0;
-}
+.banker-text{color:#ff4763}
+.player-text{color:#39a2ff}
+.wait-text{color:#ff9fc0}
 
 .rate{
     text-align:center;
-    font-size:36px;
+    font-size:38px;
     color:#ffd86b;
     margin-top:10px;
     font-weight:bold;
@@ -107,61 +90,49 @@ input{
 
 .road{
     display:grid;
-
-    grid-template-rows:repeat(6,32px);
-
+    grid-template-rows:repeat(6,34px);
     grid-auto-flow:column;
-
-    grid-auto-columns:32px;
-
-    gap:3px;
-
+    grid-auto-columns:34px;
+    gap:4px;
     overflow-x:auto;
-
-    background:rgba(255,255,255,.03);
-
-    padding:6px;
-
-    border-radius:12px;
-
-    min-height:215px;
+    background:rgba(255,255,255,.035);
+    padding:8px;
+    border-radius:14px;
+    min-height:230px;
 }
 
 .cell{
-    width:28px;
-    height:28px;
-
+    width:30px;
+    height:30px;
     border-radius:50%;
-
     display:flex;
     align-items:center;
     justify-content:center;
-
-    font-size:11px;
+    font-size:12px;
     font-weight:bold;
 }
 
 .B{
     border:2px solid #ff3151;
     color:#ff3151;
-    background:rgba(255,0,50,.12);
+    background:rgba(255,0,50,.15);
 }
 
 .P{
     border:2px solid #2f8bff;
     color:#2f8bff;
-    background:rgba(0,90,255,.12);
+    background:rgba(0,90,255,.15);
 }
 
 .T{
     border:2px solid #00d26a;
     color:#00d26a;
-    background:rgba(0,210,106,.12);
+    background:rgba(0,210,106,.15);
 }
 
 .alert-box{
     border:1px solid rgba(255,255,255,.08);
-    border-radius:10px;
+    border-radius:12px;
     padding:10px;
     margin-bottom:8px;
     color:#ffd86b;
@@ -176,29 +147,15 @@ input{
 }
 
 .manual-buttons button{
-    height:56px;
-    font-size:22px;
+    height:58px;
+    font-size:24px;
 }
 
-.banker{
-    background:linear-gradient(135deg,#8f0028,#ff2f67);
-}
-
-.player{
-    background:linear-gradient(135deg,#0047d0,#0099ff);
-}
-
-.tie{
-    background:linear-gradient(135deg,#00784b,#00d49a);
-}
-
-.warn{
-    background:linear-gradient(135deg,#8d6200,#d39b00);
-}
-
-.danger{
-    background:linear-gradient(135deg,#4b0018,#b00038);
-}
+.banker{background:linear-gradient(135deg,#8f0028,#ff2f67)}
+.player{background:linear-gradient(135deg,#0047d0,#0099ff)}
+.tie{background:linear-gradient(135deg,#00784b,#00d49a)}
+.warn{background:linear-gradient(135deg,#8d6200,#d39b00)}
+.danger{background:linear-gradient(135deg,#4b0018,#b00038)}
 
 .keypad{
     display:grid;
@@ -207,31 +164,38 @@ input{
 }
 
 .keypad button{
-    height:52px;
-    font-size:22px;
+    height:54px;
+    font-size:23px;
 }
 
 .card-preview{
     display:flex;
-    gap:6px;
+    gap:8px;
     flex-wrap:wrap;
     margin-top:10px;
+    margin-bottom:10px;
+}
+
+.preview-wrap{
+    text-align:center;
 }
 
 .preview-number{
-    width:42px;
-    height:42px;
-
-    border-radius:8px;
-
-    border:1px solid rgba(90,170,255,.35);
-
+    width:44px;
+    height:44px;
+    border-radius:9px;
+    border:1px solid rgba(90,170,255,.45);
     display:flex;
     align-items:center;
     justify-content:center;
-
-    font-size:20px;
+    font-size:21px;
     font-weight:bold;
+}
+
+.preview-label{
+    font-size:11px;
+    color:#9dccff;
+    margin-top:4px;
 }
 
 .stats-row{
@@ -241,9 +205,9 @@ input{
 }
 
 .stat-card{
-    background:rgba(5,16,34,.88);
+    background:rgba(5,16,34,.9);
     border:1px solid rgba(0,180,255,.22);
-    border-radius:14px;
+    border-radius:15px;
     padding:10px;
 }
 
@@ -270,6 +234,13 @@ input{
     font-size:22px;
 }
 
+.expire{
+    color:#ffd86b;
+    font-size:15px;
+    margin-bottom:10px;
+    font-weight:bold;
+}
+
 .footer{
     margin-top:12px;
     opacity:.6;
@@ -277,8 +248,6 @@ input{
     justify-content:space-between;
     font-size:13px;
 }
-
-/* 手機版 */
 
 body.force-mobile{
     zoom:.82;
@@ -293,567 +262,4 @@ body.force-mobile .grid-mid{
     grid-template-columns:1fr !important;
 }
 
-body.force-mobile .topbar{
-    grid-template-columns:1fr 1fr 1fr !important;
-    gap:4px !important;
-}
-
-body.force-mobile select,
-body.force-mobile button,
-body.force-mobile input{
-    padding:6px !important;
-    font-size:12px !important;
-}
-
-body.force-mobile .card{
-    padding:6px !important;
-    margin-bottom:6px !important;
-}
-
-body.force-mobile .title{
-    font-size:13px !important;
-}
-
-body.force-mobile .ai-result{
-    font-size:34px !important;
-}
-
-body.force-mobile .rate{
-    font-size:22px !important;
-}
-
-body.force-mobile .road{
-    grid-template-rows:repeat(6,18px) !important;
-    grid-auto-columns:18px !important;
-    gap:2px !important;
-    min-height:125px !important;
-}
-
-body.force-mobile .cell{
-    width:16px !important;
-    height:16px !important;
-    font-size:8px !important;
-    border-width:1px !important;
-}
-
-body.force-mobile .manual-buttons button{
-    height:36px !important;
-    font-size:16px !important;
-}
-
-body.force-mobile .keypad button{
-    height:34px !important;
-    font-size:16px !important;
-}
-
-body.force-mobile .stats-row{
-    grid-template-columns:repeat(3,1fr) !important;
-    gap:5px !important;
-}
-
-body.force-mobile .stat-value{
-    font-size:18px !important;
-}
-
-@media(max-width:760px){
-
-    .grid-top,
-    .grid-mid{
-        grid-template-columns:1fr;
-    }
-
-    .stats-row{
-        grid-template-columns:repeat(3,1fr);
-    }
-}
-
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<div class="topbar">
-
-<select id="platform" onchange="loadTables()">
-<option value="DG">DG</option>
-<option value="MT">MT</option>
-</select>
-
-<select id="table" onchange="loadData()"></select>
-
-<select id="viewMode" onchange="changeViewMode()">
-<option value="auto">自動</option>
-<option value="mobile">手機版</option>
-<option value="desktop">電腦版</option>
-</select>
-
-</div>
-
-<div class="grid-top">
-
-<div class="card">
-
-<div class="title">AI 建議</div>
-
-<div id="suggest" class="ai-result wait-text">
-觀望
-</div>
-
-<div id="stableRate" class="rate">
-0%
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="title">大路盤</div>
-
-<div id="road" class="road"></div>
-
-</div>
-
-<div class="card">
-
-<div class="title">AI 提醒</div>
-
-<div id="alerts"></div>
-
-</div>
-
-</div>
-
-<div class="grid-mid">
-
-<div class="card">
-
-<div class="title">牌型輸入</div>
-
-<div class="card-preview" id="cardPreview"></div>
-
-<div class="keypad">
-
-<button onclick="addCard(1)">1</button>
-<button onclick="addCard(2)">2</button>
-<button onclick="addCard(3)">3</button>
-
-<button onclick="addCard(4)">4</button>
-<button onclick="addCard(5)">5</button>
-<button onclick="addCard(6)">6</button>
-
-<button onclick="addCard(7)">7</button>
-<button onclick="addCard(8)">8</button>
-<button onclick="addCard(9)">9</button>
-
-<button class="warn" onclick="resetCards()">清除</button>
-<button onclick="addCard(0)">0</button>
-<button class="banker" onclick="submitCards()">送出</button>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="title">手動加入大路盤</div>
-
-<div class="manual-buttons">
-
-<button class="banker" onclick="manualAdd('B')">
-莊
-</button>
-
-<button class="player" onclick="manualAdd('P')">
-閒
-</button>
-
-<button class="tie" onclick="manualAdd('T')">
-和
-</button>
-
-</div>
-
-</div>
-
-</div>
-
-<div class="stats-row">
-
-<div class="stat-card">
-<div class="stat-title">莊率</div>
-<div id="bankerRate" class="stat-value banker-text">0%</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-title">閒率</div>
-<div id="playerRate" class="stat-value player-text">0%</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-title">和局</div>
-<div id="tieCount" class="stat-value">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-title">連續</div>
-<div id="streak" class="stat-value">-</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-title">下注次數</div>
-<div id="betCount" class="stat-value">0</div>
-</div>
-
-<div class="stat-card">
-<div class="stat-title">分析量</div>
-<div id="analysisCount" class="stat-value">0</div>
-</div>
-
-</div>
-
-<div class="bottom-buttons">
-
-<button onclick="undo()">
-撤回上一筆
-</button>
-
-<button class="danger" onclick="clearTable()">
-清除此桌
-</button>
-
-</div>
-
-<div class="footer">
-<div>Baccarat AI System</div>
-<div>v3.2.1</div>
-</div>
-
-</div>
-
-<script>
-
-let cards = [];
-
-function changeViewMode(){
-
-    const mode =
-        document.getElementById("viewMode").value;
-
-    document.body.classList.remove("force-mobile");
-
-    if(mode === "mobile"){
-        document.body.classList.add("force-mobile");
-    }
-
-    if(mode === "auto" && window.innerWidth <= 760){
-        document.body.classList.add("force-mobile");
-    }
-}
-
-window.addEventListener("resize", changeViewMode);
-
-async function loadTables(){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const res =
-        await fetch(`/api/tables?platform=${platform}`);
-
-    const tables =
-        await res.json();
-
-    const table =
-        document.getElementById("table");
-
-    table.innerHTML = "";
-
-    tables.forEach(t=>{
-
-        const op =
-            document.createElement("option");
-
-        op.value = t;
-        op.textContent = t;
-
-        table.appendChild(op);
-    });
-
-    loadData();
-}
-
-async function loadData(){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    const res =
-        await fetch(`/api/data?platform=${platform}&table=${table}`);
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-        return;
-    }
-
-    renderRoad(data.records || []);
-
-    const s = data.stats || {};
-
-    const suggest =
-        document.getElementById("suggest");
-
-    suggest.textContent =
-        s.suggest || "觀望";
-
-    suggest.className =
-        "ai-result";
-
-    if(s.suggest === "莊"){
-        suggest.classList.add("banker-text");
-    }
-    else if(s.suggest === "閒"){
-        suggest.classList.add("player-text");
-    }
-    else{
-        suggest.classList.add("wait-text");
-    }
-
-    document.getElementById("stableRate").textContent =
-        (s.stableRate || 0) + "%";
-
-    document.getElementById("bankerRate").textContent =
-        (s.bankerRate || 0) + "%";
-
-    document.getElementById("playerRate").textContent =
-        (s.playerRate || 0) + "%";
-
-    document.getElementById("tieCount").textContent =
-        s.tieCount || 0;
-
-    document.getElementById("analysisCount").textContent =
-        s.totalAnalysis || 0;
-
-    document.getElementById("betCount").textContent =
-        data.betCount || 0;
-
-    document.getElementById("streak").textContent =
-        s.streakResult
-        ? `${s.streakResult === 'B' ? '莊' : '閒'} ${s.streakCount}連`
-        : "-";
-
-    const alerts =
-        document.getElementById("alerts");
-
-    alerts.innerHTML = "";
-
-    (s.alerts || []).forEach(a=>{
-
-        const div =
-            document.createElement("div");
-
-        div.className = "alert-box";
-
-        div.textContent = a;
-
-        alerts.appendChild(div);
-    });
-}
-
-function renderRoad(records){
-
-    const road =
-        document.getElementById("road");
-
-    road.innerHTML = "";
-
-    records.forEach(r=>{
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            `cell ${r.result}`;
-
-        div.textContent =
-            r.result === "B"
-            ? "莊"
-            : r.result === "P"
-            ? "閒"
-            : "和";
-
-        road.appendChild(div);
-    });
-}
-
-async function manualAdd(result){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    const res =
-        await fetch("/api/manual",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                platform,
-                table,
-                result
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-        alert("新增失敗");
-        return;
-    }
-
-    loadData();
-}
-
-function addCard(num){
-
-    if(cards.length >= 6) return;
-
-    cards.push(num);
-
-    updatePreview();
-}
-
-function updatePreview(){
-
-    const preview =
-        document.getElementById("cardPreview");
-
-    preview.innerHTML = "";
-
-    cards.forEach(c=>{
-
-        const div =
-            document.createElement("div");
-
-        div.className =
-            "preview-number";
-
-        div.textContent = c;
-
-        preview.appendChild(div);
-    });
-}
-
-function resetCards(){
-
-    cards = [];
-
-    updatePreview();
-}
-
-async function submitCards(){
-
-    if(cards.length < 4){
-        alert("最少4張");
-        return;
-    }
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    const res =
-        await fetch("/api/cards",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                platform,
-                table,
-                cards
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-        alert(data.msg || "失敗");
-        return;
-    }
-
-    resetCards();
-
-    loadData();
-}
-
-async function undo(){
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    await fetch("/api/undo",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            platform,
-            table
-        })
-    });
-
-    loadData();
-}
-
-async function clearTable(){
-
-    if(!confirm("確定清除此桌？"))
-        return;
-
-    const platform =
-        document.getElementById("platform").value;
-
-    const table =
-        document.getElementById("table").value;
-
-    await fetch("/api/clear",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            platform,
-            table
-        })
-    });
-
-    loadData();
-}
-
-changeViewMode();
-
-loadTables();
-
-setInterval(loadData,3000);
-
-</script>
-
-</body>
-</html>
+body
