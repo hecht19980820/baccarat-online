@@ -248,6 +248,27 @@ body.force-desktop .stats-row{
         grid-template-columns:1fr;
         gap:10px;
     }
+    body.force-mobile .grid-top{
+    display:flex !important;
+    flex-direction:column !important;
+}
+
+body.force-mobile .grid-mid{
+    display:flex !important;
+    flex-direction:column !important;
+}
+
+body.force-mobile .card{
+    padding:10px !important;
+}
+
+body.force-mobile .ai-result{
+    font-size:46px !important;
+}
+
+body.force-mobile .rate{
+    font-size:22px !important;
+}
 
     .card{
         padding:12px;
@@ -288,18 +309,18 @@ body.force-desktop .stats-row{
     }
 
     .road{
-        grid-template-rows:repeat(6,32px);
-        grid-auto-columns:32px;
-        gap:4px;
-        min-height:170px;
-        padding:6px;
-    }
-
-    .cell{
-        width:28px;
-        height:28px;
-        font-size:13px;
-    }
+    grid-template-rows:repeat(6,24px);
+    grid-auto-columns:24px;
+    gap:3px;
+    min-height:150px;
+    padding:5px;
+}
+    
+.cell{
+    width:21px;
+    height:21px;
+    font-size:10px;
+}
 
     .help{
         font-size:14px;
