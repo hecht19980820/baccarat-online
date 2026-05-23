@@ -151,7 +151,8 @@ select,button{
 .keypad button{height:68px;font-size:28px}
 .manual-buttons{
     display:grid;
-    gap:18px;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
 }
 .manual-buttons button{height:50px;font-size:30px}
 .banker{background:linear-gradient(135deg,#8c0025,#e60042)}
@@ -281,7 +282,7 @@ body.force-mobile .rate{
 }
 
 .manual-buttons button{
-    height:48px !important;
+    height:46px !important;
     font-size:24px !important;
 }
 
@@ -482,6 +483,7 @@ body.force-mobile .rate{
                 <button class="banker" onclick="manualAdd('B')">莊</button>
                 <button class="player" onclick="manualAdd('P')">閒</button>
                 <button class="tie" onclick="manualAdd('T')">和</button>
+                <button onclick="undo()">↩ 撤回</button>
             </div>
         </div>
     </div>
@@ -496,7 +498,6 @@ body.force-mobile .rate{
     </div>
 
     <div class="bottom">
-        <button onclick="undo()">↩ 撤回上一筆</button>
         <button class="danger" onclick="clearTable()">🗑 清除此桌資料</button>
     </div>
 
