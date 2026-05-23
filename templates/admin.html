@@ -3,137 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>電影級 AI 控制中心</title>
+<title>百家樂 AI 預測系統</title>
 
 <style>
 *{box-sizing:border-box}
 
 body{
     margin:0;
-    background:
-    radial-gradient(circle at top,#10234d 0%,#050914 48%,#02040a 100%);
-    color:white;
+    background:#020712;
+    color:#e9f6ff;
     font-family:Arial,"Microsoft JhengHei",sans-serif;
     overflow-x:hidden;
 }
 
-.sidebar{
+body:before{
+    content:"";
     position:fixed;
-    left:0;
-    top:0;
-    bottom:0;
-    width:240px;
-
+    inset:0;
     background:
-    linear-gradient(
-        180deg,
-        rgba(6,16,34,.98),
-        rgba(4,8,18,.98)
-    );
-
-    border-right:
-    1px solid rgba(90,170,255,.28);
-
-    padding:20px;
-
-    z-index:50;
+        radial-gradient(circle at 20% 10%,rgba(0,180,255,.16),transparent 28%),
+        radial-gradient(circle at 75% 20%,rgba(255,40,90,.10),transparent 26%),
+        linear-gradient(180deg,#041021,#020712 60%,#01030a);
+    pointer-events:none;
+    z-index:-2;
 }
 
-.logo{
-    font-size:24px;
-    color:#9dccff;
-    font-weight:bold;
-    margin-bottom:30px;
-    text-shadow:0 0 12px rgba(80,180,255,.55);
+body:after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:
+        linear-gradient(rgba(0,180,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,180,255,.035) 1px, transparent 1px);
+    background-size:36px 36px;
+    opacity:.5;
+    pointer-events:none;
+    z-index:-1;
 }
 
-.menu{
-    padding:14px;
-    border-radius:14px;
-    margin-bottom:12px;
-    cursor:pointer;
-    transition:.25s;
-
-    background:
-    rgba(255,255,255,.03);
-
-    border:
-    1px solid rgba(255,255,255,.04);
-}
-
-.menu:hover{
-    transform:translateY(-2px);
-    box-shadow:0 0 14px rgba(0,140,255,.25);
-}
-
-.menu.active{
-    background:
-    linear-gradient(
-        135deg,
-        #005eff,
-        #00a2ff
-    );
-
-    box-shadow:
-    0 0 18px rgba(0,120,255,.45);
-}
-
-.main{
-    margin-left:240px;
-    padding:22px;
-}
-
-.top{
+.topbar{
+    height:86px;
+    padding:14px 24px;
     display:flex;
-    justify-content:space-between;
     align-items:center;
-    margin-bottom:20px;
+    justify-content:space-between;
+    border-bottom:1px solid rgba(0,190,255,.35);
+    background:rgba(3,13,28,.9);
+    box-shadow:0 0 30px rgba(0,180,255,.14);
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.ai-logo{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    font-weight:bold;
+    color:#8fe8ff;
+    border:2px solid #00bfff;
+    box-shadow:0 0 25px rgba(0,190,255,.75), inset 0 0 18px rgba(0,190,255,.25);
+}
+
+.brand-title{
+    font-size:26px;
+    font-weight:bold;
+    letter-spacing:2px;
+}
+
+.brand-sub{
+    font-size:13px;
+    color:#9dccff;
+    margin-top:4px;
+}
+
+.nav{
+    display:flex;
+    gap:8px;
+}
+
+.nav button{
+    min-width:120px;
+    height:46px;
+    border:1px solid rgba(0,190,255,.45);
+    background:linear-gradient(180deg,rgba(0,80,140,.42),rgba(0,20,45,.68));
+    color:#bfefff;
+    border-radius:4px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.nav button.active{
+    background:linear-gradient(180deg,rgba(0,210,255,.45),rgba(0,80,150,.55));
+    box-shadow:0 0 18px rgba(0,190,255,.45);
+}
+
+.top-right{
+    text-align:right;
+    color:#7eeeff;
+    line-height:1.6;
+    font-weight:bold;
 }
 
 .logout{
     color:#ffd86b;
     text-decoration:none;
-    font-weight:bold;
+    margin-left:18px;
 }
 
-.cards{
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:14px;
-    margin-bottom:22px;
+.container{
+    padding:16px;
 }
-
-.card{
-    background:
-    rgba(8,18,38,.86);
-
-    border:
-    1px solid rgba(90,170,255,.28);
-
-    border-radius:18px;
-
-    padding:18px;
-
-    box-shadow:
-    0 0 24px rgba(0,120,255,.12),
-    inset 0 0 12px rgba(255,255,255,.015);
-}
-
-.card-title{
-    color:#9dccff;
-    font-size:14px;
-}
-
-.card-value{
-    font-size:34px;
-    margin-top:10px;
-    font-weight:bold;
-}
-
-.green{color:#00d26a}
-.red{color:#ff4c6a}
-.blue{color:#2f8bff}
-.yellow{color:#ffd86b}
 
 .section{
     display:none;
@@ -143,70 +130,237 @@ body{
     display:block;
 }
 
-.grid{
+.dashboard{
     display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:16px;
+    grid-template-columns:360px 1fr 450px;
+    gap:14px;
+}
+
+.left-stack,
+.right-stack{
+    display:grid;
+    gap:14px;
 }
 
 .panel{
-    background:
-    rgba(8,18,38,.88);
-
-    border:
-    1px solid rgba(90,170,255,.25);
-
-    border-radius:18px;
-
+    position:relative;
+    background:rgba(4,18,38,.82);
+    border:1px solid rgba(0,190,255,.46);
+    border-radius:6px;
     padding:16px;
+    box-shadow:
+        0 0 20px rgba(0,180,255,.16),
+        inset 0 0 22px rgba(0,120,255,.06);
+    overflow:hidden;
+}
+
+.panel:before{
+    content:"";
+    position:absolute;
+    left:0;
+    top:0;
+    width:120px;
+    height:2px;
+    background:#00d9ff;
+    box-shadow:0 0 16px #00d9ff;
 }
 
 .panel-title{
-    color:#9dccff;
+    color:#bdeeff;
     font-size:20px;
-    margin-bottom:14px;
     font-weight:bold;
+    margin-bottom:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.status-core{
+    display:flex;
+    gap:18px;
+    align-items:center;
+}
+
+.holo{
+    width:150px;
+    height:150px;
+    border-radius:50%;
+    border:2px solid rgba(0,210,255,.65);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:42px;
+    font-weight:bold;
+    color:#39dcff;
+    box-shadow:0 0 28px rgba(0,210,255,.45), inset 0 0 30px rgba(0,210,255,.12);
+}
+
+.info-line{
+    margin:8px 0;
+    color:#bfefff;
+}
+
+.info-line b{
+    color:#00ffb7;
+}
+
+.big-predict{
+    min-height:360px;
+    display:grid;
+    grid-template-columns:1fr 210px 1fr;
+    align-items:center;
+    gap:16px;
+    text-align:center;
+}
+
+.side-card{
+    min-height:230px;
+    border:1px solid rgba(0,160,255,.35);
+    background:rgba(0,40,80,.23);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    border-radius:8px;
+}
+
+.side-card.banker{
+    border-color:rgba(255,60,90,.45);
+    background:rgba(120,0,35,.15);
+}
+
+.side-label{
+    font-size:46px;
+    font-weight:bold;
+    text-shadow:0 0 18px currentColor;
+}
+
+.player-color{color:#4aa3ff}
+.banker-color{color:#ff637a}
+.tie-color{color:#00d26a}
+.yellow{color:#ffd86b}
+.green{color:#00ff9d}
+.red{color:#ff4d6d}
+
+.side-percent{
+    font-size:40px;
+    margin-top:18px;
+}
+
+.ai-circle{
+    width:190px;
+    height:190px;
+    border-radius:50%;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    border:8px solid rgba(0,230,255,.25);
+    box-shadow:0 0 35px rgba(0,220,255,.36), inset 0 0 28px rgba(0,220,255,.1);
+}
+
+.ai-circle .num{
+    font-size:52px;
+    font-weight:bold;
+    color:#b8fbff;
+}
+
+.ai-circle .txt{
+    color:#9dccff;
+}
+
+.center-suggest{
+    font-size:26px;
+    color:#56f7ff;
+    margin-top:20px;
+    font-weight:bold;
+}
+
+.table-monitor-row{
+    display:grid;
+    grid-template-columns:58px 80px 70px 1fr 70px 110px;
+    align-items:center;
+    gap:8px;
+    padding:8px;
+    margin-bottom:8px;
+    border:1px solid rgba(0,190,255,.22);
+    background:rgba(255,255,255,.025);
+}
+
+.monitor-no{
+    font-size:22px;
+    color:#8fe8ff;
+}
+
+.monitor-tag{
+    text-align:center;
+    padding:4px 0;
+    border-radius:4px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.monitor-tag.B{
+    background:rgba(255,49,81,.18);
+    color:#ff637a;
+}
+
+.monitor-tag.P{
+    background:rgba(47,139,255,.18);
+    color:#4aa3ff;
+}
+
+.monitor-road{
+    display:flex;
+    gap:3px;
+    overflow:hidden;
+}
+
+.mini-dot{
+    width:12px;
+    height:12px;
+    border-radius:50%;
+    flex:0 0 auto;
+}
+
+.mini-dot.B{border:1px solid #ff3151}
+.mini-dot.P{border:1px solid #2f8bff}
+.mini-dot.T{border:1px solid #00d26a}
+
+.spark{
+    height:28px;
+    border-bottom:1px solid rgba(0,255,180,.55);
+    background:linear-gradient(135deg,transparent 40%,rgba(0,255,180,.25));
 }
 
 .road{
     display:grid;
-    grid-template-rows:repeat(6,22px);
+    grid-template-rows:repeat(6,26px);
     grid-auto-flow:column;
-    grid-auto-columns:22px;
-    gap:3px;
+    grid-auto-columns:26px;
+    gap:4px;
     overflow-x:auto;
-    padding:8px;
+    padding:10px;
+    border:1px solid rgba(0,190,255,.22);
+    background:rgba(0,0,0,.16);
 }
 
 .cell{
-    width:20px;
-    height:20px;
+    width:24px;
+    height:24px;
     border-radius:50%;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:9px;
+    font-size:11px;
     font-weight:bold;
 }
 
-.B{
-    border:1px solid #ff3151;
-    color:#ff3151;
-    box-shadow:0 0 8px rgba(255,0,55,.35);
-}
+.B{border:1px solid #ff3151;color:#ff3151}
+.P{border:1px solid #2f8bff;color:#2f8bff}
+.T{border:1px solid #00d26a;color:#00d26a}
 
-.P{
-    border:1px solid #2f8bff;
-    color:#2f8bff;
-    box-shadow:0 0 8px rgba(0,120,255,.35);
-}
-
-.T{
-    border:1px solid #00d26a;
-    color:#00d26a;
-}
-
-.stats{
+.stats-grid{
     display:grid;
     grid-template-columns:repeat(4,1fr);
     gap:8px;
@@ -214,14 +368,32 @@ body{
 }
 
 .stat{
-    background:
-    rgba(255,255,255,.03);
-
-    border-radius:10px;
-
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:8px;
     padding:10px;
-
     font-size:13px;
+}
+
+.table-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:14px;
+}
+
+.table-box{
+    background:rgba(4,18,38,.82);
+    border:1px solid rgba(0,190,255,.34);
+    border-radius:8px;
+    padding:14px;
+}
+
+.table-head{
+    display:flex;
+    justify-content:space-between;
+    color:#bdeeff;
+    font-weight:bold;
+    margin-bottom:10px;
 }
 
 .alert{
@@ -230,77 +402,107 @@ body{
     font-size:13px;
 }
 
-.table{
-    width:100%;
-    border-collapse:collapse;
+.cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:14px;
+    margin-bottom:16px;
 }
 
-.table th,
-.table td{
-    padding:12px;
-    border-bottom:
-    1px solid rgba(255,255,255,.06);
+.card{
+    background:rgba(4,18,38,.82);
+    border:1px solid rgba(0,190,255,.34);
+    border-radius:8px;
+    padding:16px;
+}
 
+.card-title{
+    color:#9dccff;
+    font-size:14px;
+}
+
+.card-value{
+    font-size:34px;
+    font-weight:bold;
+    margin-top:8px;
+}
+
+.form-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr auto;
+    gap:10px;
+    margin-bottom:18px;
+}
+
+input,button{
+    border-radius:8px;
+    border:1px solid rgba(90,170,255,.45);
+    background:#07172f;
+    color:white;
+    padding:12px;
+    font-size:15px;
+}
+
+button{
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-blue{background:linear-gradient(135deg,#005eff,#00a2ff)}
+.btn-red{background:linear-gradient(135deg,#7a001f,#d60045)}
+.btn-yellow{background:linear-gradient(135deg,#8d6200,#d39b00)}
+
+.member-table{
+    width:100%;
+    border-collapse:collapse;
+    background:rgba(4,18,38,.86);
+    border:1px solid rgba(0,190,255,.28);
+}
+
+.member-table th,
+.member-table td{
+    padding:12px;
+    border-bottom:1px solid rgba(255,255,255,.08);
     text-align:left;
     font-size:14px;
 }
 
-.table th{
+.member-table th{
     color:#9dccff;
 }
 
-.live{
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    background:#00ff88;
-    box-shadow:0 0 10px #00ff88;
-    display:inline-block;
-}
+.status-on{color:#00d26a;font-weight:bold}
+.status-off{color:#ff4c5f;font-weight:bold}
 
-.heat{
-    height:10px;
-    border-radius:8px;
-    overflow:hidden;
-    background:rgba(255,255,255,.05);
-    margin-top:8px;
-}
-
-.heat-inner{
-    height:100%;
-    border-radius:8px;
-    background:
-    linear-gradient(
-        90deg,
-        #005eff,
-        #00ffb7,
-        #ffd000,
-        #ff3151
-    );
-}
-
-.ai-rank{
+.action-row{
     display:flex;
-    justify-content:space-between;
-    padding:10px;
-    border-radius:12px;
-    margin-bottom:10px;
+    gap:6px;
+}
 
-    background:
-    rgba(255,255,255,.03);
+.action-row button{
+    padding:7px 10px;
+    font-size:13px;
+}
+
+.history-table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.history-table th,
+.history-table td{
+    padding:10px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+    text-align:center;
 }
 
 .chart{
-    height:180px;
-    border-radius:16px;
-
+    height:190px;
+    border:1px solid rgba(0,190,255,.24);
     background:
-    linear-gradient(
-        180deg,
-        rgba(0,140,255,.08),
-        rgba(255,255,255,.01)
-    );
-
+        linear-gradient(180deg,rgba(0,160,255,.08),transparent),
+        repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 48px);
+    border-radius:8px;
     position:relative;
     overflow:hidden;
 }
@@ -311,41 +513,46 @@ body{
     height:200%;
     left:-50%;
     top:-50%;
-
-    background:
-    radial-gradient(
-        circle,
-        rgba(0,160,255,.28),
-        transparent 60%
-    );
-
-    animation:wave 5s linear infinite;
+    background:radial-gradient(circle,rgba(0,200,255,.25),transparent 58%);
+    animation:spin 6s linear infinite;
 }
 
-@keyframes wave{
+@keyframes spin{
     from{transform:rotate(0deg)}
     to{transform:rotate(360deg)}
 }
 
-@media(max-width:1000px){
+.system-actions{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+}
 
-    .sidebar{
-        position:relative;
-        width:100%;
+@media(max-width:1100px){
+    .topbar{
         height:auto;
+        flex-direction:column;
+        align-items:flex-start;
     }
 
-    .main{
-        margin-left:0;
+    .nav{
+        flex-wrap:wrap;
     }
 
+    .dashboard,
+    .table-grid,
     .cards,
-    .grid{
+    .form-grid,
+    .system-actions{
         grid-template-columns:1fr;
     }
 
-    .stats{
-        grid-template-columns:repeat(2,1fr);
+    .big-predict{
+        grid-template-columns:1fr;
+    }
+
+    .action-row{
+        flex-direction:column;
     }
 }
 </style>
@@ -353,383 +560,380 @@ body{
 
 <body>
 
-<div class="sidebar">
-
-    <div class="logo">
-        AI 控制中心
+<div class="topbar">
+    <div class="brand">
+        <div class="ai-logo">AI</div>
+        <div>
+            <div class="brand-title">百家樂 AI 預測系統</div>
+            <div class="brand-sub">BACCARAT AI PREDICTION SYSTEM</div>
+        </div>
     </div>
 
-    <div class="menu active" onclick="showSection('dashboard',this)">
-        即時總覽
+    <div class="nav">
+        <button class="active" onclick="showSection('overview',this)">總覽</button>
+        <button onclick="showSection('tables',this)">多桌分析</button>
+        <button onclick="showSection('ai',this)">AI 分析</button>
+        <button onclick="showSection('members',this)">會員管理</button>
+        <button onclick="showSection('system',this)">系統設定</button>
     </div>
 
-    <div class="menu" onclick="showSection('online',this)">
-        在線會員
+    <div class="top-right">
+        雲端同步：<span class="green">已連線</span><br>
+        <span id="clock">--:--:--</span>
+        <a class="logout" href="/logout">登出</a>
     </div>
-
-    <div class="menu" onclick="showSection('history',this)">
-        AI 歷史分析
-    </div>
-
-    <div class="menu" onclick="showSection('learning',this)">
-        AI 即時學習
-    </div>
-
 </div>
 
-<div class="main">
-
-    <div class="top">
-        <h1>電影級 AI 百家樂控制中心</h1>
-
-        <a class="logout" href="/logout">
-            登出
-        </a>
-    </div>
+<div class="container">
 
     <div class="cards">
-
         <div class="card">
-            <div class="card-title">總在線會員</div>
+            <div class="card-title">總桌數</div>
+            <div id="totalTables" class="card-value blue">0</div>
+        </div>
+        <div class="card">
+            <div class="card-title">總局數</div>
+            <div id="totalRounds" class="card-value green">0</div>
+        </div>
+        <div class="card">
+            <div class="card-title">總下注次數</div>
+            <div id="totalBets" class="card-value yellow">0</div>
+        </div>
+        <div class="card">
+            <div class="card-title">在線會員</div>
             <div id="onlineCount" class="card-value green">0</div>
         </div>
-
-        <div class="card">
-            <div class="card-title">目前 AI 偏向</div>
-            <div id="globalBias" class="card-value red">莊</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">最穩桌</div>
-            <div id="bestTable" class="card-value blue">-</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">熱桌</div>
-            <div id="hotTable" class="card-value yellow">-</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">AI 今日準確率</div>
-            <div id="todayAcc" class="card-value green">91%</div>
-        </div>
-
     </div>
 
-    <!-- 即時總覽 -->
-    <div id="dashboard" class="section active">
+    <div id="overview" class="section active">
+        <div class="dashboard">
 
-        <div id="tableGrid" class="grid"></div>
+            <div class="left-stack">
+                <div class="panel">
+                    <div class="panel-title">系統狀態</div>
+                    <div class="status-core">
+                        <div class="holo">AI</div>
+                        <div>
+                            <div class="info-line">AI 學習模型 <b>v3.2.1 PRO</b></div>
+                            <div class="info-line">雲端資料庫 <b>已同步</b></div>
+                            <div class="info-line">即時監控 <b>運行中</b></div>
+                            <div class="info-line">系統效能 <b>98%</b></div>
+                        </div>
+                    </div>
+                </div>
 
-    </div>
+                <div class="panel">
+                    <div class="panel-title">AI 核心數據</div>
+                    <div class="info-line">總預測次數 <b id="corePredict">0</b></div>
+                    <div class="info-line">AI 今日準確率 <b id="todayAcc">0%</b></div>
+                    <div class="info-line">近 7 天準確率 <b id="weekAcc">0%</b></div>
+                    <div class="info-line">AI 信心平均 <b id="avgConfidence">0%</b></div>
+                </div>
 
-    <!-- 在線會員 -->
-    <div id="online" class="section">
-
-        <div class="panel">
-
-            <div class="panel-title">
-                即時在線會員
+                <div class="panel">
+                    <div class="panel-title">即時在線會員</div>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>會員</th>
+                                <th>桌號</th>
+                                <th>裝置</th>
+                            </tr>
+                        </thead>
+                        <tbody id="onlineMini"></tbody>
+                    </table>
+                </div>
             </div>
 
-            <table class="table">
+            <div>
+                <div class="panel">
+                    <div class="panel-title">AI 即時預測</div>
 
+                    <div class="big-predict">
+                        <div class="side-card">
+                            <div class="side-label player-color">閒</div>
+                            <div class="side-percent player-color" id="globalPlayerRate">0%</div>
+                        </div>
+
+                        <div>
+                            <div class="ai-circle">
+                                <div class="txt">AI 信心度</div>
+                                <div class="num" id="globalConfidence">0%</div>
+                            </div>
+                            <div class="center-suggest" id="globalSuggest">建議下注：觀望</div>
+                        </div>
+
+                        <div class="side-card banker">
+                            <div class="side-label banker-color">莊</div>
+                            <div class="side-percent banker-color" id="globalBankerRate">0%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top:14px;">
+                    <div class="panel-title">路線圖分析</div>
+                    <div id="mainRoad" class="road"></div>
+                </div>
+            </div>
+
+            <div class="right-stack">
+                <div class="panel">
+                    <div class="panel-title">
+                        多桌監控
+                        <span>總桌數：<span id="rightTableCount">0</span></span>
+                    </div>
+                    <div id="monitorList"></div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title">最近預測紀錄</div>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>桌號</th>
+                                <th>預測</th>
+                                <th>信心度</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentPredict"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="tables" class="section">
+        <div class="table-grid" id="tableGrid"></div>
+    </div>
+
+    <div id="ai" class="section">
+        <div class="table-grid">
+            <div class="panel">
+                <div class="panel-title">AI 歷史準確率</div>
+                <div class="info-line">今日準確率 <b id="aiToday">0%</b></div>
+                <div class="info-line">昨日準確率 <b id="aiYesterday">0%</b></div>
+                <div class="info-line">近 7 天準確率 <b id="aiWeek">0%</b></div>
+                <div class="chart"><div class="wave"></div></div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">AI 勝率排行</div>
+                <div id="aiRank"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="members" class="section">
+        <div class="panel">
+            <div class="panel-title">會員管理</div>
+
+            <div class="form-grid">
+                <input id="newUsername" placeholder="會員帳號">
+                <input id="newPassword" placeholder="會員密碼">
+                <input id="newExpire" placeholder="到期日 例如 2026-12-31 23:59:59">
+                <button class="btn-blue" onclick="addMember()">新增會員</button>
+            </div>
+
+            <table class="member-table">
                 <thead>
                     <tr>
+                        <th>帳號</th>
+                        <th>密碼</th>
+                        <th>到期日</th>
                         <th>狀態</th>
-                        <th>會員</th>
                         <th>所在桌</th>
-                        <th>最後操作</th>
                         <th>IP</th>
                         <th>裝置</th>
+                        <th>最後操作</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
-
-                <tbody id="onlineBody"></tbody>
-
+                <tbody id="memberList"></tbody>
             </table>
-
         </div>
-
     </div>
 
-    <!-- AI歷史 -->
-    <div id="history" class="section">
-
-        <div class="grid">
-
-            <div class="panel">
-
-                <div class="panel-title">
-                    AI 歷史勝率
-                </div>
-
-                <div class="ai-rank">
-                    <span>今日</span>
-                    <span class="green">91%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>昨日</span>
-                    <span class="blue">88%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>近7天</span>
-                    <span class="yellow">86%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>最準桌</span>
-                    <span class="green">DG-RB02</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>最差桌</span>
-                    <span class="red">MT-03A</span>
-                </div>
-
+    <div id="system" class="section">
+        <div class="panel">
+            <div class="panel-title">系統設定</div>
+            <div class="system-actions">
+                <button class="btn-yellow" onclick="loadAdminData()">重新整理資料</button>
+                <button class="btn-red" onclick="clearAllTables()">清除全部桌資料</button>
+                <button class="btn-blue" onclick="location.href='/'">前往會員頁</button>
             </div>
-
-            <div class="panel">
-
-                <div class="panel-title">
-                    AI 波動圖
-                </div>
-
-                <div class="chart">
-                    <div class="wave"></div>
-                </div>
-
-            </div>
-
         </div>
-
-    </div>
-
-    <!-- AI學習 -->
-    <div id="learning" class="section">
-
-        <div class="grid">
-
-            <div class="panel">
-
-                <div class="panel-title">
-                    AI 即時學習中心
-                </div>
-
-                <div class="ai-rank">
-                    <span>目前偏莊</span>
-                    <span class="red">73%</span>
-                </div>
-
-                <div class="heat">
-                    <div class="heat-inner" style="width:73%"></div>
-                </div>
-
-                <br>
-
-                <div class="ai-rank">
-                    <span>目前偏閒</span>
-                    <span class="blue">27%</span>
-                </div>
-
-                <div class="heat">
-                    <div class="heat-inner" style="width:27%"></div>
-                </div>
-
-            </div>
-
-            <div class="panel">
-
-                <div class="panel-title">
-                    AI 勝率排行
-                </div>
-
-                <div class="ai-rank">
-                    <span>1. DG-RB02</span>
-                    <span class="green">93%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>2. DG-RB05</span>
-                    <span class="green">91%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>3. MT-01</span>
-                    <span class="yellow">88%</span>
-                </div>
-
-                <div class="ai-rank">
-                    <span>4. MT-03A</span>
-                    <span class="red">61%</span>
-                </div>
-
-            </div>
-
-        </div>
-
     </div>
 
 </div>
 
 <script>
+let adminData = null;
 
-function showSection(id,el){
-
-    document.querySelectorAll(".section")
-    .forEach(s=>s.classList.remove("active"));
-
-    document.querySelectorAll(".menu")
-    .forEach(m=>m.classList.remove("active"));
-
-    document.getElementById(id)
-    .classList.add("active");
-
+function showSection(id, el){
+    document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+    document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
     el.classList.add("active");
 }
 
-async function loadAdminData(){
+function updateClock(){
+    const d = new Date();
+    document.getElementById("clock").textContent =
+        d.toLocaleTimeString("zh-TW",{hour12:false});
+}
+setInterval(updateClock,1000);
+updateClock();
 
+async function loadAdminData(){
     const res = await fetch("/api/admin-data");
     const data = await res.json();
 
     if(!data.ok){
-        location.href="/admin-login";
+        location.href = "/admin-login";
         return;
     }
 
-    renderTables(data.tables);
+    adminData = data;
 
-    document.getElementById("onlineCount")
-    .textContent = data.members.length;
+    document.getElementById("totalTables").textContent = data.totalTables || 0;
+    document.getElementById("totalRounds").textContent = data.totalRounds || 0;
+    document.getElementById("totalBets").textContent = data.totalBets || 0;
+    document.getElementById("onlineCount").textContent = data.onlineCount || 0;
+    document.getElementById("rightTableCount").textContent = data.totalTables || 0;
 
-    if(data.tables.length){
-
-        const best = [...data.tables]
-        .sort((a,b)=>b.stableRate-a.stableRate)[0];
-
-        document.getElementById("bestTable")
-        .textContent = `${best.platform}-${best.table}`;
-
-        const hot = [...data.tables]
-        .sort((a,b)=>b.rounds-a.rounds)[0];
-
-        document.getElementById("hotTable")
-        .textContent = `${hot.platform}-${hot.table}`;
-
-        let bankerBias = 0;
-        let playerBias = 0;
-
-        data.tables.forEach(t=>{
-            bankerBias += t.bankerScore;
-            playerBias += t.playerScore;
-        });
-
-        document.getElementById("globalBias")
-        .textContent =
-            bankerBias > playerBias
-            ? "莊"
-            : "閒";
+    if(data.aiAccuracy){
+        document.getElementById("todayAcc").textContent = (data.aiAccuracy.today || 0) + "%";
+        document.getElementById("weekAcc").textContent = (data.aiAccuracy.week || 0) + "%";
+        document.getElementById("aiToday").textContent = (data.aiAccuracy.today || 0) + "%";
+        document.getElementById("aiYesterday").textContent = (data.aiAccuracy.yesterday || 0) + "%";
+        document.getElementById("aiWeek").textContent = (data.aiAccuracy.week || 0) + "%";
     }
 
-    renderOnline(data.members);
+    renderGlobal(data.tables || []);
+    renderMonitor(data.tables || []);
+    renderTables(data.tables || []);
+    renderMembers(data.members || []);
+    renderOnlineMini(data.members || []);
+    renderRank(data.tables || []);
 }
 
-function renderOnline(members){
+function renderGlobal(tables){
+    if(!tables.length) return;
 
-    const body = document.getElementById("onlineBody");
-    body.innerHTML = "";
+    let bScore = 0, pScore = 0, stable = 0;
+    tables.forEach(t=>{
+        bScore += t.bankerScore || 0;
+        pScore += t.playerScore || 0;
+        stable += t.stableRate || 0;
+    });
 
-    members.forEach(m=>{
+    const total = bScore + pScore || 1;
+    const bRate = Math.round((bScore / total) * 100);
+    const pRate = Math.round((pScore / total) * 100);
+    const avg = Math.round(stable / tables.length);
+
+    document.getElementById("globalBankerRate").textContent = bRate + "%";
+    document.getElementById("globalPlayerRate").textContent = pRate + "%";
+    document.getElementById("globalConfidence").textContent = avg + "%";
+    document.getElementById("avgConfidence").textContent = avg + "%";
+    document.getElementById("globalSuggest").textContent =
+        "建議下注：" + (bRate > pRate ? "莊" : "閒");
+    document.getElementById("corePredict").textContent =
+        tables.reduce((s,t)=>s+(t.rounds||0),0);
+
+    const best = [...tables].sort((a,b)=>(b.records?.length||0)-(a.records?.length||0))[0];
+    renderRoad("mainRoad", best ? best.records || [] : []);
+}
+
+function renderRoad(id, records){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.innerHTML = "";
+
+    records.forEach(r=>{
+        const div = document.createElement("div");
+        div.className = `cell ${r.result}`;
+        div.textContent = r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和";
+        el.appendChild(div);
+    });
+}
+
+function renderMonitor(tables){
+    const list = document.getElementById("monitorList");
+    const recent = document.getElementById("recentPredict");
+    list.innerHTML = "";
+    recent.innerHTML = "";
+
+    tables.slice(0,8).forEach((t,i)=>{
+        const tag = t.suggest === "莊" ? "B" : t.suggest === "閒" ? "P" : "T";
+
+        let dots = "";
+        (t.records || []).slice(-12).forEach(r=>{
+            dots += `<span class="mini-dot ${r.result}"></span>`;
+        });
+
+        const row = document.createElement("div");
+        row.className = "table-monitor-row";
+        row.innerHTML = `
+            <div class="monitor-no">${String(i+1).padStart(2,"0")}</div>
+            <div class="monitor-tag ${tag}">${t.suggest}</div>
+            <div>${t.stableRate}%</div>
+            <div class="monitor-road">${dots}</div>
+            <div class="green">連勝：${t.streakCount || 0}</div>
+            <div class="spark"></div>
+        `;
+        list.appendChild(row);
 
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
-            <td><span class="live"></span></td>
-            <td>${m.username}</td>
-            <td>DG-RB01</td>
-            <td>${m.lastLogin || "-"}</td>
-            <td>127.0.0.1</td>
-            <td>Windows / Mobile</td>
+            <td>${t.platform}-${t.table}</td>
+            <td>${t.suggest}</td>
+            <td class="green">${t.stableRate}%</td>
         `;
-
-        body.appendChild(tr);
+        recent.appendChild(tr);
     });
 }
 
 function renderTables(tables){
-
     const grid = document.getElementById("tableGrid");
     grid.innerHTML = "";
 
     tables.forEach(t=>{
-
         const box = document.createElement("div");
-        box.className = "panel";
+        box.className = "table-box";
 
         let roadHtml = "";
-
-        t.records.forEach(r=>{
-
-            roadHtml += `
-            <div class="cell ${r.result}">
-                ${
-                    r.result==="B"
-                    ?"莊"
-                    :r.result==="P"
-                    ?"閒"
-                    :"和"
-                }
-            </div>
-            `;
+        (t.records || []).forEach(r=>{
+            roadHtml += `<div class="cell ${r.result}">${r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和"}</div>`;
         });
 
-        let streak =
-            t.streakResult
-            ?`${t.streakResult==="B"?"莊":"閒"} ${t.streakCount}連`
-            :"-";
+        let streakText = t.streakResult ? `${t.streakResult === "B" ? "莊" : "閒"} ${t.streakCount}連` : "-";
+        let alertText = t.alerts && t.alerts.length ? t.alerts.join(" / ") : "-";
 
         box.innerHTML = `
-            <div class="panel-title">
-                ${t.platform}-${t.table}
+            <div class="table-head">
+                <div>${t.platform} - ${t.table}</div>
+                <div>建議：${t.suggest} ${t.stableRate}%</div>
             </div>
 
-            <div class="stats">
-
-                <div class="stat">
-                    AI建議<br>
-                    ${t.suggest}
-                </div>
-
-                <div class="stat">
-                    穩定率<br>
-                    ${t.stableRate}%
-                </div>
-
-                <div class="stat">
-                    連續<br>
-                    ${streak}
-                </div>
-
-                <div class="stat">
-                    局數<br>
-                    ${t.rounds}
-                </div>
-
+            <div class="stats-grid">
+                <div class="stat">局數<br>${t.rounds}</div>
+                <div class="stat">下注<br>${t.betCount}</div>
+                <div class="stat">莊率<br>${t.bankerRate}%</div>
+                <div class="stat">閒率<br>${t.playerRate}%</div>
+                <div class="stat">和局<br>${t.tieCount}</div>
+                <div class="stat">連續<br>${streakText}</div>
+                <div class="stat">莊權重<br>${t.bankerScore}</div>
+                <div class="stat">閒權重<br>${t.playerScore}</div>
             </div>
 
-            <div class="road">
-                ${roadHtml}
-            </div>
+            <div class="road">${roadHtml}</div>
 
-            <div class="alert">
-                ${
-                    t.alerts && t.alerts.length
-                    ? t.alerts.join(" / ")
-                    : "目前無提醒"
-                }
+            <div class="alert">提醒：${alertText}</div>
+
+            <div style="margin-top:10px;">
+                <button class="btn-red" onclick="clearTable('${t.platform}','${t.table}')">清除此桌</button>
             </div>
         `;
 
@@ -737,10 +941,162 @@ function renderTables(tables){
     });
 }
 
+function renderMembers(members){
+    const tbody = document.getElementById("memberList");
+    tbody.innerHTML = "";
+
+    members.forEach(m=>{
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${m.username}</td>
+            <td><input id="pw_${m.id}" value="${m.password}"></td>
+            <td><input id="ex_${m.id}" value="${m.expire}"></td>
+            <td>
+                <span class="${m.enabled ? "status-on" : "status-off"}">
+                    ${m.enabled ? "啟用" : "停權"}
+                </span>
+            </td>
+            <td>${m.currentPlatform || "-"}-${m.currentTable || "-"}</td>
+            <td>${m.ip || "-"}</td>
+            <td>${m.device || "-"}</td>
+            <td>${m.lastActive || "-"}</td>
+            <td>
+                <div class="action-row">
+                    <button class="btn-blue" onclick="updateMember(${m.id})">儲存</button>
+                    <button class="btn-yellow" onclick="toggleMember(${m.id})">${m.enabled ? "停權" : "啟用"}</button>
+                    <button class="btn-red" onclick="deleteMember(${m.id})">刪除</button>
+                </div>
+            </td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+function renderOnlineMini(members){
+    const tbody = document.getElementById("onlineMini");
+    tbody.innerHTML = "";
+
+    members.filter(m=>m.online).slice(0,5).forEach(m=>{
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${m.username}</td>
+            <td>${m.currentPlatform || "-"}-${m.currentTable || "-"}</td>
+            <td>${m.device || "-"}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    if(!tbody.innerHTML){
+        tbody.innerHTML = `<tr><td colspan="3">目前無在線會員</td></tr>`;
+    }
+}
+
+function renderRank(tables){
+    const rank = document.getElementById("aiRank");
+    rank.innerHTML = "";
+
+    [...tables]
+    .sort((a,b)=>(b.stableRate||0)-(a.stableRate||0))
+    .slice(0,10)
+    .forEach((t,i)=>{
+        const div = document.createElement("div");
+        div.className = "info-line";
+        div.innerHTML = `${i+1}. ${t.platform}-${t.table} <b>${t.stableRate}%</b>　建議：${t.suggest}`;
+        rank.appendChild(div);
+    });
+}
+
+async function addMember(){
+    const username = document.getElementById("newUsername").value.trim();
+    const password = document.getElementById("newPassword").value.trim();
+    const expire = document.getElementById("newExpire").value.trim();
+
+    const res = await fetch("/api/admin/member/add", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({username,password,expire})
+    });
+
+    const data = await res.json();
+    if(!data.ok){
+        alert(data.msg || "新增失敗");
+        return;
+    }
+
+    document.getElementById("newUsername").value = "";
+    document.getElementById("newPassword").value = "";
+    document.getElementById("newExpire").value = "";
+    loadAdminData();
+}
+
+async function updateMember(id){
+    const password = document.getElementById(`pw_${id}`).value.trim();
+    const expire = document.getElementById(`ex_${id}`).value.trim();
+
+    const res = await fetch("/api/admin/member/update", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id,password,expire})
+    });
+
+    const data = await res.json();
+    if(!data.ok){
+        alert(data.msg || "修改失敗");
+        return;
+    }
+
+    alert("已儲存");
+    loadAdminData();
+}
+
+async function toggleMember(id){
+    await fetch("/api/admin/member/toggle", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id})
+    });
+    loadAdminData();
+}
+
+async function deleteMember(id){
+    if(!confirm("確定刪除此會員？")) return;
+
+    await fetch("/api/admin/member/delete", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id})
+    });
+
+    loadAdminData();
+}
+
+async function clearTable(platform, table){
+    if(!confirm(`確定清除 ${platform}-${table}？`)) return;
+
+    await fetch("/api/admin/clear-table", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({platform,table})
+    });
+
+    loadAdminData();
+}
+
+async function clearAllTables(){
+    if(!confirm("確定清除全部桌資料？")) return;
+
+    await fetch("/api/admin/clear-all", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"}
+    });
+
+    loadAdminData();
+}
+
 loadAdminData();
-
-setInterval(loadAdminData,3000);
-
+setInterval(loadAdminData, 3000);
 </script>
 
 </body>
