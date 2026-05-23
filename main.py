@@ -89,9 +89,6 @@ def init_db():
     )
     """)
 
-    ensure_column(cur, "records", "platform", "TEXT")
-ensure_column(cur, "records", "table_no", "TEXT")
-
     for col, typ in [
         ("role", "TEXT DEFAULT 'member'"),
         ("created_at", "TEXT"),
@@ -141,6 +138,9 @@ ensure_column(cur, "records", "table_no", "TEXT")
             ""
         ))
 
+    ensure_column(cur, "records", "platform", "TEXT")
+    ensure_column(cur, "records", "table_no", "TEXT")
+    
     conn.commit()
     conn.close()
 
@@ -526,6 +526,10 @@ def logout():
 
 
 init_db()
+
+@app.route("/")
+def home():
+    return "Baccarat AI System Running"
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
