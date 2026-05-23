@@ -1,7 +1,6 @@
 from flask import Flask, render_template, request, jsonify, redirect, session
 from datetime import datetime, timedelta
-import sqlite3
-import json
+import sqlite3, json
 
 app = Flask(__name__)
 app.secret_key = "baccarat_admin_secret_2026"
@@ -23,6 +22,12 @@ def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
+
+
+def ensure_column(cur, table, column, col_type):
+    cols = [r["name"] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
+    if column not in cols:
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
 
 
 def init_db():
@@ -68,48 +73,54 @@ def init_db():
     )
     """)
 
+    for c, t in [
+        ("last_active", "TEXT"),
+        ("current_platform", "TEXT"),
+        ("current_table", "TEXT"),
+        ("ip", "TEXT"),
+        ("device", "TEXT")
+    ]:
+        ensure_column(cur, "members", c, t)
+
+    for c, t in [
+        ("ai_suggest_before", "TEXT"),
+        ("ai_hit", "INTEGER DEFAULT 0")
+    ]:
+        ensure_column(cur, "records", c, t)
+
     cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
     if cur.fetchone()["c"] == 0:
         cur.execute("""
         INSERT INTO members
         (username,password,expire,enabled,created_at,last_login,last_active,current_platform,current_table,ip,device)
         VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """, (
-            "test01",
-            "123456",
-            "2026-12-31 23:59:59",
-            1,
-            now(),
-            "",
-            "",
-            "",
-            "",
-            "",
-            ""
-        ))
+        """, ("test01","123456","2026-12-31 23:59:59",1,now(),"","","","","",""))
 
     conn.commit()
     conn.close()
 
 
-def table_key(platform, table):
-    return f"{platform}_{table}"
-
-
 def detect_device():
     ua = request.headers.get("User-Agent", "")
-    if "iPhone" in ua:
-        return "iPhone"
-    if "Android" in ua:
-        return "Android"
-    if "Windows" in ua:
-        return "Windows"
-    if "Macintosh" in ua:
-        return "Mac"
+    if "iPhone" in ua: return "iPhone"
+    if "Android" in ua: return "Android"
+    if "Windows" in ua: return "Windows"
+    if "Macintosh" in ua: return "Mac"
     return "Unknown"
 
 
-def update_member_active(platform=None, table=None):
+def admin_password_ok(body):
+    return body.get("adminPassword") == ADMIN_PASS
+
+
+def get_member(username):
+    conn = db()
+    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
+    conn.close()
+    return row
+
+
+def update_member_active(platform="", table=""):
     username = session.get("member")
     if not username:
         return
@@ -121,8 +132,8 @@ def update_member_active(platform=None, table=None):
     WHERE username=?
     """, (
         now(),
-        platform or "",
-        table or "",
+        platform,
+        table,
         request.headers.get("X-Forwarded-For", request.remote_addr),
         detect_device(),
         username
@@ -131,29 +142,14 @@ def update_member_active(platform=None, table=None):
     conn.close()
 
 
-def get_member(username):
-    conn = db()
-    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
-    conn.close()
-    return row
-
-
-def member_expire_time(username):
-    row = get_member(username)
-    return row["expire"] if row else "-"
-
-
 def calc_cards(cards):
     try:
         nums = [int(x) for x in cards]
-
         if len(nums) < 4 or len(nums) > 6:
             return None
 
-        player_cards = []
-        banker_cards = []
+        player_cards, banker_cards = [], []
 
-        # 固定：閒1 莊1 閒2 莊2 閒3 莊3
         for i, n in enumerate(nums):
             if i % 2 == 0:
                 player_cards.append(n)
@@ -179,7 +175,6 @@ def calc_cards(cards):
             "lucky6": result == "B" and banker_point == 6,
             "tie": result == "T"
         }
-
     except:
         return None
 
@@ -218,14 +213,13 @@ def get_records(platform, table):
 
 
 def road_stats(data):
-    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
-    bp = [x for x in valid if x.get("result") in ["B", "P"]]
+    valid = [x for x in data if x.get("result") in ["B","P","T"]]
+    bp = [x for x in valid if x.get("result") in ["B","P"]]
 
     bet_count = len([x for x in data if x.get("countBet")])
     b_count = len([x for x in bp if x["result"] == "B"])
     p_count = len([x for x in bp if x["result"] == "P"])
     t_count = len([x for x in valid if x["result"] == "T"])
-
     total_bp = len(bp)
 
     banker_rate = round((b_count / total_bp) * 100, 1) if total_bp else 0
@@ -277,24 +271,19 @@ def road_stats(data):
 
     recent_cards = valid[-20:]
 
-    banker_pair_count = len([x for x in recent_cards if x.get("bankerPair")])
-    player_pair_count = len([x for x in recent_cards if x.get("playerPair")])
-    lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
-    tie_count = len([x for x in recent_cards if x.get("tie")])
-
-    if banker_pair_count >= 3:
+    if len([x for x in recent_cards if x.get("bankerPair")]) >= 3:
         banker_score += 3
         alerts.append("莊對偏熱")
 
-    if player_pair_count >= 3:
+    if len([x for x in recent_cards if x.get("playerPair")]) >= 3:
         player_score += 3
         alerts.append("閒對偏熱")
 
-    if lucky6_count >= 2:
+    if len([x for x in recent_cards if x.get("lucky6")]) >= 2:
         banker_score += 4
         alerts.append("幸運6偏熱")
 
-    if tie_count >= 2:
+    if len([x for x in recent_cards if x.get("tie")]) >= 2:
         alerts.append("和局偏熱")
 
     diff = abs(banker_score - player_score)
@@ -332,7 +321,6 @@ def road_stats(data):
 
 def ai_accuracy():
     conn = db()
-
     today = datetime.now().strftime("%Y-%m-%d")
     yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
     seven_days = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
@@ -351,20 +339,17 @@ def ai_accuracy():
         hit = len([r for r in rows if r["ai_hit"]])
         return round((hit / len(rows)) * 100, 1)
 
-    today_acc = calc("AND DATE(created_at)=?", (today,))
-    yesterday_acc = calc("AND DATE(created_at)=?", (yesterday,))
-    week_acc = calc("AND DATE(created_at)>=?", (seven_days,))
-
-    conn.close()
-
-    return {
-        "today": today_acc,
-        "yesterday": yesterday_acc,
-        "week": week_acc
+    result = {
+        "today": calc("AND DATE(created_at)=?", (today,)),
+        "yesterday": calc("AND DATE(created_at)=?", (yesterday,)),
+        "week": calc("AND DATE(created_at)>=?", (seven_days,))
     }
 
+    conn.close()
+    return result
 
-@app.route("/login", methods=["GET", "POST"])
+
+@app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -382,7 +367,6 @@ def login():
             return render_template("login.html", error="密碼錯誤")
 
         expire_time = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
-
         if datetime.now() > expire_time:
             return render_template("login.html", error="會員已到期")
 
@@ -414,7 +398,7 @@ def index():
     return render_template("index.html")
 
 
-@app.route("/admin-login", methods=["GET", "POST"])
+@app.route("/admin-login", methods=["GET","POST"])
 def admin_login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -451,7 +435,7 @@ def tables():
 @app.route("/api/data")
 def get_data():
     if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
@@ -464,7 +448,7 @@ def get_data():
         "ok": True,
         "records": data,
         "betCount": len([x for x in data if x.get("countBet")]),
-        "memberExpireTime": member_expire_time(session.get("member")),
+        "memberExpireTime": get_member(session.get("member"))["expire"],
         "stats": road_stats(data)
     })
 
@@ -513,11 +497,9 @@ def admin_data():
 
     for m in members_rows:
         online = False
-
         if m["last_active"]:
             try:
-                active_time = datetime.strptime(m["last_active"], "%Y-%m-%d %H:%M:%S")
-                online = (now_dt - active_time).total_seconds() <= 300
+                online = (now_dt - datetime.strptime(m["last_active"], "%Y-%m-%d %H:%M:%S")).total_seconds() <= 300
             except:
                 online = False
 
@@ -537,8 +519,6 @@ def admin_data():
             "online": online
         })
 
-    acc = ai_accuracy()
-
     return jsonify({
         "ok": True,
         "totalRounds": total_rounds,
@@ -547,7 +527,7 @@ def admin_data():
         "tables": all_tables,
         "members": member_list,
         "onlineCount": len([m for m in member_list if m["online"]]),
-        "aiAccuracy": acc
+        "aiAccuracy": ai_accuracy()
     })
 
 
@@ -563,6 +543,11 @@ def admin_member_add():
 
     if not username or not password or not expire:
         return jsonify({"ok": False, "msg": "資料不完整"})
+
+    try:
+        datetime.strptime(expire, "%Y-%m-%d %H:%M:%S")
+    except:
+        return jsonify({"ok": False, "msg": "到期日格式錯誤，例：2026-12-31 23:59:59"})
 
     conn = db()
     try:
@@ -593,6 +578,11 @@ def admin_member_update():
     if not member_id or not password or not expire:
         return jsonify({"ok": False, "msg": "資料不完整"})
 
+    try:
+        datetime.strptime(expire, "%Y-%m-%d %H:%M:%S")
+    except:
+        return jsonify({"ok": False, "msg": "到期日格式錯誤"})
+
     conn = db()
     conn.execute("UPDATE members SET password=?, expire=? WHERE id=?", (password, expire, member_id))
     conn.commit()
@@ -616,9 +606,7 @@ def admin_member_toggle():
         conn.close()
         return jsonify({"ok": False})
 
-    new_status = 0 if m["enabled"] else 1
-
-    conn.execute("UPDATE members SET enabled=? WHERE id=?", (new_status, member_id))
+    conn.execute("UPDATE members SET enabled=? WHERE id=?", (0 if m["enabled"] else 1, member_id))
     conn.commit()
     conn.close()
 
@@ -631,6 +619,10 @@ def admin_member_delete():
         return jsonify({"ok": False}), 403
 
     body = request.json
+
+    if not admin_password_ok(body):
+        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
+
     member_id = body.get("id")
 
     conn = db()
@@ -647,6 +639,10 @@ def admin_clear_table():
         return jsonify({"ok": False}), 403
 
     body = request.json
+
+    if not admin_password_ok(body):
+        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
+
     platform = body.get("platform")
     table = body.get("table")
 
@@ -663,6 +659,11 @@ def admin_clear_all():
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
 
+    body = request.json or {}
+
+    if not admin_password_ok(body):
+        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
+
     conn = db()
     conn.execute("DELETE FROM records")
     conn.commit()
@@ -674,7 +675,7 @@ def admin_clear_all():
 @app.route("/api/manual", methods=["POST"])
 def manual_add():
     if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     body = request.json
     platform = body.get("platform")
@@ -689,7 +690,6 @@ def manual_add():
     data_before = get_records(platform, table)
     suggest_before = road_stats(data_before)["suggest"]
     suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
-
     ai_hit = 1 if suggest_code == result else 0
 
     conn = db()
@@ -701,10 +701,8 @@ def manual_add():
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         platform, table, result, "",
-        None, None,
-        0, 0, 0, 1 if result == "T" else 0,
-        "manual", 0, 1,
-        suggest_code, ai_hit, now()
+        None, None, 0, 0, 0, 1 if result == "T" else 0,
+        "manual", 0, 1, suggest_code, ai_hit, now()
     ))
     conn.commit()
     conn.close()
@@ -715,7 +713,7 @@ def manual_add():
 @app.route("/api/cards", methods=["POST"])
 def cards_add():
     if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     body = request.json
     platform = body.get("platform")
@@ -725,14 +723,12 @@ def cards_add():
     update_member_active(platform, table)
 
     calc = calc_cards(cards)
-
     if calc is None:
         return jsonify({"ok": False})
 
     data_before = get_records(platform, table)
     suggest_before = road_stats(data_before)["suggest"]
     suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
-
     ai_hit = 1 if suggest_code == calc["result"] else 0
 
     conn = db()
@@ -743,22 +739,13 @@ def cards_add():
      ai_suggest_before,ai_hit,created_at)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        platform,
-        table,
-        calc["result"],
-        json.dumps(cards),
-        calc["playerPoint"],
-        calc["bankerPoint"],
+        platform, table, calc["result"], json.dumps(cards),
+        calc["playerPoint"], calc["bankerPoint"],
         1 if calc["playerPair"] else 0,
         1 if calc["bankerPair"] else 0,
         1 if calc["lucky6"] else 0,
         1 if calc["tie"] else 0,
-        "card_button",
-        1,
-        1,
-        suggest_code,
-        ai_hit,
-        now()
+        "card_button", 1, 1, suggest_code, ai_hit, now()
     ))
     conn.commit()
     conn.close()
@@ -769,7 +756,7 @@ def cards_add():
 @app.route("/api/undo", methods=["POST"])
 def undo():
     if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     body = request.json
     platform = body.get("platform")
@@ -796,7 +783,7 @@ def undo():
 @app.route("/api/clear", methods=["POST"])
 def clear():
     if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+        return jsonify({"ok": False}), 403
 
     body = request.json
     platform = body.get("platform")
