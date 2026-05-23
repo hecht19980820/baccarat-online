@@ -257,6 +257,7 @@ def get_shared_records(platform, table):
         for r in rows
         
     ]
+    
     def calc_cards(cards)
     try:
         nums = [int(x) for x in cards]
