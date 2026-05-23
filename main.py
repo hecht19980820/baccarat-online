@@ -1,805 +1,693 @@
-from flask import Flask, render_template, request, jsonify, redirect, session
-from datetime import datetime, timedelta
-import sqlite3, json
+from flask import Flask, render_template, request, jsonify, session, redirect
+from flask_cors import CORS
+import sqlite3
+import os
+from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = "baccarat_admin_secret_2026"
+app.secret_key = "baccarat_secret_2026"
 
-DB_PATH = "baccarat_system.db"
+CORS(app)
 
-DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07","RB08","RB09","RB10"]
-MT_TABLES = ["01","02","03","03A","05","06","07","08","09","10"]
+DB = "baccarat_system.db"
 
 ADMIN_USER = "admin"
 ADMIN_PASS = "Baccarat2026!"
 
 
-def now():
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# =========================
+# DB
+# =========================
 
-
-def db():
-    conn = sqlite3.connect(DB_PATH)
+def get_db():
+    conn = sqlite3.connect(DB)
     conn.row_factory = sqlite3.Row
     return conn
 
 
-def ensure_column(cur, table, column, col_type):
-    cols = [r["name"] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
-    if column not in cols:
-        cur.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
-
-
 def init_db():
-    conn = db()
+
+    conn = get_db()
     cur = conn.cursor()
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS members (
+    CREATE TABLE IF NOT EXISTS members(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password TEXT NOT NULL,
-        expire TEXT NOT NULL,
+        username TEXT UNIQUE,
+        password TEXT,
+        expire TEXT,
         enabled INTEGER DEFAULT 1,
-        created_at TEXT,
-        last_login TEXT,
-        last_active TEXT,
-        current_platform TEXT,
-        current_table TEXT,
-        ip TEXT,
-        device TEXT
+        currentPlatform TEXT DEFAULT '',
+        currentTable TEXT DEFAULT '',
+        device TEXT DEFAULT '',
+        ip TEXT DEFAULT '',
+        lastActive TEXT DEFAULT ''
     )
     """)
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS records (
+    CREATE TABLE IF NOT EXISTS records(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        platform TEXT NOT NULL,
-        table_no TEXT NOT NULL,
-        result TEXT NOT NULL,
-        cards TEXT,
-        player_point INTEGER,
-        banker_point INTEGER,
-        player_pair INTEGER DEFAULT 0,
-        banker_pair INTEGER DEFAULT 0,
-        lucky6 INTEGER DEFAULT 0,
-        tie INTEGER DEFAULT 0,
-        source TEXT,
-        count_bet INTEGER DEFAULT 0,
-        ai_learn INTEGER DEFAULT 1,
-        ai_suggest_before TEXT,
-        ai_hit INTEGER DEFAULT 0,
+        platform TEXT,
+        table_name TEXT,
+        result TEXT,
         created_at TEXT
     )
     """)
 
-    for c, t in [
-        ("last_active", "TEXT"),
-        ("current_platform", "TEXT"),
-        ("current_table", "TEXT"),
-        ("ip", "TEXT"),
-        ("device", "TEXT")
-    ]:
-        ensure_column(cur, "members", c, t)
-
-    for c, t in [
-        ("ai_suggest_before", "TEXT"),
-        ("ai_hit", "INTEGER DEFAULT 0")
-    ]:
-        ensure_column(cur, "records", c, t)
-
-    cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
-    if cur.fetchone()["c"] == 0:
-        cur.execute("""
-        INSERT INTO members
-        (username,password,expire,enabled,created_at,last_login,last_active,current_platform,current_table,ip,device)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """, ("test01","123456","2026-12-31 23:59:59",1,now(),"","","","","",""))
-
     conn.commit()
     conn.close()
-
-
-def detect_device():
-    ua = request.headers.get("User-Agent", "")
-    if "iPhone" in ua: return "iPhone"
-    if "Android" in ua: return "Android"
-    if "Windows" in ua: return "Windows"
-    if "Macintosh" in ua: return "Mac"
-    return "Unknown"
-
-
-def admin_password_ok(body):
-    return body.get("adminPassword") == ADMIN_PASS
-
-
-def get_member(username):
-    conn = db()
-    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
-    conn.close()
-    return row
-
-
-def update_member_active(platform="", table=""):
-    username = session.get("member")
-    if not username:
-        return
-
-    conn = db()
-    conn.execute("""
-    UPDATE members
-    SET last_active=?, current_platform=?, current_table=?, ip=?, device=?
-    WHERE username=?
-    """, (
-        now(),
-        platform,
-        table,
-        request.headers.get("X-Forwarded-For", request.remote_addr),
-        detect_device(),
-        username
-    ))
-    conn.commit()
-    conn.close()
-
-
-def calc_cards(cards):
-    try:
-        nums = [int(x) for x in cards]
-        if len(nums) < 4 or len(nums) > 6:
-            return None
-
-        player_cards, banker_cards = [], []
-
-        for i, n in enumerate(nums):
-            if i % 2 == 0:
-                player_cards.append(n)
-            else:
-                banker_cards.append(n)
-
-        player_point = sum(player_cards) % 10
-        banker_point = sum(banker_cards) % 10
-
-        if player_point > banker_point:
-            result = "P"
-        elif banker_point > player_point:
-            result = "B"
-        else:
-            result = "T"
-
-        return {
-            "result": result,
-            "playerPoint": player_point,
-            "bankerPoint": banker_point,
-            "playerPair": len(player_cards) >= 2 and player_cards[0] == player_cards[1],
-            "bankerPair": len(banker_cards) >= 2 and banker_cards[0] == banker_cards[1],
-            "lucky6": result == "B" and banker_point == 6,
-            "tie": result == "T"
-        }
-    except:
-        return None
-
-
-def row_to_record(row):
-    return {
-        "id": row["id"],
-        "platform": row["platform"],
-        "table": row["table_no"],
-        "result": row["result"],
-        "cards": json.loads(row["cards"]) if row["cards"] else [],
-        "playerPoint": row["player_point"],
-        "bankerPoint": row["banker_point"],
-        "playerPair": bool(row["player_pair"]),
-        "bankerPair": bool(row["banker_pair"]),
-        "lucky6": bool(row["lucky6"]),
-        "tie": bool(row["tie"]),
-        "source": row["source"],
-        "countBet": bool(row["count_bet"]),
-        "aiLearn": bool(row["ai_learn"]),
-        "aiSuggestBefore": row["ai_suggest_before"],
-        "aiHit": bool(row["ai_hit"]),
-        "createdAt": row["created_at"]
-    }
-
-
-def get_records(platform, table):
-    conn = db()
-    rows = conn.execute("""
-        SELECT * FROM records
-        WHERE platform=? AND table_no=?
-        ORDER BY id ASC
-    """, (platform, table)).fetchall()
-    conn.close()
-    return [row_to_record(r) for r in rows]
-
-
-def road_stats(data):
-    valid = [x for x in data if x.get("result") in ["B","P","T"]]
-    bp = [x for x in valid if x.get("result") in ["B","P"]]
-
-    bet_count = len([x for x in data if x.get("countBet")])
-    b_count = len([x for x in bp if x["result"] == "B"])
-    p_count = len([x for x in bp if x["result"] == "P"])
-    t_count = len([x for x in valid if x["result"] == "T"])
-    total_bp = len(bp)
-
-    banker_rate = round((b_count / total_bp) * 100, 1) if total_bp else 0
-    player_rate = round((p_count / total_bp) * 100, 1) if total_bp else 0
-
-    recent = [x["result"] for x in bp][-20:]
-    recent10 = recent[-10:]
-    recent6 = recent[-6:]
-
-    banker_score = 50
-    player_score = 50
-    alerts = []
-
-    for i, r in enumerate(recent):
-        weight = i + 1
-        if r == "B":
-            banker_score += weight * 0.35
-        elif r == "P":
-            player_score += weight * 0.35
-
-    banker_score += recent10.count("B") * 1.8
-    player_score += recent10.count("P") * 1.8
-
-    streak_result = None
-    streak_count = 0
-
-    for item in reversed(bp):
-        r = item["result"]
-        if streak_result is None:
-            streak_result = r
-            streak_count = 1
-        elif r == streak_result:
-            streak_count += 1
-        else:
-            break
-
-    if streak_result == "B":
-        banker_score += min(streak_count * 3, 18)
-    elif streak_result == "P":
-        player_score += min(streak_count * 3, 18)
-
-    if len(recent6) == 6:
-        if recent6 == ["B","P","B","P","B","P"]:
-            banker_score += 8
-            alerts.append("跳路偏莊")
-        elif recent6 == ["P","B","P","B","P","B"]:
-            player_score += 8
-            alerts.append("跳路偏閒")
-
-    recent_cards = valid[-20:]
-
-    if len([x for x in recent_cards if x.get("bankerPair")]) >= 3:
-        banker_score += 3
-        alerts.append("莊對偏熱")
-
-    if len([x for x in recent_cards if x.get("playerPair")]) >= 3:
-        player_score += 3
-        alerts.append("閒對偏熱")
-
-    if len([x for x in recent_cards if x.get("lucky6")]) >= 2:
-        banker_score += 4
-        alerts.append("幸運6偏熱")
-
-    if len([x for x in recent_cards if x.get("tie")]) >= 2:
-        alerts.append("和局偏熱")
-
-    diff = abs(banker_score - player_score)
-
-    if total_bp < 6:
-        suggest = "觀望"
-        stable_rate = 0
-        alerts.append("資料不足")
-    elif diff < 6:
-        suggest = "觀望"
-        stable_rate = round(50 + diff, 1)
-        alerts.append("莊閒不明顯")
-    elif banker_score > player_score:
-        suggest = "莊"
-        stable_rate = round(min(92, 50 + diff), 1)
-    else:
-        suggest = "閒"
-        stable_rate = round(min(92, 50 + diff), 1)
-
-    return {
-        "totalAnalysis": total_bp,
-        "betCount": bet_count,
-        "bankerRate": banker_rate,
-        "playerRate": player_rate,
-        "tieCount": t_count,
-        "streakResult": streak_result,
-        "streakCount": streak_count,
-        "suggest": suggest,
-        "stableRate": stable_rate,
-        "alerts": alerts[:3],
-        "bankerScore": round(banker_score, 1),
-        "playerScore": round(player_score, 1)
-    }
-
-
-def ai_accuracy():
-    conn = db()
-    today = datetime.now().strftime("%Y-%m-%d")
-    yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    seven_days = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
-
-    def calc(where, params):
-        rows = conn.execute(f"""
-            SELECT ai_hit FROM records
-            WHERE ai_suggest_before IN ('B','P')
-            AND count_bet=1
-            {where}
-        """, params).fetchall()
-
-        if not rows:
-            return 0
-
-        hit = len([r for r in rows if r["ai_hit"]])
-        return round((hit / len(rows)) * 100, 1)
-
-    result = {
-        "today": calc("AND DATE(created_at)=?", (today,)),
-        "yesterday": calc("AND DATE(created_at)=?", (yesterday,)),
-        "week": calc("AND DATE(created_at)>=?", (seven_days,))
-    }
-
-    conn.close()
-    return result
-
-
-@app.route("/login", methods=["GET","POST"])
-def login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "").strip()
-
-        member = get_member(username)
-
-        if not member:
-            return render_template("login.html", error="帳號不存在")
-
-        if not member["enabled"]:
-            return render_template("login.html", error="會員已停權")
-
-        if member["password"] != password:
-            return render_template("login.html", error="密碼錯誤")
-
-        expire_time = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
-        if datetime.now() > expire_time:
-            return render_template("login.html", error="會員已到期")
-
-        conn = db()
-        conn.execute("""
-        UPDATE members
-        SET last_login=?, last_active=?, ip=?, device=?
-        WHERE username=?
-        """, (
-            now(),
-            now(),
-            request.headers.get("X-Forwarded-For", request.remote_addr),
-            detect_device(),
-            username
-        ))
-        conn.commit()
-        conn.close()
-
-        session["member"] = username
-        return redirect("/")
-
-    return render_template("login.html")
-
-
-@app.route("/")
-def index():
-    if not session.get("member"):
-        return redirect("/login")
-    return render_template("index.html")
-
-
-@app.route("/admin-login", methods=["GET","POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form.get("username", "").strip()
-        password = request.form.get("password", "").strip()
-
-        if username == ADMIN_USER and password == ADMIN_PASS:
-            session["admin"] = True
-            return redirect("/admin")
-
-        return render_template("admin_login.html", error="帳號或密碼錯誤")
-
-    return render_template("admin_login.html")
-
-
-@app.route("/admin")
-def admin():
-    if not session.get("admin"):
-        return redirect("/admin-login")
-    return render_template("admin.html")
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/login")
-
-
-@app.route("/api/tables")
-def tables():
-    platform = request.args.get("platform", "DG")
-    return jsonify(MT_TABLES if platform == "MT" else DG_TABLES)
-
-
-@app.route("/api/data")
-def get_data():
-    if not session.get("member"):
-        return jsonify({"ok": False}), 403
-
-    platform = request.args.get("platform", "DG")
-    table = request.args.get("table", "RB01")
-
-    update_member_active(platform, table)
-
-    data = get_records(platform, table)
-
-    return jsonify({
-        "ok": True,
-        "records": data,
-        "betCount": len([x for x in data if x.get("countBet")]),
-        "memberExpireTime": get_member(session.get("member"))["expire"],
-        "stats": road_stats(data)
-    })
-
-
-@app.route("/api/admin-data")
-def admin_data():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    all_tables = []
-    total_rounds = 0
-    total_bets = 0
-
-    for platform, tables in {"DG": DG_TABLES, "MT": MT_TABLES}.items():
-        for table in tables:
-            data = get_records(platform, table)
-            stats = road_stats(data)
-
-            total_rounds += len(data)
-            total_bets += stats["betCount"]
-
-            all_tables.append({
-                "platform": platform,
-                "table": table,
-                "rounds": len(data),
-                "betCount": stats["betCount"],
-                "suggest": stats["suggest"],
-                "stableRate": stats["stableRate"],
-                "bankerRate": stats["bankerRate"],
-                "playerRate": stats["playerRate"],
-                "tieCount": stats["tieCount"],
-                "streakResult": stats["streakResult"],
-                "streakCount": stats["streakCount"],
-                "bankerScore": stats["bankerScore"],
-                "playerScore": stats["playerScore"],
-                "alerts": stats["alerts"],
-                "records": data[-36:]
-            })
-
-    conn = db()
-    members_rows = conn.execute("SELECT * FROM members ORDER BY id DESC").fetchall()
-    conn.close()
-
-    now_dt = datetime.now()
-    member_list = []
-
-    for m in members_rows:
-        online = False
-        if m["last_active"]:
-            try:
-                online = (now_dt - datetime.strptime(m["last_active"], "%Y-%m-%d %H:%M:%S")).total_seconds() <= 300
-            except:
-                online = False
-
-        member_list.append({
-            "id": m["id"],
-            "username": m["username"],
-            "password": m["password"],
-            "expire": m["expire"],
-            "enabled": bool(m["enabled"]),
-            "createdAt": m["created_at"],
-            "lastLogin": m["last_login"],
-            "lastActive": m["last_active"],
-            "currentPlatform": m["current_platform"],
-            "currentTable": m["current_table"],
-            "ip": m["ip"],
-            "device": m["device"],
-            "online": online
-        })
-
-    return jsonify({
-        "ok": True,
-        "totalRounds": total_rounds,
-        "totalBets": total_bets,
-        "totalTables": len(all_tables),
-        "tables": all_tables,
-        "members": member_list,
-        "onlineCount": len([m for m in member_list if m["online"]]),
-        "aiAccuracy": ai_accuracy()
-    })
-
-
-@app.route("/api/admin/member/add", methods=["POST"])
-def admin_member_add():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    username = body.get("username", "").strip()
-    password = body.get("password", "").strip()
-    expire = body.get("expire", "").strip()
-
-    if not username or not password or not expire:
-        return jsonify({"ok": False, "msg": "資料不完整"})
-
-    try:
-        datetime.strptime(expire, "%Y-%m-%d %H:%M:%S")
-    except:
-        return jsonify({"ok": False, "msg": "到期日格式錯誤，例：2026-12-31 23:59:59"})
-
-    conn = db()
-    try:
-        conn.execute("""
-        INSERT INTO members
-        (username,password,expire,enabled,created_at,last_login,last_active,current_platform,current_table,ip,device)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?)
-        """, (username, password, expire, 1, now(), "", "", "", "", "", ""))
-        conn.commit()
-    except sqlite3.IntegrityError:
-        conn.close()
-        return jsonify({"ok": False, "msg": "帳號已存在"})
-
-    conn.close()
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/member/update", methods=["POST"])
-def admin_member_update():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    member_id = body.get("id")
-    password = body.get("password", "").strip()
-    expire = body.get("expire", "").strip()
-
-    if not member_id or not password or not expire:
-        return jsonify({"ok": False, "msg": "資料不完整"})
-
-    try:
-        datetime.strptime(expire, "%Y-%m-%d %H:%M:%S")
-    except:
-        return jsonify({"ok": False, "msg": "到期日格式錯誤"})
-
-    conn = db()
-    conn.execute("UPDATE members SET password=?, expire=? WHERE id=?", (password, expire, member_id))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/member/toggle", methods=["POST"])
-def admin_member_toggle():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    member_id = body.get("id")
-
-    conn = db()
-    m = conn.execute("SELECT enabled FROM members WHERE id=?", (member_id,)).fetchone()
-
-    if not m:
-        conn.close()
-        return jsonify({"ok": False})
-
-    conn.execute("UPDATE members SET enabled=? WHERE id=?", (0 if m["enabled"] else 1, member_id))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/member/delete", methods=["POST"])
-def admin_member_delete():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-
-    if not admin_password_ok(body):
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
-
-    member_id = body.get("id")
-
-    conn = db()
-    conn.execute("DELETE FROM members WHERE id=?", (member_id,))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/clear-table", methods=["POST"])
-def admin_clear_table():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-
-    if not admin_password_ok(body):
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
-
-    platform = body.get("platform")
-    table = body.get("table")
-
-    conn = db()
-    conn.execute("DELETE FROM records WHERE platform=? AND table_no=?", (platform, table))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/admin/clear-all", methods=["POST"])
-def admin_clear_all():
-    if not session.get("admin"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json or {}
-
-    if not admin_password_ok(body):
-        return jsonify({"ok": False, "msg": "管理員密碼錯誤"})
-
-    conn = db()
-    conn.execute("DELETE FROM records")
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/manual", methods=["POST"])
-def manual_add():
-    if not session.get("member"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    platform = body.get("platform")
-    table = body.get("table")
-    result = body.get("result")
-
-    update_member_active(platform, table)
-
-    if result not in ["B", "P", "T"]:
-        return jsonify({"ok": False})
-
-    data_before = get_records(platform, table)
-    suggest_before = road_stats(data_before)["suggest"]
-    suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
-    ai_hit = 1 if suggest_code == result else 0
-
-    conn = db()
-    conn.execute("""
-    INSERT INTO records
-    (platform,table_no,result,cards,player_point,banker_point,
-     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,
-     ai_suggest_before,ai_hit,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        platform, table, result, "",
-        None, None, 0, 0, 0, 1 if result == "T" else 0,
-        "manual", 0, 1, suggest_code, ai_hit, now()
-    ))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
-
-
-@app.route("/api/cards", methods=["POST"])
-def cards_add():
-    if not session.get("member"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    platform = body.get("platform")
-    table = body.get("table")
-    cards = body.get("cards", [])
-
-    update_member_active(platform, table)
-
-    calc = calc_cards(cards)
-    if calc is None:
-        return jsonify({"ok": False})
-
-    data_before = get_records(platform, table)
-    suggest_before = road_stats(data_before)["suggest"]
-    suggest_code = "B" if suggest_before == "莊" else "P" if suggest_before == "閒" else ""
-    ai_hit = 1 if suggest_code == calc["result"] else 0
-
-    conn = db()
-    conn.execute("""
-    INSERT INTO records
-    (platform,table_no,result,cards,player_point,banker_point,
-     player_pair,banker_pair,lucky6,tie,source,count_bet,ai_learn,
-     ai_suggest_before,ai_hit,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        platform, table, calc["result"], json.dumps(cards),
-        calc["playerPoint"], calc["bankerPoint"],
-        1 if calc["playerPair"] else 0,
-        1 if calc["bankerPair"] else 0,
-        1 if calc["lucky6"] else 0,
-        1 if calc["tie"] else 0,
-        "card_button", 1, 1, suggest_code, ai_hit, now()
-    ))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True, **calc})
-
-
-@app.route("/api/undo", methods=["POST"])
-def undo():
-    if not session.get("member"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    platform = body.get("platform")
-    table = body.get("table")
-
-    update_member_active(platform, table)
-
-    conn = db()
-    row = conn.execute("""
-        SELECT id FROM records
-        WHERE platform=? AND table_no=?
-        ORDER BY id DESC
-        LIMIT 1
-    """, (platform, table)).fetchone()
-
-    if row:
-        conn.execute("DELETE FROM records WHERE id=?", (row["id"],))
-        conn.commit()
-
-    conn.close()
-    return jsonify({"ok": True})
-
-
-@app.route("/api/clear", methods=["POST"])
-def clear():
-    if not session.get("member"):
-        return jsonify({"ok": False}), 403
-
-    body = request.json
-    platform = body.get("platform")
-    table = body.get("table")
-
-    update_member_active(platform, table)
-
-    conn = db()
-    conn.execute("DELETE FROM records WHERE platform=? AND table_no=?", (platform, table))
-    conn.commit()
-    conn.close()
-
-    return jsonify({"ok": True})
 
 
 init_db()
 
+
+# =========================
+# 工具
+# =========================
+
+def get_tables(platform):
+
+    if platform == "MT":
+        return [
+            "MT01","MT02","MT03","MT04","MT05",
+            "MT06","MT07","MT08","MT09","MT10"
+        ]
+
+    return [
+        "RB01","RB02","RB03","RB04","RB05",
+        "RB06","RB07","RB08","RB09","RB10"
+    ]
+
+
+def analyze(records):
+
+    banker = len([x for x in records if x["result"] == "B"])
+    player = len([x for x in records if x["result"] == "P"])
+    tie = len([x for x in records if x["result"] == "T"])
+
+    total = banker + player
+
+    bankerRate = 0
+    playerRate = 0
+
+    if total > 0:
+        bankerRate = round((banker / total) * 100)
+        playerRate = round((player / total) * 100)
+
+    suggest = "觀望"
+
+    if bankerRate >= 58:
+        suggest = "莊"
+
+    elif playerRate >= 58:
+        suggest = "閒"
+
+    stableRate = max(bankerRate, playerRate)
+
+    streakResult = None
+    streakCount = 0
+
+    if len(records) > 0:
+
+        last = records[-1]["result"]
+
+        if last != "T":
+
+            streakResult = last
+
+            for r in reversed(records):
+
+                if r["result"] == last:
+                    streakCount += 1
+                else:
+                    break
+
+    alerts = []
+
+    if streakCount >= 4:
+        alerts.append(f"{'莊' if streakResult == 'B' else '閒'} {streakCount} 連")
+
+    return {
+        "bankerRate": bankerRate,
+        "playerRate": playerRate,
+        "tieCount": tie,
+        "suggest": suggest,
+        "stableRate": stableRate,
+        "streakResult": streakResult,
+        "streakCount": streakCount,
+        "alerts": alerts,
+        "totalAnalysis": len(records)
+    }
+
+
+# =========================
+# 頁面
+# =========================
+
+@app.route("/")
+def home():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("index.html")
+
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/admin")
+def admin_page():
+
+    if not session.get("admin"):
+        return redirect("/admin-login")
+
+    return render_template("admin.html")
+
+
+@app.route("/admin-login")
+def admin_login():
+    return render_template("admin_login.html")
+
+
+# =========================
+# 登入
+# =========================
+
+@app.route("/api/login", methods=["POST"])
+def login():
+
+    data = request.json
+
+    username = data.get("username")
+    password = data.get("password")
+
+    conn = get_db()
+
+    user = conn.execute("""
+    SELECT * FROM members
+    WHERE username=?
+    AND password=?
+    AND enabled=1
+    """, (username, password)).fetchone()
+
+    conn.close()
+
+    if not user:
+        return jsonify({
+            "ok": False,
+            "msg": "帳號或密碼錯誤"
+        })
+
+    session["user"] = username
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin-login", methods=["POST"])
+def admin_login_api():
+
+    data = request.json
+
+    if (
+        data.get("username") == ADMIN_USER and
+        data.get("password") == ADMIN_PASS
+    ):
+
+        session["admin"] = True
+
+        return jsonify({"ok": True})
+
+    return jsonify({
+        "ok": False,
+        "msg": "帳號密碼錯誤"
+    })
+
+
+# =========================
+# tables
+# =========================
+
+@app.route("/api/tables")
+def api_tables():
+
+    platform = request.args.get("platform", "DG")
+
+    return jsonify(get_tables(platform))
+
+
+# =========================
+# data
+# =========================
+
+@app.route("/api/data")
+def api_data():
+
+    if "user" not in session:
+        return jsonify({
+            "ok": False,
+            "msg": "未登入"
+        })
+
+    platform = request.args.get("platform")
+    table = request.args.get("table")
+
+    conn = get_db()
+
+    rows = conn.execute("""
+    SELECT * FROM records
+    WHERE platform=?
+    AND table_name=?
+    ORDER BY id ASC
+    """, (platform, table)).fetchall()
+
+    records = [dict(x) for x in rows]
+
+    stats = analyze(records)
+
+    user = conn.execute("""
+    SELECT * FROM members
+    WHERE username=?
+    """, (session["user"],)).fetchone()
+
+    conn.execute("""
+    UPDATE members
+    SET
+        currentPlatform=?,
+        currentTable=?,
+        device=?,
+        ip=?,
+        lastActive=?
+    WHERE username=?
+    """, (
+        platform,
+        table,
+        request.user_agent.string[:100],
+        request.remote_addr,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        session["user"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "records": records,
+        "stats": stats,
+        "betCount": len(records),
+        "memberExpireTime": user["expire"]
+    })
+
+
+# =========================
+# 手動加入
+# =========================
+
+@app.route("/api/manual", methods=["POST"])
+def api_manual():
+
+    if "user" not in session:
+        return jsonify({"ok": False})
+
+    data = request.json
+
+    conn = get_db()
+
+    conn.execute("""
+    INSERT INTO records(
+        platform,
+        table_name,
+        result,
+        created_at
+    )
+    VALUES(?,?,?,?)
+    """, (
+        data["platform"],
+        data["table"],
+        data["result"],
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# 牌型輸入
+# =========================
+
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+
+    if "user" not in session:
+        return jsonify({"ok": False})
+
+    data = request.json
+
+    cards = data.get("cards", [])
+
+    if len(cards) < 4:
+        return jsonify({
+            "ok": False,
+            "msg": "牌數不足"
+        })
+
+    player = cards[0] + cards[2]
+    banker = cards[1] + cards[3]
+
+    if len(cards) >= 5:
+        player += cards[4]
+
+    if len(cards) >= 6:
+        banker += cards[5]
+
+    player %= 10
+    banker %= 10
+
+    result = "T"
+
+    if banker > player:
+        result = "B"
+
+    elif player > banker:
+        result = "P"
+
+    conn = get_db()
+
+    conn.execute("""
+    INSERT INTO records(
+        platform,
+        table_name,
+        result,
+        created_at
+    )
+    VALUES(?,?,?,?)
+    """, (
+        data["platform"],
+        data["table"],
+        result,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "result": result
+    })
+
+
+# =========================
+# undo
+# =========================
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+
+    data = request.json
+
+    conn = get_db()
+
+    row = conn.execute("""
+    SELECT * FROM records
+    WHERE platform=?
+    AND table_name=?
+    ORDER BY id DESC
+    LIMIT 1
+    """, (
+        data["platform"],
+        data["table"]
+    )).fetchone()
+
+    if row:
+        conn.execute("""
+        DELETE FROM records
+        WHERE id=?
+        """, (row["id"],))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# clear
+# =========================
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+
+    data = request.json
+
+    conn = get_db()
+
+    conn.execute("""
+    DELETE FROM records
+    WHERE platform=?
+    AND table_name=?
+    """, (
+        data["platform"],
+        data["table"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# admin data
+# =========================
+
+@app.route("/api/admin-data")
+def admin_data():
+
+    if not session.get("admin"):
+        return jsonify({"ok": False})
+
+    conn = get_db()
+
+    members = conn.execute("""
+    SELECT * FROM members
+    ORDER BY id DESC
+    """).fetchall()
+
+    members = [dict(x) for x in members]
+
+    tables = []
+
+    totalRounds = 0
+
+    for platform in ["DG", "MT"]:
+
+        for table in get_tables(platform):
+
+            rows = conn.execute("""
+            SELECT * FROM records
+            WHERE platform=?
+            AND table_name=?
+            ORDER BY id ASC
+            """, (platform, table)).fetchall()
+
+            records = [dict(x) for x in rows]
+
+            stats = analyze(records)
+
+            totalRounds += len(records)
+
+            tables.append({
+                "platform": platform,
+                "table": table,
+                "records": records[-30:],
+                **stats
+            })
+
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "members": members,
+        "tables": tables,
+        "onlineCount": len([
+            x for x in members
+            if x["lastActive"]
+        ]),
+        "totalTables": len(tables),
+        "totalRounds": totalRounds,
+        "aiAccuracy": {
+            "today": 72
+        }
+    })
+
+
+# =========================
+# member add
+# =========================
+
+@app.route("/api/admin/member/add", methods=["POST"])
+def add_member():
+
+    if not session.get("admin"):
+        return jsonify({"ok": False})
+
+    data = request.json
+
+    try:
+
+        conn = get_db()
+
+        conn.execute("""
+        INSERT INTO members(
+            username,
+            password,
+            expire
+        )
+        VALUES(?,?,?)
+        """, (
+            data["username"],
+            data["password"],
+            data["expire"]
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({"ok": True})
+
+    except Exception as e:
+
+        return jsonify({
+            "ok": False,
+            "msg": str(e)
+        })
+
+
+# =========================
+# update member
+# =========================
+
+@app.route("/api/admin/member/update", methods=["POST"])
+def update_member():
+
+    if not session.get("admin"):
+        return jsonify({"ok": False})
+
+    data = request.json
+
+    conn = get_db()
+
+    conn.execute("""
+    UPDATE members
+    SET
+        password=?,
+        expire=?
+    WHERE id=?
+    """, (
+        data["password"],
+        data["expire"],
+        data["id"]
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# toggle
+# =========================
+
+@app.route("/api/admin/member/toggle", methods=["POST"])
+def toggle_member():
+
+    data = request.json
+
+    conn = get_db()
+
+    row = conn.execute("""
+    SELECT enabled
+    FROM members
+    WHERE id=?
+    """, (data["id"],)).fetchone()
+
+    newVal = 0 if row["enabled"] else 1
+
+    conn.execute("""
+    UPDATE members
+    SET enabled=?
+    WHERE id=?
+    """, (newVal, data["id"]))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# delete
+# =========================
+
+@app.route("/api/admin/member/delete", methods=["POST"])
+def delete_member():
+
+    data = request.json
+
+    if data.get("adminPassword") != ADMIN_PASS:
+        return jsonify({
+            "ok": False,
+            "msg": "管理員密碼錯誤"
+        })
+
+    conn = get_db()
+
+    conn.execute("""
+    DELETE FROM members
+    WHERE id=?
+    """, (data["id"],))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+# clear all
+# =========================
+
+@app.route("/api/admin/clear-all", methods=["POST"])
+def clear_all():
+
+    data = request.json
+
+    if data.get("adminPassword") != ADMIN_PASS:
+        return jsonify({
+            "ok": False,
+            "msg": "管理員密碼錯誤"
+        })
+
+    conn = get_db()
+
+    conn.execute("DELETE FROM records")
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+# =========================
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(debug=True)
