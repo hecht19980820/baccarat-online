@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify, redirect, session
-from datetime import datetime
+from datetime import datetime, timedelta
 import sqlite3
 import json
 
@@ -19,6 +19,15 @@ def now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def normalize_expire(value):
+    value = (value or "").strip()
+    if not value:
+        return "2026-12-31 23:59:59"
+    if len(value) == 10:
+        return value + " 23:59:59"
+    return value
+
+
 def db():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
@@ -32,7 +41,6 @@ def ensure_column(cur, table, col, typ):
 
 
 def init_db():
-
     conn = db()
     cur = conn.cursor()
 
@@ -133,19 +141,10 @@ def init_db():
         ensure_column(cur, "shared_ai_stats", col, typ)
 
     cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
-
     if cur.fetchone()["c"] == 0:
-
         cur.execute("""
         INSERT INTO members
-        (
-            username,
-            password,
-            expire,
-            enabled,
-            role,
-            created_at
-        )
+        (username,password,expire,enabled,role,created_at)
         VALUES (?,?,?,?,?,?)
         """, (
             "test01",
@@ -161,62 +160,38 @@ def init_db():
 
 
 def detect_device():
-
     ua = request.headers.get("User-Agent", "")
-
     if "iPhone" in ua:
         return "iPhone"
-
     if "Android" in ua:
         return "Android"
-
     if "Windows" in ua:
         return "Windows"
-
     if "Macintosh" in ua:
         return "Mac"
-
     return "Unknown"
 
 
 def client_ip():
-    return request.headers.get(
-        "X-Forwarded-For",
-        request.remote_addr
-    )
+    return request.headers.get("X-Forwarded-For", request.remote_addr)
 
 
 def get_member(username):
-
     conn = db()
-
-    row = conn.execute("""
-    SELECT * FROM members
-    WHERE username=?
-    """, (username,)).fetchone()
-
+    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
     conn.close()
-
     return row
 
 
 def update_member_active(platform="", table=""):
-
     username = session.get("member")
-
     if not username:
         return
 
     conn = db()
-
     conn.execute("""
     UPDATE members
-    SET
-        last_active=?,
-        current_platform=?,
-        current_table=?,
-        ip=?,
-        device=?
+    SET last_active=?, current_platform=?, current_table=?, ip=?, device=?
     WHERE username=?
     """, (
         now(),
@@ -226,25 +201,18 @@ def update_member_active(platform="", table=""):
         detect_device(),
         username
     ))
-
     conn.commit()
     conn.close()
 
 
 def get_shared_records(platform, table):
-
     conn = db()
-
     rows = conn.execute("""
     SELECT *
     FROM shared_ai_stats
     WHERE platform=? AND table_no=?
     ORDER BY id ASC
-    """, (
-        platform,
-        table
-    )).fetchall()
-
+    """, (platform, table)).fetchall()
     conn.close()
 
     return [
@@ -294,7 +262,6 @@ def calc_cards(cards):
 
                 if banker_draw and len(nums) >= 6:
                     banker_cards.append(nums[5])
-
             else:
                 if banker_two <= 5 and len(nums) >= 5:
                     banker_cards.append(nums[4])
@@ -319,7 +286,7 @@ def calc_cards(cards):
             "tie": result == "T"
         }
 
-    except:
+    except Exception:
         return None
 
 
@@ -357,8 +324,8 @@ def get_records(platform, table):
 
 
 def road_stats(data):
-    valid = [x for x in data if x.get("result") in ["B","P","T"]]
-    bp = [x for x in valid if x.get("result") in ["B","P"]]
+    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
+    bp = [x for x in valid if x.get("result") in ["B", "P"]]
 
     b = len([x for x in bp if x["result"] == "B"])
     p = len([x for x in bp if x["result"] == "P"])
@@ -387,17 +354,16 @@ def road_stats(data):
 
     jump_count = 0
     for i in range(1, len(bp)):
-        if bp[i]["result"] != bp[i-1]["result"]:
+        if bp[i]["result"] != bp[i - 1]["result"]:
             jump_count += 1
 
-    jump_rate = round((jump_count / (len(bp)-1)) * 100, 1) if len(bp) > 1 else 0
+    jump_rate = round((jump_count / (len(bp) - 1)) * 100, 1) if len(bp) > 1 else 0
 
     banker_score = 50
     player_score = 50
 
     banker_score += (banker_rate - 50) * 0.6
     player_score += (player_rate - 50) * 0.6
-
     banker_score += (recent_b - recent_p) * 3
     player_score += (recent_p - recent_b) * 3
 
@@ -430,16 +396,12 @@ def road_stats(data):
         stable = player_score
 
     alerts = []
-
     if streak_count >= 4:
         alerts.append("長龍注意，可能續龍或斷龍")
-
     if jump_rate >= 60:
         alerts.append("跳路偏高，注意反打")
-
     if len(bp) < 10:
         alerts.append("資料量不足，建議觀望")
-
     if not alerts:
         alerts.append("共享AI正常分析中")
 
@@ -493,6 +455,7 @@ def logout():
 @app.route("/api/login", methods=["POST"])
 def api_login():
     body = request.json or {}
+
     username = body.get("username", "").strip()
     password = body.get("password", "").strip()
 
@@ -500,6 +463,26 @@ def api_login():
 
     if not member:
         return jsonify({"ok": False, "msg": "帳號不存在"})
+
+    if member["expire"]:
+        try:
+            expire_time = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
+
+            if datetime.now() > expire_time:
+                conn = db()
+                conn.execute(
+                    "UPDATE members SET enabled=0 WHERE username=?",
+                    (username,)
+                )
+                conn.commit()
+                conn.close()
+
+                return jsonify({
+                    "ok": False,
+                    "msg": "會員已到期，已自動停權"
+                })
+        except Exception:
+            pass
 
     if not member["enabled"]:
         return jsonify({"ok": False, "msg": "會員停權"})
@@ -516,6 +499,7 @@ def api_login():
 @app.route("/api/admin-login", methods=["POST"])
 def api_admin_login():
     body = request.json or {}
+
     username = body.get("username", "").strip()
     password = body.get("password", "").strip()
 
@@ -525,6 +509,7 @@ def api_admin_login():
 
     return jsonify({"ok": False})
 
+
 @app.route("/api/admin/members")
 def api_admin_members():
     if not session.get("admin"):
@@ -532,8 +517,19 @@ def api_admin_members():
 
     conn = db()
     rows = conn.execute("""
-    SELECT id, username, expire, enabled, role, created_at, last_login, last_active,
-           current_platform, current_table, ip, device
+    SELECT
+        id,
+        username,
+        expire,
+        enabled,
+        role,
+        created_at,
+        last_login,
+        last_active,
+        current_platform,
+        current_table,
+        ip,
+        device
     FROM members
     ORDER BY id DESC
     """).fetchall()
@@ -551,9 +547,10 @@ def api_admin_create_member():
         return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json or {}
+
     username = body.get("username", "").strip()
     password = body.get("password", "").strip()
-    expire = body.get("expire", "2026-12-31 23:59:59").strip()
+    expire = normalize_expire(body.get("expire", "2026-12-31 23:59:59"))
 
     if not username or not password:
         return jsonify({"ok": False, "msg": "帳號密碼必填"})
@@ -563,10 +560,14 @@ def api_admin_create_member():
     try:
         conn.execute("""
         INSERT INTO members
-        (username, password, expire, enabled, role, created_at)
+        (username,password,expire,enabled,role,created_at)
         VALUES (?, ?, ?, 1, 'member', ?)
-        """, (username, password, expire, now()))
-
+        """, (
+            username,
+            password,
+            expire,
+            now()
+        ))
         conn.commit()
         ok = True
         msg = "新增成功"
@@ -577,7 +578,10 @@ def api_admin_create_member():
 
     conn.close()
 
-    return jsonify({"ok": ok, "msg": msg})
+    return jsonify({
+        "ok": ok,
+        "msg": msg
+    })
 
 
 @app.route("/api/admin/toggle-member", methods=["POST"])
@@ -589,7 +593,11 @@ def api_admin_toggle_member():
     username = body.get("username", "").strip()
 
     conn = db()
-    row = conn.execute("SELECT enabled FROM members WHERE username=?", (username,)).fetchone()
+    row = conn.execute("""
+    SELECT enabled
+    FROM members
+    WHERE username=?
+    """, (username,)).fetchone()
 
     if not row:
         conn.close()
@@ -597,41 +605,97 @@ def api_admin_toggle_member():
 
     new_status = 0 if row["enabled"] else 1
 
-    conn.execute("UPDATE members SET enabled=? WHERE username=?", (new_status, username))
+    conn.execute("""
+    UPDATE members
+    SET enabled=?
+    WHERE username=?
+    """, (
+        new_status,
+        username
+    ))
     conn.commit()
     conn.close()
 
     return jsonify({"ok": True})
-    
+
+
+@app.route("/api/admin/add-days", methods=["POST"])
+def api_admin_add_days():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+
+    username = body.get("username", "").strip()
+    days = int(body.get("days", 0))
+
+    if not username or days <= 0:
+        return jsonify({"ok": False, "msg": "資料錯誤"})
+
+    member = get_member(username)
+
+    if not member:
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    try:
+        old_expire = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        old_expire = datetime.now()
+
+    base_time = old_expire if old_expire > datetime.now() else datetime.now()
+    new_expire = base_time.replace(microsecond=0) + timedelta(days=days)
+
+    conn = db()
+    conn.execute("""
+    UPDATE members
+    SET expire=?, enabled=1
+    WHERE username=?
+    """, (
+        new_expire.strftime("%Y-%m-%d %H:%M:%S"),
+        username
+    ))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "msg": f"已補 {days} 天"
+    })
+
+
 @app.route("/api/admin/tables-monitor")
 def api_admin_tables_monitor():
-
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
 
     conn = db()
-
     result = []
 
-    for table in DG_TABLES:
+    for platform, tables in [("DG", DG_TABLES), ("MT", MT_TABLES)]:
+        for table in tables:
+            rows = conn.execute("""
+            SELECT result
+            FROM records
+            WHERE platform=? AND table_no=?
+            ORDER BY id DESC
+            LIMIT 6
+            """, (
+                platform,
+                table
+            )).fetchall()
 
-        rows = conn.execute("""
-        SELECT result
-        FROM records
-        WHERE platform='DG' AND table_no=?
-        ORDER BY id DESC
-        LIMIT 6
-        """, (table,)).fetchall()
+            road = "".join([r["result"] for r in reversed(rows)])
 
-        road = "".join([r["result"] for r in reversed(rows)])
+            banker_count = road.count("B")
+            player_count = road.count("P")
 
-        result.append({
-            "platform":"DG",
-            "table":table,
-            "road":road if road else "-",
-            "ai":"莊" if road.count("B") >= road.count("P") else "閒",
-            "online":True
-        })
+            result.append({
+                "platform": platform,
+                "table": table,
+                "road": road if road else "-",
+                "ai": "莊" if banker_count >= player_count else "閒",
+                "online": True if road else False
+            })
 
     conn.close()
 
@@ -643,7 +707,6 @@ def api_admin_tables_monitor():
 
 @app.route("/api/admin/core-stats")
 def api_admin_core_stats():
-
     if not session.get("admin"):
         return jsonify({"ok": False}), 403
 
@@ -672,10 +735,7 @@ def api_admin_core_stats():
 
     conn.close()
 
-    accuracy = round(
-        (total_shared / total_records) * 100,
-        1
-    ) if total_records else 0
+    accuracy = round((total_shared / total_records) * 100, 1) if total_records else 0
 
     return jsonify({
         "ok": True,
@@ -684,8 +744,9 @@ def api_admin_core_stats():
         "accuracy": accuracy,
         "totalMembers": total_members,
         "onlineMembers": online_members
-    })   
-    
+    })
+
+
 @app.route("/api/tables")
 def api_tables():
     platform = request.args.get("platform", "DG")
@@ -705,7 +766,6 @@ def api_data():
     data = get_records(platform, table)
     shared_data = get_shared_records(platform, table)
     stats = road_stats(shared_data if shared_data else data)
-
     member = get_member(session.get("member"))
 
     return jsonify({
@@ -723,11 +783,12 @@ def api_manual():
         return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json or {}
+
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
     result = body.get("result")
 
-    if result not in ["B","P","T"]:
+    if result not in ["B", "P", "T"]:
         return jsonify({"ok": False, "msg": "結果錯誤"})
 
     conn = db()
@@ -735,27 +796,56 @@ def api_manual():
     cur = conn.execute("""
     INSERT INTO records
     (
-        platform, table_no, result, cards,
-        player_point, banker_point,
-        player_pair, banker_pair,
-        lucky6, tie, source, count_bet,
-        ai_learn, ai_suggest_before, ai_hit, created_at
+        platform,
+        table_no,
+        result,
+        cards,
+        player_point,
+        banker_point,
+        player_pair,
+        banker_pair,
+        lucky6,
+        tie,
+        source,
+        count_bet,
+        ai_learn,
+        ai_suggest_before,
+        ai_hit,
+        created_at
     )
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        platform, table, result, "",
-        0, 0,
-        0, 0,
-        0, 1 if result == "T" else 0,
-        "manual", 0,
-        1, "", 0, now()
+        platform,
+        table,
+        result,
+        "",
+        0,
+        0,
+        0,
+        0,
+        0,
+        1 if result == "T" else 0,
+        "manual",
+        0,
+        1,
+        "",
+        0,
+        now()
     ))
 
     record_id = cur.lastrowid
 
     conn.execute("""
     INSERT INTO shared_ai_stats
-    (record_id, platform, table_no, result, source, username, created_at)
+    (
+        record_id,
+        platform,
+        table_no,
+        result,
+        source,
+        username,
+        created_at
+    )
     VALUES (?,?,?,?,?,?,?)
     """, (
         record_id,
@@ -781,6 +871,7 @@ def api_cards():
         return jsonify({"ok": False, "msg": "未登入"}), 403
 
     body = request.json or {}
+
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
     cards = body.get("cards", [])
@@ -795,11 +886,22 @@ def api_cards():
     cur = conn.execute("""
     INSERT INTO records
     (
-        platform, table_no, result, cards,
-        player_point, banker_point,
-        player_pair, banker_pair,
-        lucky6, tie, source, count_bet,
-        ai_learn, ai_suggest_before, ai_hit, created_at
+        platform,
+        table_no,
+        result,
+        cards,
+        player_point,
+        banker_point,
+        player_pair,
+        banker_pair,
+        lucky6,
+        tie,
+        source,
+        count_bet,
+        ai_learn,
+        ai_suggest_before,
+        ai_hit,
+        created_at
     )
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
@@ -825,7 +927,15 @@ def api_cards():
 
     conn.execute("""
     INSERT INTO shared_ai_stats
-    (record_id, platform, table_no, result, source, username, created_at)
+    (
+        record_id,
+        platform,
+        table_no,
+        result,
+        source,
+        username,
+        created_at
+    )
     VALUES (?,?,?,?,?,?,?)
     """, (
         record_id,
@@ -847,22 +957,36 @@ def api_cards():
 
 @app.route("/api/undo", methods=["POST"])
 def api_undo():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
     body = request.json or {}
+
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
 
     conn = db()
 
     row = conn.execute("""
-    SELECT id FROM records
+    SELECT id
+    FROM records
     WHERE platform=? AND table_no=?
     ORDER BY id DESC
     LIMIT 1
-    """, (platform, table)).fetchone()
+    """, (
+        platform,
+        table
+    )).fetchone()
 
     if row:
-        conn.execute("DELETE FROM shared_ai_stats WHERE record_id=?", (row["id"],))
-        conn.execute("DELETE FROM records WHERE id=?", (row["id"],))
+        conn.execute(
+            "DELETE FROM shared_ai_stats WHERE record_id=?",
+            (row["id"],)
+        )
+        conn.execute(
+            "DELETE FROM records WHERE id=?",
+            (row["id"],)
+        )
         conn.commit()
 
     conn.close()
@@ -872,16 +996,24 @@ def api_undo():
 
 @app.route("/api/clear", methods=["POST"])
 def api_clear():
+    if not session.get("member"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
     body = request.json or {}
+
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
 
     conn = db()
 
     rows = conn.execute("""
-    SELECT id FROM records
+    SELECT id
+    FROM records
     WHERE platform=? AND table_no=?
-    """, (platform, table)).fetchall()
+    """, (
+        platform,
+        table
+    )).fetchall()
 
     ids = [r["id"] for r in rows]
 
@@ -894,7 +1026,10 @@ def api_clear():
     conn.execute("""
     DELETE FROM records
     WHERE platform=? AND table_no=?
-    """, (platform, table))
+    """, (
+        platform,
+        table
+    ))
 
     conn.commit()
     conn.close()
@@ -905,4 +1040,7 @@ def api_clear():
 init_db()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(
+        host="0.0.0.0",
+        port=5000
+    )
