@@ -20,12 +20,12 @@ body{
 }
 
 .container{
-    max-width:1600px;
+    max-width:1700px;
     margin:auto;
     padding:10px;
 }
 
-.top-title{
+.topbar{
 
     background:rgba(5,16,34,.92);
 
@@ -42,25 +42,25 @@ body{
         inset 0 0 12px rgba(255,255,255,.03);
 }
 
-.top-title h1{
-    margin:0;
+.top-title{
     font-size:34px;
     color:#7fd5ff;
+    font-weight:bold;
 }
 
-.top-title p{
-    margin-top:8px;
+.top-sub{
+    margin-top:6px;
     color:#9dccff;
 }
 
-.cards{
+.stats{
     display:grid;
-    grid-template-columns:repeat(4,1fr);
+    grid-template-columns:repeat(6,1fr);
     gap:10px;
     margin-bottom:10px;
 }
 
-.card{
+.stat-card{
 
     background:rgba(5,16,34,.92);
 
@@ -75,14 +75,14 @@ body{
         inset 0 0 12px rgba(255,255,255,.03);
 }
 
-.card-title{
+.stat-title{
     color:#9dccff;
     font-size:14px;
 }
 
-.card-value{
+.stat-value{
     margin-top:10px;
-    font-size:36px;
+    font-size:34px;
     font-weight:bold;
 }
 
@@ -109,10 +109,10 @@ body{
 }
 
 .panel-title{
-    font-size:22px;
+    font-size:24px;
     color:#9dccff;
-    margin-bottom:12px;
     font-weight:bold;
+    margin-bottom:14px;
 }
 
 .monitor-grid{
@@ -130,6 +130,42 @@ body{
     border-radius:14px;
 
     padding:10px;
+
+    position:relative;
+
+    overflow:hidden;
+}
+
+.monitor.hot{
+    box-shadow:
+        0 0 18px rgba(255,80,120,.55);
+}
+
+.monitor.cold{
+    opacity:.65;
+}
+
+.glow{
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:
+        linear-gradient(
+            120deg,
+            transparent,
+            rgba(255,255,255,.08),
+            transparent
+        );
+    animation:glowMove 3s linear infinite;
+}
+
+@keyframes glowMove{
+    from{
+        transform:translateX(-100%);
+    }
+    to{
+        transform:translateX(100%);
+    }
 }
 
 .monitor-head{
@@ -140,13 +176,13 @@ body{
 }
 
 .monitor-title{
-    font-size:20px;
+    font-size:22px;
     font-weight:bold;
 }
 
-.monitor-rate{
-    color:#ffd86b;
+.monitor-ai{
     font-size:18px;
+    color:#ffd86b;
     font-weight:bold;
 }
 
@@ -219,7 +255,8 @@ body{
 }
 
 input,
-button{
+button,
+select{
     border:none;
     outline:none;
     border-radius:10px;
@@ -246,11 +283,15 @@ button{
     background:linear-gradient(135deg,#8d6200,#d39b00);
 }
 
+.btn-green{
+    background:linear-gradient(135deg,#006c43,#00d49a);
+}
+
 .form-grid{
     display:grid;
-    grid-template-columns:1fr 1fr 1fr auto;
+    grid-template-columns:1fr 1fr 1fr 1fr auto;
     gap:10px;
-    margin-bottom:12px;
+    margin-bottom:14px;
 }
 
 .action-row{
@@ -268,14 +309,46 @@ button{
     font-weight:bold;
 }
 
-@media(max-width:900px){
+.ranking{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+}
 
-    .cards{
+.rank-card{
+
+    background:rgba(255,255,255,.03);
+
+    border-radius:12px;
+
+    padding:12px;
+
+    border:1px solid rgba(255,255,255,.05);
+}
+
+.rank-title{
+    color:#9dccff;
+    font-size:14px;
+}
+
+.rank-value{
+    margin-top:8px;
+    font-size:26px;
+    font-weight:bold;
+}
+
+@media(max-width:1000px){
+
+    .stats{
         grid-template-columns:repeat(2,1fr);
     }
 
     .monitor-grid{
         grid-template-columns:1fr;
+    }
+
+    .ranking{
+        grid-template-columns:repeat(2,1fr);
     }
 
     .form-grid{
@@ -288,11 +361,7 @@ button{
         white-space:nowrap;
     }
 
-    .card-value{
-        font-size:24px;
-    }
-
-    .top-title h1{
+    .top-title{
         font-size:24px;
     }
 }
@@ -304,32 +373,59 @@ button{
 
 <div class="container">
 
+<div class="topbar">
+
 <div class="top-title">
-<h1>AI 管理控制中心</h1>
-<p>Baccarat AI Admin Dashboard</p>
+AI 電影級控制中心
 </div>
 
-<div class="cards">
-
-<div class="card">
-<div class="card-title">總桌數</div>
-<div id="totalTables" class="card-value blue">0</div>
+<div class="top-sub">
+Baccarat AI Control Center
 </div>
 
-<div class="card">
-<div class="card-title">總局數</div>
-<div id="totalRounds" class="card-value green">0</div>
 </div>
 
-<div class="card">
-<div class="card-title">在線會員</div>
-<div id="onlineCount" class="card-value yellow">0</div>
+<div class="stats">
+
+<div class="stat-card">
+<div class="stat-title">在線會員</div>
+<div id="onlineCount" class="stat-value green">0</div>
 </div>
 
-<div class="card">
-<div class="card-title">AI 今日準確率</div>
-<div id="todayAcc" class="card-value red">72%</div>
+<div class="stat-card">
+<div class="stat-title">總桌數</div>
+<div id="totalTables" class="stat-value blue">0</div>
 </div>
+
+<div class="stat-card">
+<div class="stat-title">總局數</div>
+<div id="totalRounds" class="stat-value yellow">0</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">今日 AI</div>
+<div id="todayAcc" class="stat-value red">0%</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">昨日 AI</div>
+<div id="yesterdayAcc" class="stat-value blue">0%</div>
+</div>
+
+<div class="stat-card">
+<div class="stat-title">近7天 AI</div>
+<div id="weekAcc" class="stat-value green">0%</div>
+</div>
+
+</div>
+
+<div class="panel">
+
+<div class="panel-title">
+AI 勝率排行榜
+</div>
+
+<div id="ranking" class="ranking"></div>
 
 </div>
 
@@ -357,6 +453,11 @@ AI 即時桌況監控
 
 <input id="newExpire" type="datetime-local">
 
+<select id="newRole">
+<option value="member">會員</option>
+<option value="agent">代理</option>
+</select>
+
 <button class="btn-blue" onclick="addMember()">
 新增會員
 </button>
@@ -369,6 +470,7 @@ AI 即時桌況監控
 
 <tr>
 <th>帳號</th>
+<th>角色</th>
 <th>密碼</th>
 <th>到期</th>
 <th>狀態</th>
@@ -403,7 +505,7 @@ AI 即時桌況監控
 清除全部桌資料
 </button>
 
-<button class="btn-blue" onclick="location.href='/'">
+<button class="btn-green" onclick="location.href='/'">
 返回會員頁
 </button>
 
@@ -415,6 +517,28 @@ AI 即時桌況監控
 
 <script>
 
+function roadHtml(records){
+
+    let html = "";
+
+    (records || []).forEach(r=>{
+
+        html += `
+        <div class="cell ${r.result}">
+            ${
+                r.result === "B"
+                ? "莊"
+                : r.result === "P"
+                ? "閒"
+                : "和"
+            }
+        </div>
+        `;
+    });
+
+    return html;
+}
+
 async function loadAdminData(){
 
     const res =
@@ -424,9 +548,14 @@ async function loadAdminData(){
         await res.json();
 
     if(!data.ok){
-        location.href="/admin-login";
+
+        location.href = "/admin-login";
+
         return;
     }
+
+    document.getElementById("onlineCount").textContent =
+        data.onlineCount || 0;
 
     document.getElementById("totalTables").textContent =
         data.totalTables || 0;
@@ -434,15 +563,57 @@ async function loadAdminData(){
     document.getElementById("totalRounds").textContent =
         data.totalRounds || 0;
 
-    document.getElementById("onlineCount").textContent =
-        data.onlineCount || 0;
-
     document.getElementById("todayAcc").textContent =
         (data.aiAccuracy?.today || 0) + "%";
+
+    document.getElementById("yesterdayAcc").textContent =
+        (data.aiAccuracy?.yesterday || 0) + "%";
+
+    document.getElementById("weekAcc").textContent =
+        (data.aiAccuracy?.week || 0) + "%";
+
+    renderRanking(data.ranking || []);
 
     renderTables(data.tables || []);
 
     renderMembers(data.members || []);
+}
+
+function renderRanking(list){
+
+    const wrap =
+        document.getElementById("ranking");
+
+    wrap.innerHTML = "";
+
+    list.forEach((r,i)=>{
+
+        const div =
+            document.createElement("div");
+
+        div.className = "rank-card";
+
+        div.innerHTML = `
+
+            <div class="rank-title">
+                TOP ${i+1}
+            </div>
+
+            <div style="margin-top:6px;">
+                ${r.platform}-${r.table}
+            </div>
+
+            <div class="rank-value">
+                ${r.aiHitRate || 0}%
+            </div>
+
+            <div style="margin-top:6px;color:#9dccff;">
+                AI：${r.suggest}
+            </div>
+        `;
+
+        wrap.appendChild(div);
+    });
 }
 
 function renderTables(tables){
@@ -457,26 +628,12 @@ function renderTables(tables){
         const div =
             document.createElement("div");
 
-        div.className = "monitor";
-
-        let roadHtml = "";
-
-        (t.records || []).forEach(r=>{
-
-            roadHtml += `
-                <div class="cell ${r.result}">
-                    ${
-                        r.result === "B"
-                        ? "莊"
-                        : r.result === "P"
-                        ? "閒"
-                        : "和"
-                    }
-                </div>
-            `;
-        });
+        div.className =
+            `monitor ${t.hot ? 'hot' : ''} ${t.cold ? 'cold' : ''}`;
 
         div.innerHTML = `
+
+            <div class="glow"></div>
 
             <div class="monitor-head">
 
@@ -484,20 +641,36 @@ function renderTables(tables){
                     ${t.platform}-${t.table}
                 </div>
 
-                <div class="monitor-rate">
+                <div class="monitor-ai">
                     ${t.suggest} ${t.stableRate}%
                 </div>
 
             </div>
 
             <div style="margin-bottom:8px;">
+
                 莊率 ${t.bankerRate}%　
                 閒率 ${t.playerRate}%　
                 和 ${t.tieCount}
+
             </div>
 
             <div class="road">
-                ${roadHtml}
+                ${roadHtml(t.records)}
+            </div>
+
+            <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+
+                <div>
+                    AI命中：
+                    ${t.aiHitRate || 0}%
+                </div>
+
+                <div>
+                    學習局數：
+                    ${t.modelRounds || 0}
+                </div>
+
             </div>
 
             <div style="margin-top:10px;">
@@ -532,27 +705,35 @@ function renderMembers(members){
 
             <td>${m.username}</td>
 
+            <td>${m.role}</td>
+
             <td>
+
                 <input
                     id="pw_${m.id}"
                     value="${m.password}"
                 >
+
             </td>
 
             <td>
+
                 <input
                     type="datetime-local"
                     id="ex_${m.id}"
                     value="${(m.expire || '').replace(' ','T')}"
                 >
+
             </td>
 
             <td>
+
                 ${
-                    m.enabled
-                    ? '<span class="online">啟用</span>'
-                    : '<span class="offline">停權</span>'
+                    m.online
+                    ? '<span class="online">在線</span>'
+                    : '<span class="offline">離線</span>'
                 }
+
             </td>
 
             <td>
@@ -610,6 +791,9 @@ async function addMember(){
     let expire =
         document.getElementById("newExpire").value.trim();
 
+    const role =
+        document.getElementById("newRole").value;
+
     if(!username || !password || !expire){
 
         alert("請填寫完整");
@@ -629,7 +813,8 @@ async function addMember(){
             body:JSON.stringify({
                 username,
                 password,
-                expire
+                expire,
+                role
             })
         });
 
@@ -645,10 +830,6 @@ async function addMember(){
 
     alert("新增成功");
 
-    document.getElementById("newUsername").value = "";
-    document.getElementById("newPassword").value = "";
-    document.getElementById("newExpire").value = "";
-
     loadAdminData();
 }
 
@@ -663,30 +844,17 @@ async function updateMember(id){
     expire =
         expire.replace("T"," ") + ":00";
 
-    const res =
-        await fetch("/api/admin/member/update",{
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                id,
-                password,
-                expire
-            })
-        });
-
-    const data =
-        await res.json();
-
-    if(!data.ok){
-
-        alert("修改失敗");
-
-        return;
-    }
-
-    alert("已儲存");
+    await fetch("/api/admin/member/update",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            id,
+            password,
+            expire
+        })
+    });
 
     loadAdminData();
 }
@@ -705,9 +873,6 @@ async function toggleMember(id){
 }
 
 async function deleteMember(id){
-
-    if(!confirm("確定刪除會員？"))
-        return;
 
     const adminPassword =
         prompt("請輸入管理員密碼");
@@ -742,9 +907,6 @@ async function deleteMember(id){
 
 async function clearTable(platform,table){
 
-    if(!confirm(`確定清除 ${platform}-${table}？`))
-        return;
-
     const adminPassword =
         prompt("請輸入管理員密碼");
 
@@ -752,7 +914,7 @@ async function clearTable(platform,table){
         return;
 
     const res =
-        await fetch("/api/clear",{
+        await fetch("/api/admin/clear-table",{
             method:"POST",
             headers:{
                 "Content-Type":"application/json"
@@ -778,9 +940,6 @@ async function clearTable(platform,table){
 }
 
 async function clearAllTables(){
-
-    if(!confirm("確定清除全部桌資料？"))
-        return;
 
     const adminPassword =
         prompt("請輸入管理員密碼");
