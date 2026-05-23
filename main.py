@@ -366,7 +366,6 @@ def api_login():
 def index():
     if not session.get("member"):
         return redirect("/login")
-
     return render_template("index.html")
 
 
