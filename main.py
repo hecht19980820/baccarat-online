@@ -85,4 +85,11 @@ def init_db():
     """)
 
     cur.execute("""
-    CREATE TABLE IF NOT
+    CREATE TABLE IF NOT EXISTS agents(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE,
+    password TEXT,
+    enabled INTEGER DEFAULT 1,
+    createdAt TEXT
+)
+""")
