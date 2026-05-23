@@ -602,7 +602,8 @@ def api_admin_toggle_member():
     conn.close()
 
     return jsonify({"ok": True})
- @app.route("/api/admin/tables-monitor")
+    
+@app.route("/api/admin/tables-monitor")
 def api_admin_tables_monitor():
 
     if not session.get("admin"):
