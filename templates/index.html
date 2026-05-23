@@ -3,799 +3,522 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>百家樂 AI 系統</title>
+<title>百家樂 AI</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+    box-sizing:border-box;
+}
 
 body{
     margin:0;
-    background:radial-gradient(circle at top,#101f3d 0%,#050b18 48%,#02050d 100%);
+    background:#07111f;
     color:white;
-    font-family:Arial,"Microsoft JhengHei",sans-serif;
-}
-
-.container{
-    width:100%;
-    max-width:1120px;
-    margin:auto;
-    padding:12px;
+    font-family:Arial,"Microsoft JhengHei";
 }
 
 .topbar{
-    display:grid;
-    grid-template-columns:160px 160px 160px;
-    gap:12px;
-    margin-bottom:12px;
+    background:#0b1728;
+    padding:10px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
 }
 
-select,button{
-    width:100%;
-    border-radius:12px;
-    border:1px solid rgba(90,170,255,.45);
-    background:#08162f;
+select,
+input,
+button{
+    border:none;
+    border-radius:8px;
+    padding:10px;
+    background:#10243d;
     color:white;
-    padding:12px;
-    font-size:16px;
-    font-weight:bold;
-}
-
-.expire{
-    color:#ffd86b;
-    font-size:16px;
-    font-weight:bold;
-    margin-bottom:12px;
-}
-
-.card{
-    background:rgba(8,18,38,.82);
-    border:1px solid rgba(80,160,255,.48);
-    box-shadow:0 0 18px rgba(0,120,255,.18), inset 0 0 12px rgba(255,255,255,.025);
-    border-radius:16px;
-    padding:14px;
-    margin-bottom:12px;
-}
-
-.grid-top{
-    display:grid;
-    grid-template-columns:280px 1fr 260px;
-    gap:12px;
-}
-
-.grid-mid{
-    display:grid;
-    grid-template-columns:1fr 320px;
-    gap:12px;
-}
-
-.title{
-    color:#9dccff;
-    font-size:20px;
-    font-weight:bold;
-    margin-bottom:10px;
-}
-
-.ai-result{
-    font-size:78px;
-    font-weight:bold;
-    text-align:center;
-    margin:12px 0 8px;
-    text-shadow:0 0 18px currentColor;
-}
-
-.banker-text{color:#ff4c5f}
-.player-text{color:#2f8bff}
-.wait-text{color:#ff5b8d}
-
-.rate{
-    text-align:center;
-    font-size:42px;
-    font-weight:bold;
-    color:#ff9ec0;
-}
-
-.sub{
-    color:#91a8d7;
     font-size:14px;
 }
 
-.center{text-align:center}
+button{
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.btn-b{
+    background:#8f1024;
+}
+
+.btn-p{
+    background:#144f9c;
+}
+
+.btn-t{
+    background:#1f8f58;
+}
+
+.btn-yellow{
+    background:#9c7b14;
+}
+
+.main{
+    padding:10px;
+}
+
+.stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    margin-bottom:10px;
+}
+
+.card{
+    background:#0d1b2d;
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+}
+
+.card-title{
+    font-size:12px;
+    color:#8cbcff;
+}
+
+.card-value{
+    font-size:24px;
+    font-weight:bold;
+    margin-top:5px;
+}
+
+.red{color:#ff5a6e}
+.blue{color:#59a9ff}
+.green{color:#00ff9d}
+.yellow{color:#ffd86b}
+
+.predict{
+    background:#0d1b2d;
+    border-radius:12px;
+    padding:15px;
+    text-align:center;
+    margin-bottom:10px;
+}
+
+.predict-main{
+    font-size:42px;
+    font-weight:bold;
+    margin:10px 0;
+}
 
 .road{
     display:grid;
-    grid-template-rows:repeat(6,43px);
+    grid-template-rows:repeat(6,22px);
     grid-auto-flow:column;
-    grid-auto-columns:43px;
-    gap:5px;
+    grid-auto-columns:22px;
+    gap:3px;
     overflow-x:auto;
-    overflow-y:hidden;
+    background:#08111d;
+    border-radius:10px;
     padding:8px;
-    border-radius:14px;
-    background:rgba(255,255,255,.025);
 }
 
 .cell{
-    width:40px;
-    height:40px;
+    width:20px;
+    height:20px;
     border-radius:50%;
     display:flex;
     align-items:center;
     justify-content:center;
+    font-size:9px;
     font-weight:bold;
-    font-size:18px;
 }
 
 .B{
-    border:2px solid #ff3151;
+    border:1px solid #ff3151;
     color:#ff3151;
-    background:rgba(255,0,40,.18);
 }
 
 .P{
-    border:2px solid #2f8bff;
+    border:1px solid #2f8bff;
     color:#2f8bff;
-    background:rgba(0,90,255,.18);
 }
 
 .T{
-    border:2px solid #00d26a;
+    border:1px solid #00d26a;
     color:#00d26a;
-    background:rgba(0,210,106,.18);
 }
-
-.alert-box{
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:12px;
-    padding:14px;
-    margin-bottom:10px;
-    background:rgba(255,255,255,.025);
-    color:#ffd36a;
-    font-size:16px;
-}
-
-.input-box{
-    display:grid;
-    grid-template-columns:1fr 300px;
-    gap:14px;
-}
-
-.hint{
-    border:1px solid rgba(80,160,255,.35);
-    border-radius:12px;
-    padding:12px;
-    color:#bcd8ff;
-    line-height:1.8;
-}
-
-.card-preview{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-top:12px;
-}
-
-.preview-wrap{text-align:center}
-
-.preview-number{
-    width:46px;
-    height:46px;
-    border-radius:8px;
-    border:1px solid rgba(120,180,255,.48);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.preview-label{
-    margin-top:4px;
-    font-size:12px;
-    color:#91a8d7;
-}
-
-.preview-player .preview-number{border-color:#2f8bff}
-.preview-banker .preview-number{border-color:#ff3151}
-
-.keypad{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-}
-
-.keypad button{
-    height:58px;
-    font-size:24px;
-}
-
-.banker{background:linear-gradient(135deg,#9d0038,#ff2f71)}
-.player{background:linear-gradient(135deg,#0048d8,#009dff)}
-.tie{background:linear-gradient(135deg,#007a4c,#00d49a)}
-.warn{background:linear-gradient(135deg,#8d6200,#d39b00)}
-.danger{background:linear-gradient(135deg,#4b0018,#b00038)}
 
 .manual-buttons{
     display:grid;
-    gap:14px;
-    margin-top:25px;
-}
-
-.manual-buttons button{
-    height:66px;
-    font-size:28px;
-}
-
-.stats-row{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:12px;
-}
-
-.stat-card{
-    background:rgba(8,18,38,.82);
-    border:1px solid rgba(80,160,255,.48);
-    border-radius:14px;
-    padding:14px;
-}
-
-.stat-title{
-    color:#bceaff;
-    font-size:16px;
-}
-
-.stat-value{
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
     margin-top:10px;
-    font-size:30px;
-    font-weight:bold;
 }
 
-.red-text{color:#ff3151}
-.blue-text{color:#2f8bff}
-.green-text{color:#00d26a}
-
-.bottom-buttons{
+.cards-input{
+    margin-top:10px;
     display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:12px;
-    margin-top:12px;
+    grid-template-columns:1fr auto;
+    gap:8px;
 }
 
-.bottom-buttons button{
-    height:60px;
-    font-size:22px;
-}
+@media(max-width:900px){
 
-.footer{
-    opacity:.65;
-    font-size:14px;
-    display:flex;
-    justify-content:space-between;
-    padding:14px;
-    margin-top:12px;
-}
+    .stats{
+        grid-template-columns:repeat(2,1fr);
+    }
 
-/* 強制手機版 */
-body.force-mobile{
-    zoom:.82;
-}
+    .topbar{
+        padding:8px;
+    }
 
-body.force-mobile .container{
-    padding:4px !important;
-    max-width:100% !important;
-}
+    select,
+    input,
+    button{
+        font-size:12px;
+        padding:8px;
+    }
 
-body.force-mobile .topbar{
-    gap:4px !important;
-    grid-template-columns:1fr 1fr 1fr !important;
-}
+    .predict-main{
+        font-size:30px;
+    }
 
-body.force-mobile select{
-    height:34px !important;
-    padding:4px !important;
-    font-size:13px !important;
-    border-radius:8px !important;
-}
+    .road{
+        grid-template-rows:repeat(6,18px);
+        grid-auto-columns:18px;
+        gap:2px;
+    }
 
-body.force-mobile .expire{
-    font-size:13px !important;
-    margin-bottom:6px !important;
-}
-
-body.force-mobile .grid-top,
-body.force-mobile .grid-mid,
-body.force-mobile .input-box{
-    grid-template-columns:1fr !important;
-    gap:5px !important;
-}
-
-body.force-mobile .card{
-    padding:6px !important;
-    border-radius:10px !important;
-    margin-bottom:6px !important;
-}
-
-body.force-mobile .title{
-    font-size:14px !important;
-    margin-bottom:4px !important;
-}
-
-body.force-mobile .ai-result{
-    font-size:34px !important;
-    margin:2px 0 !important;
-}
-
-body.force-mobile .rate{
-    font-size:24px !important;
-}
-
-body.force-mobile .sub{
-    font-size:11px !important;
-}
-
-body.force-mobile .road{
-    grid-template-rows:repeat(6,20px) !important;
-    grid-auto-columns:20px !important;
-    gap:2px !important;
-    padding:3px !important;
-    max-height:128px !important;
-    min-height:128px !important;
-}
-
-body.force-mobile .cell{
-    width:18px !important;
-    height:18px !important;
-    font-size:9px !important;
-    border-width:1px !important;
-}
-
-body.force-mobile .hint{
-    font-size:11px !important;
-    padding:6px !important;
-    line-height:1.4 !important;
-}
-
-body.force-mobile .preview-number{
-    width:30px !important;
-    height:30px !important;
-    font-size:15px !important;
-}
-
-body.force-mobile .preview-label{
-    font-size:9px !important;
-}
-
-body.force-mobile .keypad{
-    gap:5px !important;
-}
-
-body.force-mobile .keypad button{
-    height:38px !important;
-    font-size:18px !important;
-    border-radius:8px !important;
-}
-
-body.force-mobile .manual-buttons{
-    gap:6px !important;
-    grid-template-columns:repeat(3,1fr) !important;
-    margin-top:6px !important;
-}
-
-body.force-mobile .manual-buttons button{
-    height:40px !important;
-    font-size:18px !important;
-    border-radius:8px !important;
-}
-
-body.force-mobile .stats-row{
-    grid-template-columns:repeat(3,1fr) !important;
-    gap:5px !important;
-}
-
-body.force-mobile .stat-card{
-    padding:6px !important;
-    border-radius:10px !important;
-}
-
-body.force-mobile .stat-title{
-    font-size:10px !important;
-}
-
-body.force-mobile .stat-value{
-    font-size:18px !important;
-    margin-top:4px !important;
-}
-
-body.force-mobile .bottom-buttons{
-    gap:6px !important;
-}
-
-body.force-mobile .bottom-buttons button{
-    height:40px !important;
-    font-size:15px !important;
-    border-radius:8px !important;
-}
-
-body.force-mobile .footer{
-    font-size:10px !important;
-    padding:6px !important;
-}
-
-@media(max-width:760px){
-    body{overflow-x:hidden}
-    .container{padding:8px}
-    .topbar{grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .grid-top,.grid-mid,.input-box{grid-template-columns:1fr}
-    .stats-row{grid-template-columns:repeat(3,1fr);gap:8px}
-    .card{padding:10px}
-    .title{font-size:18px}
-    .ai-result{font-size:54px}
-    .rate{font-size:32px}
-    .road{grid-template-rows:repeat(6,34px);grid-auto-columns:34px}
-    .cell{width:32px;height:32px;font-size:14px}
-    .keypad button{height:52px;font-size:22px}
-    .manual-buttons{grid-template-columns:repeat(3,1fr)}
-    .manual-buttons button{height:54px;font-size:22px}
-    .stat-title{font-size:13px}
-    .stat-value{font-size:22px}
+    .cell{
+        width:16px;
+        height:16px;
+        font-size:8px;
+    }
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
+<div class="topbar">
 
-    <div class="topbar">
-        <select id="platform" onchange="loadTables()">
-            <option value="DG">♠ DG</option>
-            <option value="MT">♠ MT</option>
-        </select>
+    <select id="platformSelect" onchange="changePlatform()">
+        <option value="DG">DG</option>
+        <option value="MT">MT</option>
+    </select>
 
-        <select id="table" onchange="loadData()"></select>
+    <select id="tableSelect" onchange="loadData()"></select>
 
-        <select id="viewMode" onchange="changeViewMode()">
-            <option value="auto">自動</option>
-            <option value="mobile">手機版</option>
-            <option value="desktop">電腦版</option>
-        </select>
-    </div>
+    <button class="btn-yellow" onclick="undoRecord()">
+        撤回
+    </button>
 
-    <div class="expire">
-        會員到期時間：
-        <span id="memberExpire">2026-12-31 23:59:59</span>
-    </div>
+    <button class="btn-yellow" onclick="clearTable()">
+        清除此桌
+    </button>
 
-    <div class="grid-top">
+</div>
 
-        <div class="card">
-            <div class="title">✦ AI 建議方向</div>
-            <div id="suggest" class="ai-result wait-text">觀望</div>
-            <div class="center sub">後台穩定率</div>
-            <div id="stableRate" class="rate">0%</div>
-        </div>
+<div class="main">
+
+    <div class="stats">
 
         <div class="card">
-            <div class="title">⚙ 大路盤</div>
-            <div id="road" class="road"></div>
-        </div>
-
-        <div class="card">
-            <div class="title">🔔 AI 提醒</div>
-            <div id="alerts"></div>
-        </div>
-
-    </div>
-
-    <div class="grid-mid">
-
-        <div class="card">
-            <div class="title">🎴 牌型輸入</div>
-
-            <div class="input-box">
-
-                <div>
-                    <div class="hint">
-                        固定輸入順序：<br>
-                        閒1 → 莊1 → 閒2 → 莊2 → 閒3 → 莊3
-                    </div>
-
-                    <div class="sub" style="margin-top:12px;">目前輸入</div>
-                    <div id="cardPreview" class="card-preview"></div>
-                </div>
-
-                <div>
-                    <div class="keypad">
-                        <button onclick="addCard(1)">1</button>
-                        <button onclick="addCard(2)">2</button>
-                        <button onclick="addCard(3)">3</button>
-                        <button onclick="addCard(4)">4</button>
-                        <button onclick="addCard(5)">5</button>
-                        <button onclick="addCard(6)">6</button>
-                        <button onclick="addCard(7)">7</button>
-                        <button onclick="addCard(8)">8</button>
-                        <button onclick="addCard(9)">9</button>
-                        <button class="warn" onclick="resetCards()">清除</button>
-                        <button onclick="addCard(0)">0</button>
-                        <button class="banker" onclick="submitCards()">送出</button>
-                    </div>
-                </div>
-
+            <div class="card-title">AI 建議</div>
+            <div id="suggestText" class="card-value yellow">
+                觀望
             </div>
         </div>
 
         <div class="card">
-            <div class="title">♠ 手動添加大路結果</div>
+            <div class="card-title">信心度</div>
+            <div id="stableRate" class="card-value green">
+                0%
+            </div>
+        </div>
 
-            <div class="manual-buttons">
-                <button class="banker" onclick="manualAdd('B')">莊</button>
-                <button class="player" onclick="manualAdd('P')">閒</button>
-                <button class="tie" onclick="manualAdd('T')">和</button>
+        <div class="card">
+            <div class="card-title">莊率</div>
+            <div id="bankerRate" class="card-value red">
+                0%
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">閒率</div>
+            <div id="playerRate" class="card-value blue">
+                0%
             </div>
         </div>
 
     </div>
 
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-title">莊勝率</div>
-            <div id="bankerRate" class="stat-value red-text">0%</div>
+    <div class="predict">
+
+        <div>AI 即時預測</div>
+
+        <div id="predictMain" class="predict-main yellow">
+            觀望
         </div>
 
-        <div class="stat-card">
-            <div class="stat-title">閒勝率</div>
-            <div id="playerRate" class="stat-value blue-text">0%</div>
-        </div>
+        <div id="alertText"></div>
 
-        <div class="stat-card">
-            <div class="stat-title">和局數</div>
-            <div id="tieRate" class="stat-value green-text">0</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-title">連續狀態</div>
-            <div id="streak" class="stat-value red-text">-</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-title">下注次數</div>
-            <div id="betCount" class="stat-value">0</div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-title">分析量</div>
-            <div id="analysisCount" class="stat-value">0</div>
-        </div>
     </div>
 
-    <div class="bottom-buttons">
-        <button onclick="undo()">↩ 撤回上一筆</button>
-        <button class="danger" onclick="clearTable()">🗑 清除此桌資料</button>
+    <div id="road" class="road"></div>
+
+    <div class="manual-buttons">
+
+        <button
+            class="btn-b"
+            onclick="addManual('B')"
+        >
+            手動莊
+        </button>
+
+        <button
+            class="btn-p"
+            onclick="addManual('P')"
+        >
+            手動閒
+        </button>
+
+        <button
+            class="btn-t"
+            onclick="addManual('T')"
+        >
+            手動和
+        </button>
+
     </div>
 
-    <div class="footer">
-        <div>♠ 百家樂 AI 系統</div>
-        <div>Ver 2.3.0</div>
+    <div class="cards-input">
+
+        <input
+            id="cardsInput"
+            placeholder="輸入牌型 0.2.8.0"
+        >
+
+        <button
+            class="btn-yellow"
+            onclick="submitCards()"
+        >
+            送出牌型
+        </button>
+
     </div>
 
 </div>
 
 <script>
-let cards = [];
 
-function changeViewMode(){
-    const mode = document.getElementById("viewMode").value;
-
-    document.body.classList.remove("force-mobile");
-
-    if(mode === "mobile"){
-        document.body.classList.add("force-mobile");
-    }
-
-    if(mode === "auto" && window.innerWidth <= 760){
-        document.body.classList.add("force-mobile");
-    }
-}
-
-window.addEventListener("resize", changeViewMode);
+let currentPlatform = "DG";
+let currentTable = "";
 
 async function loadTables(){
-    const platform = document.getElementById("platform").value;
-    const res = await fetch(`/api/tables?platform=${platform}`);
-    const tables = await res.json();
 
-    const tableSelect = document.getElementById("table");
-    tableSelect.innerHTML = "";
+    const res =
+        await fetch(`/api/tables?platform=${currentPlatform}`);
+
+    const tables =
+        await res.json();
+
+    const select =
+        document.getElementById("tableSelect");
+
+    select.innerHTML = "";
 
     tables.forEach(t=>{
-        const opt = document.createElement("option");
-        opt.value = t;
-        opt.textContent = t;
-        tableSelect.appendChild(opt);
+
+        const op =
+            document.createElement("option");
+
+        op.value = t;
+        op.textContent = t;
+
+        select.appendChild(op);
     });
+
+    currentTable = tables[0];
 
     loadData();
 }
 
+function changePlatform(){
+
+    currentPlatform =
+        document.getElementById("platformSelect").value;
+
+    loadTables();
+}
+
 async function loadData(){
-    const platform = document.getElementById("platform").value;
-    const table = document.getElementById("table").value;
 
-    const res = await fetch(`/api/data?platform=${platform}&table=${table}`);
-    const data = await res.json();
+    currentTable =
+        document.getElementById("tableSelect").value;
 
-    if(data.memberExpireTime){
-        document.getElementById("memberExpire").textContent = data.memberExpireTime;
+    const res =
+        await fetch(`/api/data?platform=${currentPlatform}&table=${currentTable}`);
+
+    const data =
+        await res.json();
+
+    if(!data.ok){
+        return;
     }
 
-    renderRoad(data.records);
-    renderStats(data);
+    renderRoad(data.records || []);
+
+    const stats = data.stats || {};
+
+    document.getElementById("suggestText").textContent =
+        stats.suggest || "觀望";
+
+    document.getElementById("predictMain").textContent =
+        stats.suggest || "觀望";
+
+    document.getElementById("stableRate").textContent =
+        (stats.stableRate || 0) + "%";
+
+    document.getElementById("bankerRate").textContent =
+        (stats.bankerRate || 0) + "%";
+
+    document.getElementById("playerRate").textContent =
+        (stats.playerRate || 0) + "%";
+
+    document.getElementById("alertText").textContent =
+        (stats.alerts || []).join(" / ");
 }
 
 function renderRoad(records){
-    const road = document.getElementById("road");
+
+    const road =
+        document.getElementById("road");
+
     road.innerHTML = "";
 
     records.forEach(r=>{
-        const div = document.createElement("div");
-        div.className = `cell ${r.result}`;
-        div.textContent = r.result === "B" ? "莊" : r.result === "P" ? "閒" : "和";
+
+        const div =
+            document.createElement("div");
+
+        div.className =
+            `cell ${r.result}`;
+
+        div.textContent =
+            r.result === "B"
+            ? "莊"
+            : r.result === "P"
+            ? "閒"
+            : "和";
+
         road.appendChild(div);
     });
 }
 
-function renderStats(data){
-    const s = data.stats;
-    const suggest = document.getElementById("suggest");
+async function addManual(result){
 
-    suggest.textContent = s.suggest;
-    suggest.className = "ai-result";
-
-    if(s.suggest === "莊"){
-        suggest.classList.add("banker-text");
-    }else if(s.suggest === "閒"){
-        suggest.classList.add("player-text");
-    }else{
-        suggest.classList.add("wait-text");
-    }
-
-    document.getElementById("stableRate").textContent = s.stableRate + "%";
-    document.getElementById("bankerRate").textContent = s.bankerRate + "%";
-    document.getElementById("playerRate").textContent = s.playerRate + "%";
-    document.getElementById("tieRate").textContent = s.tieCount || 0;
-    document.getElementById("betCount").textContent = data.betCount;
-    document.getElementById("analysisCount").textContent = s.totalAnalysis;
-
-    document.getElementById("streak").textContent =
-        s.streakResult
-        ? `${s.streakResult === "B" ? "莊" : "閒"} ${s.streakCount} 連`
-        : "-";
-
-    const alerts = document.getElementById("alerts");
-    alerts.innerHTML = "";
-
-    if(s.alerts && s.alerts.length){
-        s.alerts.forEach(a=>{
-            const div = document.createElement("div");
-            div.className = "alert-box";
-            div.textContent = a;
-            alerts.appendChild(div);
-        });
-    }else{
-        alerts.innerHTML = `<div class="sub">目前無明顯提醒</div>`;
-    }
-}
-
-async function manualAdd(result){
-    const platform = document.getElementById("platform").value;
-    const table = document.getElementById("table").value;
-
-    await fetch("/api/manual",{
+    const res = await fetch("/api/manual",{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform, table, result})
-    });
-
-    loadData();
-}
-
-function addCard(num){
-    if(cards.length >= 6) return;
-
-    cards.push(num);
-    updatePreview();
-}
-
-function updatePreview(){
-    const preview = document.getElementById("cardPreview");
-    preview.innerHTML = "";
-
-    cards.forEach((n,i)=>{
-        const wrap = document.createElement("div");
-        wrap.className = "preview-wrap";
-
-        if(i % 2 === 0){
-            wrap.classList.add("preview-player");
-        }else{
-            wrap.classList.add("preview-banker");
-        }
-
-        const numBox = document.createElement("div");
-        numBox.className = "preview-number";
-        numBox.textContent = n;
-
-        const label = document.createElement("div");
-        label.className = "preview-label";
-        label.textContent = i % 2 === 0
-            ? `閒${Math.floor(i/2)+1}`
-            : `莊${Math.floor(i/2)+1}`;
-
-        wrap.appendChild(numBox);
-        wrap.appendChild(label);
-        preview.appendChild(wrap);
-    });
-}
-
-function resetCards(){
-    cards = [];
-    updatePreview();
-}
-
-async function submitCards(){
-    if(cards.length < 4){
-        alert("最少4張");
-        return;
-    }
-
-    const platform = document.getElementById("platform").value;
-    const table = document.getElementById("table").value;
-
-    const res = await fetch("/api/cards",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform, table, cards})
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform: currentPlatform,
+            table: currentTable,
+            result: result
+        })
     });
 
     const data = await res.json();
 
     if(!data.ok){
-        alert("牌型錯誤");
+        alert(data.msg || "新增失敗");
         return;
     }
 
-    resetCards();
     loadData();
 }
 
-async function undo(){
-    const platform = document.getElementById("platform").value;
-    const table = document.getElementById("table").value;
+async function submitCards(){
+
+    const raw =
+        document.getElementById("cardsInput").value.trim();
+
+    if(!raw){
+        return;
+    }
+
+    const cards =
+        raw
+        .split(".")
+        .filter(x => x !== "")
+        .map(x => parseInt(x));
+
+    if(cards.some(isNaN)){
+        alert("格式錯誤");
+        return;
+    }
+
+    const res = await fetch("/api/cards",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform: currentPlatform,
+            table: currentTable,
+            cards: cards
+        })
+    });
+
+    const data = await res.json();
+
+    if(!data.ok){
+        alert(data.msg || "輸入失敗");
+        return;
+    }
+
+    document.getElementById("cardsInput").value = "";
+
+    loadData();
+}
+
+async function undoRecord(){
 
     await fetch("/api/undo",{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform, table})
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform: currentPlatform,
+            table: currentTable
+        })
     });
 
     loadData();
 }
 
 async function clearTable(){
-    if(!confirm("確定清除此桌？")) return;
 
-    const platform = document.getElementById("platform").value;
-    const table = document.getElementById("table").value;
+    if(!confirm("確定清除此桌？"))
+        return;
 
     await fetch("/api/clear",{
         method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({platform, table})
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform: currentPlatform,
+            table: currentTable
+        })
     });
 
     loadData();
 }
 
-changeViewMode();
 loadTables();
+
+setInterval(loadData,3000);
+
 </script>
 
 </body>
