@@ -390,55 +390,105 @@ def api_data():
 @app.route("/api/manual", methods=["POST"])
 def api_manual():
     if not session.get("member"):
-        return jsonify({"ok": False})
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
-    body = request.json
+    body = request.json or {}
 
-    platform = body.get("platform")
-    table = body.get("table")
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
     result = body.get("result")
+
+    if result not in ["B", "P", "T"]:
+        return jsonify({"ok": False, "msg": "結果錯誤"})
 
     conn = db()
 
     conn.execute("""
     INSERT INTO records
-    (platform,table_no,result,created_at)
-    VALUES (?,?,?,?)
+    (
+        platform,
+        table_no,
+        result,
+        cards,
+        player_point,
+        banker_point,
+        player_pair,
+        banker_pair,
+        lucky6,
+        tie,
+        source,
+        count_bet,
+        ai_learn,
+        ai_suggest_before,
+        ai_hit,
+        created_at
+    )
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         platform,
         table,
         result,
+        "",
+        0,
+        0,
+        0,
+        0,
+        0,
+        1 if result == "T" else 0,
+        "manual",
+        0,
+        1,
+        "",
+        0,
         now()
     ))
 
     conn.commit()
     conn.close()
 
-    return jsonify({"ok": True})
+    update_member_active(platform, table)
 
+    return jsonify({"ok": True})
 
 @app.route("/api/cards", methods=["POST"])
 def api_cards():
     if not session.get("member"):
-        return jsonify({"ok": False})
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
-    body = request.json
+    body = request.json or {}
 
-    platform = body.get("platform")
-    table = body.get("table")
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
     cards = body.get("cards", [])
 
     calc = calc_cards(cards)
 
-    if not calc:
-        return jsonify({"ok": False})
+    if calc is None:
+        return jsonify({"ok": False, "msg": "牌型錯誤"})
 
     conn = db()
 
     conn.execute("""
     INSERT INTO records
-    (platform,table_no,result,cards,player_point,banker_point,created_at)
-    VALUES (?,?,?,?,?,?,?)
+    (
+        platform,
+        table_no,
+        result,
+        cards,
+        player_point,
+        banker_point,
+        player_pair,
+        banker_pair,
+        lucky6,
+        tie,
+        source,
+        count_bet,
+        ai_learn,
+        ai_suggest_before,
+        ai_hit,
+        created_at
+    )
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
         platform,
         table,
@@ -446,13 +496,24 @@ def api_cards():
         json.dumps(cards),
         calc["playerPoint"],
         calc["bankerPoint"],
+        1 if calc["playerPair"] else 0,
+        1 if calc["bankerPair"] else 0,
+        1 if calc["lucky6"] else 0,
+        1 if calc["tie"] else 0,
+        "card_button",
+        1,
+        1,
+        "",
+        0,
         now()
     ))
 
     conn.commit()
     conn.close()
 
-    return jsonify({"ok": True})
+    update_member_active(platform, table)
+
+    return jsonify({"ok": True, **calc})
 
 
 @app.route("/logout")
