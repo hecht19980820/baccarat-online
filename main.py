@@ -328,7 +328,6 @@ def road_stats(data):
     }
 
 @app.route("/api/login", methods=["POST"])
-def api_login():
 
     body = request.json or {}
 
