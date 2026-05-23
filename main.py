@@ -264,3 +264,189 @@ def get_records(platform, table):
     conn.close()
 
     return [row_to_record(r) for r in rows]
+def road_stats(data):
+    valid = [x for x in data if x.get("result") in ["B","P","T"]]
+    bp = [x for x in valid if x.get("result") in ["B","P"]]
+
+    b = len([x for x in bp if x["result"] == "B"])
+    p = len([x for x in bp if x["result"] == "P"])
+
+    total = len(bp)
+
+    banker_rate = round((b / total) * 100, 1) if total else 0
+    player_rate = round((p / total) * 100, 1) if total else 0
+
+    suggest = "觀望"
+
+    if banker_rate >= 55:
+        suggest = "莊"
+
+    if player_rate >= 55:
+        suggest = "閒"
+
+    stable = max(banker_rate, player_rate)
+
+    return {
+        "bankerRate": banker_rate,
+        "playerRate": player_rate,
+        "suggest": suggest,
+        "stableRate": stable,
+        "betCount": len(valid)
+    }
+
+
+@app.route("/")
+def index():
+    if not session.get("member"):
+        return redirect("/login")
+
+    return render_template("index.html")
+
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/admin-login")
+def admin_login_page():
+    return render_template("admin_login.html")
+
+
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/admin-login")
+
+    return render_template("admin.html")
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    body = request.json
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    member = get_member(username)
+
+    if not member:
+        return jsonify({"ok": False})
+
+    if member["password"] != password:
+        return jsonify({"ok": False})
+
+    session["member"] = username
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin-login", methods=["POST"])
+def api_admin_login():
+    body = request.json
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        session["admin"] = True
+        return jsonify({"ok": True})
+
+    return jsonify({"ok": False})
+
+
+@app.route("/api/data")
+def api_data():
+    if not session.get("member"):
+        return jsonify({"ok": False})
+
+    platform = request.args.get("platform", "DG")
+    table = request.args.get("table", "RB01")
+
+    data = get_records(platform, table)
+
+    return jsonify({
+        "ok": True,
+        "records": data,
+        "stats": road_stats(data)
+    })
+
+
+@app.route("/api/manual", methods=["POST"])
+def api_manual():
+    if not session.get("member"):
+        return jsonify({"ok": False})
+
+    body = request.json
+
+    platform = body.get("platform")
+    table = body.get("table")
+    result = body.get("result")
+
+    conn = db()
+
+    conn.execute("""
+    INSERT INTO records
+    (platform,table_no,result,created_at)
+    VALUES (?,?,?,?)
+    """, (
+        platform,
+        table,
+        result,
+        now()
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+    if not session.get("member"):
+        return jsonify({"ok": False})
+
+    body = request.json
+
+    platform = body.get("platform")
+    table = body.get("table")
+    cards = body.get("cards", [])
+
+    calc = calc_cards(cards)
+
+    if not calc:
+        return jsonify({"ok": False})
+
+    conn = db()
+
+    conn.execute("""
+    INSERT INTO records
+    (platform,table_no,result,cards,player_point,banker_point,created_at)
+    VALUES (?,?,?,?,?,?,?)
+    """, (
+        platform,
+        table,
+        calc["result"],
+        json.dumps(cards),
+        calc["playerPoint"],
+        calc["bankerPoint"],
+        now()
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
+init_db()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
