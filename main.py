@@ -525,7 +525,83 @@ def api_admin_login():
 
     return jsonify({"ok": False})
 
+@app.route("/api/admin/members")
+def api_admin_members():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
 
+    conn = db()
+    rows = conn.execute("""
+    SELECT id, username, expire, enabled, role, created_at, last_login, last_active,
+           current_platform, current_table, ip, device
+    FROM members
+    ORDER BY id DESC
+    """).fetchall()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "members": [dict(r) for r in rows]
+    })
+
+
+@app.route("/api/admin/create-member", methods=["POST"])
+def api_admin_create_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    expire = body.get("expire", "2026-12-31 23:59:59").strip()
+
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號密碼必填"})
+
+    conn = db()
+
+    try:
+        conn.execute("""
+        INSERT INTO members
+        (username, password, expire, enabled, role, created_at)
+        VALUES (?, ?, ?, 1, 'member', ?)
+        """, (username, password, expire, now()))
+
+        conn.commit()
+        ok = True
+        msg = "新增成功"
+
+    except sqlite3.IntegrityError:
+        ok = False
+        msg = "帳號已存在"
+
+    conn.close()
+
+    return jsonify({"ok": ok, "msg": msg})
+
+
+@app.route("/api/admin/toggle-member", methods=["POST"])
+def api_admin_toggle_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+
+    conn = db()
+    row = conn.execute("SELECT enabled FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    new_status = 0 if row["enabled"] else 1
+
+    conn.execute("UPDATE members SET enabled=? WHERE username=?", (new_status, username))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
 @app.route("/api/tables")
 def api_tables():
     platform = request.args.get("platform", "DG")
