@@ -89,6 +89,9 @@ def init_db():
     )
     """)
 
+    ensure_column(cur, "records", "platform", "TEXT")
+ensure_column(cur, "records", "table_no", "TEXT")
+
     for col, typ in [
         ("role", "TEXT DEFAULT 'member'"),
         ("created_at", "TEXT"),
