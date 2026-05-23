@@ -408,8 +408,6 @@ def api_login():
 
     return jsonify({"ok": True})
 
-
-@app.route("/api/admin-login", methods=["POST"])
 def api_admin_login():
     body = request.json
 
