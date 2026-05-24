@@ -11,8 +11,8 @@ DB_PATH = "baccarat_system.db"
 ADMIN_USER = "admin"
 ADMIN_PASS = "Baccarat2026!"
 
-DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07","RB08","RB09","RB10"]
-MT_TABLES = ["01","02","03","03A","05","06","07","08","09","10"]
+DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07"]
+MT_TABLES = ["1","2","3","3A","5","6","7","8","9","10","11","12","13","13A","15"]
 
 
 def now():
@@ -671,6 +671,126 @@ def api_admin_add_days():
     return jsonify({"ok": True, "msg": f"已補 {days} 天"})
 
 
+
+
+@app.route("/api/admin/delete-member", methods=["POST"])
+def api_admin_delete_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+
+    if not username:
+        return jsonify({"ok": False, "msg": "會員帳號錯誤"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("DELETE FROM members WHERE username=?", (username,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員已刪除"})
+
+
+@app.route("/api/admin/update-member", methods=["POST"])
+def api_admin_update_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    old_username = body.get("oldUsername", "").strip()
+    new_username = body.get("username", "").strip()
+    expire = normalize_expire(body.get("expire", ""))
+    enabled = 1 if str(body.get("enabled", "1")) in ["1", "true", "True", "啟用"] else 0
+
+    if not old_username or not new_username:
+        return jsonify({"ok": False, "msg": "會員帳號必填"})
+
+    conn = db()
+
+    row = conn.execute("SELECT id FROM members WHERE username=?", (old_username,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    dup = conn.execute(
+        "SELECT id FROM members WHERE username=? AND username<>?",
+        (new_username, old_username)
+    ).fetchone()
+
+    if dup:
+        conn.close()
+        return jsonify({"ok": False, "msg": "新帳號已存在"})
+
+    conn.execute("""
+    UPDATE members
+    SET username=?, expire=?, enabled=?
+    WHERE username=?
+    """, (new_username, expire, enabled, old_username))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員資料已更新"})
+
+
+@app.route("/api/admin/reset-password", methods=["POST"])
+def api_admin_reset_password():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號與新密碼必填"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("UPDATE members SET password=? WHERE username=?", (password, username))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "密碼已重置"})
+
+
+@app.route("/api/admin/set-expire", methods=["POST"])
+def api_admin_set_expire():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    expire = normalize_expire(body.get("expire", ""))
+
+    if not username or not expire:
+        return jsonify({"ok": False, "msg": "帳號與時間必填"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("UPDATE members SET expire=?, enabled=1 WHERE username=?", (expire, username))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員時間已更新"})
+
 @app.route("/api/admin/set-table-status", methods=["POST"])
 def api_admin_set_table_status():
     if not session.get("admin"):
@@ -713,7 +833,7 @@ def api_admin_tables_monitor():
             rows = conn.execute("""
             SELECT result FROM records
             WHERE platform=? AND table_no=? AND hidden=0
-            ORDER BY id DESC LIMIT 6
+            ORDER BY id DESC LIMIT 120
             """, (platform, table)).fetchall()
             road = "".join([r["result"] for r in reversed(rows)])
             ai_stats = weighted_stats_for_table(platform, table)
@@ -868,37 +988,19 @@ def api_cards():
 def api_undo():
     if not session.get("member"):
         return jsonify({"ok": False, "msg": "未登入"}), 403
-
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
-
     conn = db()
-
     row = conn.execute("""
-    SELECT id
-    FROM records
+    SELECT id FROM records
     WHERE platform=? AND table_no=? AND hidden=0
-    ORDER BY id DESC
-    LIMIT 1
+    ORDER BY id DESC LIMIT 1
     """, (platform, table)).fetchone()
-
     if row:
-        conn.execute("""
-        UPDATE records
-        SET hidden=1, count_bet=0, ai_learn=0
-        WHERE id=?
-        """, (row["id"],))
-
-        conn.execute("""
-        DELETE FROM shared_ai_stats
-        WHERE record_id=?
-        """, (row["id"],))
-
+        conn.execute("UPDATE records SET hidden=1 WHERE id=?", (row["id"],))
         conn.commit()
-
     conn.close()
-
     return jsonify({"ok": True})
 
 
