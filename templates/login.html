@@ -6,74 +6,72 @@
 <title>會員登入</title>
 <style>
 body{
-    margin:0;
-    height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:#050b18;
-    color:white;
-    font-family:Arial,"Microsoft JhengHei";
+background:#020817;
+color:white;
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
 }
 .box{
-    width:360px;
-    padding:28px;
-    border-radius:18px;
-    background:#0b1b35;
-    border:1px solid #1f7cff;
+width:350px;
+background:#071226;
+padding:30px;
+border-radius:20px;
+border:1px solid #16345f;
+box-shadow:0 0 25px rgba(0,140,255,.2);
 }
-h1{text-align:center;color:#7ed0ff}
-input,button{
-    width:100%;
-    padding:14px;
-    margin-top:12px;
-    border-radius:10px;
-    border:0;
-    font-size:16px;
+input{
+width:100%;
+padding:15px;
+margin-top:15px;
+background:#0b1730;
+border:none;
+border-radius:12px;
+color:white;
+font-size:16px;
 }
 button{
-    background:#007bff;
-    color:white;
-    font-weight:bold;
-}
-.msg{
-    color:#ff6b86;
-    text-align:center;
-    margin-top:12px;
+width:100%;
+padding:15px;
+margin-top:20px;
+background:linear-gradient(90deg,#2563eb,#38bdf8);
+border:none;
+border-radius:14px;
+color:white;
+font-size:18px;
+font-weight:bold;
 }
 </style>
 </head>
 <body>
-
 <div class="box">
-    <h1>會員登入</h1>
-    <input id="username" placeholder="帳號">
-    <input id="password" type="password" placeholder="密碼">
-    <button onclick="login()">登入</button>
-    <div id="msg" class="msg"></div>
+<h1>會員登入</h1>
+<input id="username" placeholder="帳號">
+<input id="password" type="password" placeholder="密碼">
+<button onclick="login()">登入</button>
 </div>
-
 <script>
 async function login(){
-    const username=document.getElementById("username").value.trim();
-    const password=document.getElementById("password").value.trim();
+const username=document.getElementById('username').value
+const password=document.getElementById('password').value
 
-    const res=await fetch("/api/login",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({username,password})
-    });
+const r=await fetch('/api/login',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({username,password})
+})
 
-    const data=await res.json();
+const data=await r.json()
 
-    if(!data.ok){
-        document.getElementById("msg").textContent=data.msg || "登入失敗";
-        return;
-    }
-
-    location.href="/";
+if(data.ok){
+location.href='/'
+}else{
+alert(data.msg)
+}
 }
 </script>
-
 </body>
 </html>
