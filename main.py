@@ -221,6 +221,52 @@ def get_member(username):
     return row
 
 
+def parse_expire_time(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except Exception:
+            return None
+
+
+def disable_member(username):
+    conn = db()
+    conn.execute("UPDATE members SET enabled=0 WHERE username=?", (username,))
+    conn.commit()
+    conn.close()
+
+
+def require_active_member():
+    username = session.get("member")
+
+    if not username:
+        return None, (jsonify({"ok": False, "msg": "請重新登入"}), 403)
+
+    member = get_member(username)
+
+    if not member:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "帳號不存在，請重新登入"}), 403)
+
+    expire_time = parse_expire_time(member["expire"])
+
+    if expire_time and datetime.now() > expire_time:
+        disable_member(member["username"])
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員已到期，已自動停權"}), 403)
+
+    if not member["enabled"]:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員已停權，請聯絡管理員"}), 403)
+
+    return member, None
+
+
 def get_table_status_map():
     conn = db()
     rows = conn.execute("SELECT platform, table_no, status, note FROM table_status").fetchall()
@@ -351,16 +397,110 @@ def get_mixed_ai_history(platform, table):
     }
 
 
+def make_hidden_route(results, gap):
+    bp = [r for r in results if r in ["B", "P"]]
+    route = []
+
+    for i in range(gap, len(bp)):
+        # 紅 = 結構相同，藍 = 結構不同。
+        route.append("R" if bp[i] == bp[i - gap] else "L")
+
+    return route
+
+
+def hidden_route_bias(results):
+    bp = [r for r in results if r in ["B", "P"]]
+
+    if len(bp) < 8:
+        return {
+            "bigEye": [],
+            "small": [],
+            "cockroach": [],
+            "hollow": [],
+            "bankerBias": 0,
+            "playerBias": 0,
+            "routePower": 0
+        }
+
+    routes = {
+        "bigEye": make_hidden_route(bp, 2),
+        "small": make_hidden_route(bp, 3),
+        "cockroach": make_hidden_route(bp, 4),
+        "hollow": make_hidden_route(bp, 5)
+    }
+
+    weights = {
+        "bigEye": 2.5,
+        "small": 3.5,
+        "cockroach": 5.0,
+        "hollow": 4.0
+    }
+
+    banker_bias = 0
+    player_bias = 0
+    last = bp[-1]
+    opposite = "P" if last == "B" else "B"
+
+    for name, arr in routes.items():
+        recent = arr[-8:]
+        if len(recent) < 4:
+            continue
+
+        red_count = recent.count("R")
+        blue_count = recent.count("L")
+        weight = weights[name]
+
+        # 紅多：路線結構穩定，偏向延續目前方向。
+        if red_count >= blue_count + 2:
+            target = last
+            power = weight
+
+        # 藍多：路線結構混亂，偏向反打目前方向。
+        elif blue_count >= red_count + 2:
+            target = opposite
+            power = weight
+
+        else:
+            continue
+
+        if target == "B":
+            banker_bias += power
+        else:
+            player_bias += power
+
+    return {
+        "bigEye": routes["bigEye"],
+        "small": routes["small"],
+        "cockroach": routes["cockroach"],
+        "hollow": routes["hollow"],
+        "bankerBias": banker_bias,
+        "playerBias": player_bias,
+        "routePower": round(banker_bias + player_bias, 1)
+    }
+
+
 def calc_pattern_routes(bp):
     results = [x["result"] if isinstance(x, dict) else x for x in bp]
     results = [r for r in results if r in ["B", "P"]]
+
     if not results:
-        return {"cockroachBias": 0, "hollowBias": 0, "routePower": 0}
+        return {
+            "cockroachBias": 0,
+            "hollowBias": 0,
+            "bankerHiddenBias": 0,
+            "playerHiddenBias": 0,
+            "routePower": 0
+        }
+
+    hidden = hidden_route_bias(results)
+
     switches = sum(1 for i in range(1, len(results)) if results[i] != results[i - 1])
     switch_rate = switches / max(1, len(results) - 1)
+
     groups = []
     current = results[0]
     count = 1
+
     for r in results[1:]:
         if r == current:
             count += 1
@@ -368,22 +508,35 @@ def calc_pattern_routes(bp):
             groups.append((current, count))
             current = r
             count = 1
+
     groups.append((current, count))
+
     last = results[-1]
     opposite = "P" if last == "B" else "B"
+
     cockroach_bias = 0
     hollow_bias = 0
+
     if switch_rate >= 0.58:
         cockroach_bias = 7 if opposite == "B" else -7
     elif groups and groups[-1][1] >= 3:
         cockroach_bias = 6 if last == "B" else -6
+
     last_groups = groups[-6:]
     same_pair_count = len([g for g in last_groups if g[1] == 2])
+
     if same_pair_count >= 3:
         hollow_bias = 6 if last == "B" else -6
     elif len(last_groups) >= 4 and last_groups[-1][1] == 1 and last_groups[-2][1] == 1:
         hollow_bias = 5 if opposite == "B" else -5
-    return {"cockroachBias": cockroach_bias, "hollowBias": hollow_bias, "routePower": abs(cockroach_bias) + abs(hollow_bias)}
+
+    return {
+        "cockroachBias": cockroach_bias,
+        "hollowBias": hollow_bias,
+        "bankerHiddenBias": hidden["bankerBias"],
+        "playerHiddenBias": hidden["playerBias"],
+        "routePower": round(abs(cockroach_bias) + abs(hollow_bias) + hidden["routePower"], 1)
+    }
 
 
 def road_stats(data):
@@ -435,6 +588,10 @@ def road_stats(data):
         banker_score += route_bias
     elif route_bias < 0:
         player_score += abs(route_bias)
+
+    # 後台隱藏演算：大眼路、小路、曱甴路、空心路不跳提醒，直接回饋AI權重。
+    banker_score += route.get("bankerHiddenBias", 0)
+    player_score += route.get("playerHiddenBias", 0)
     card_rows = [x for x in valid if x.get("cards")]
     recent_cards = card_rows[-30:]
     lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
@@ -520,7 +677,9 @@ def weighted_stats_for_table(platform, table, fallback_screen_data=None):
 
 @app.route("/")
 def index():
-    if not session.get("member"):
+    member, error = require_active_member()
+    if error:
+        session.clear()
         return redirect("/login")
     return render_template("index.html")
 
@@ -556,17 +715,11 @@ def api_login():
     member = get_member(username)
     if not member:
         return jsonify({"ok": False, "msg": "帳號不存在"})
-    if member["expire"]:
-        try:
-            expire_time = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
-            if datetime.now() > expire_time:
-                conn = db()
-                conn.execute("UPDATE members SET enabled=0 WHERE username=?", (username,))
-                conn.commit()
-                conn.close()
-                return jsonify({"ok": False, "msg": "會員已到期，已自動停權"})
-        except Exception:
-            pass
+    expire_time = parse_expire_time(member["expire"])
+    if expire_time and datetime.now() > expire_time:
+        disable_member(username)
+        return jsonify({"ok": False, "msg": "會員已到期，已自動停權"})
+
     if not member["enabled"]:
         return jsonify({"ok": False, "msg": "會員停權"})
     if member["password"] != password:
@@ -891,8 +1044,10 @@ def api_tables():
 
 @app.route("/api/data")
 def api_data():
-    if not session.get("member"):
-        return jsonify({"ok": False})
+    member, error = require_active_member()
+    if error:
+        return error
+
     platform = request.args.get("platform", "DG")
     table = request.args.get("table", "RB01")
     status_map = get_table_status_map()
@@ -901,7 +1056,6 @@ def api_data():
     update_member_active(platform, table)
     screen_data = get_records(platform, table)
     stats = weighted_stats_for_table(platform, table, screen_data)
-    member = get_member(session.get("member"))
     return jsonify({
         "ok": True,
         "records": screen_data,
@@ -913,8 +1067,9 @@ def api_data():
 
 @app.route("/api/manual", methods=["POST"])
 def api_manual():
-    if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+    member, error = require_active_member()
+    if error:
+        return error
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
@@ -946,8 +1101,9 @@ def api_manual():
 
 @app.route("/api/cards", methods=["POST"])
 def api_cards():
-    if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+    member, error = require_active_member()
+    if error:
+        return error
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
@@ -986,8 +1142,9 @@ def api_cards():
 
 @app.route("/api/undo", methods=["POST"])
 def api_undo():
-    if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+    member, error = require_active_member()
+    if error:
+        return error
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
@@ -998,7 +1155,9 @@ def api_undo():
     ORDER BY id DESC LIMIT 1
     """, (platform, table)).fetchone()
     if row:
-        conn.execute("UPDATE records SET hidden=1 WHERE id=?", (row["id"],))
+        # 撤回代表輸入錯誤：畫面隱藏，同時不進AI永久學習。
+        conn.execute("UPDATE records SET hidden=1, count_bet=0, ai_learn=0 WHERE id=?", (row["id"],))
+        conn.execute("DELETE FROM shared_ai_stats WHERE record_id=?", (row["id"],))
         conn.commit()
     conn.close()
     return jsonify({"ok": True})
@@ -1006,8 +1165,9 @@ def api_undo():
 
 @app.route("/api/clear", methods=["POST"])
 def api_clear():
-    if not session.get("member"):
-        return jsonify({"ok": False, "msg": "未登入"}), 403
+    member, error = require_active_member()
+    if error:
+        return error
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
