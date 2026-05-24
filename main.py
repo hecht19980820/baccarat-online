@@ -557,8 +557,7 @@ def hidden_route_bias(results):
             banker_bias += power
         else:
             player_bias += power
-
-        return {
+    return {
         "bigEye": routes["bigEye"],
         "small": routes["small"],
         "cockroach": routes["cockroach"],
@@ -605,6 +604,40 @@ def admin():
 def logout():
     session.clear()
     return redirect("/login")
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    body = request.json or {}
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    member = get_member(username)
+
+    if not member:
+        return jsonify({
+            "ok": False,
+            "msg": "帳號不存在"
+        })
+
+    if not member["enabled"]:
+        return jsonify({
+            "ok": False,
+            "msg": "會員停權"
+        })
+
+    if member["password"] != password:
+        return jsonify({
+            "ok": False,
+            "msg": "密碼錯誤"
+        })
+
+    session["member"] = username
+
+    return jsonify({
+        "ok": True
+    })
 
 
 @app.route("/api/admin-login", methods=["POST"])
