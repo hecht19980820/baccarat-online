@@ -383,7 +383,7 @@ def calc_cards(cards):
         else:
             result = "T"
 
-                return {
+    return {
             "result": result,
             "playerPoint": player_point,
             "bankerPoint": banker_point,
