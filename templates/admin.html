@@ -1,686 +1,1187 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>百家樂 AI 管理中心</title>
+from flask import Flask, render_template, request, jsonify, redirect, session
+from datetime import datetime, timedelta
+import sqlite3
+import json
 
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{
-    --bg:#020713;
-    --panel:rgba(4,18,38,.92);
-    --line:#18c7ff;
-    --blue:#35c8ff;
-    --green:#22c55e;
-    --red:#ff4268;
-    --yellow:#ffd84d;
-    --text:#e8fbff;
-    --muted:#8db9d8;
-}
-body{
-    min-height:100vh;
-    color:var(--text);
-    font-family:Arial,"Microsoft JhengHei",sans-serif;
-    background:
-        radial-gradient(circle at top,rgba(0,180,255,.25),transparent 36%),
-        linear-gradient(180deg,#03152d,#020713 62%,#000);
-}
-body:before{
-    content:"";
-    position:fixed;
-    inset:0;
-    pointer-events:none;
-    background-image:
-        linear-gradient(rgba(0,210,255,.04) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(0,210,255,.04) 1px,transparent 1px);
-    background-size:42px 42px;
-}
-.wrap{max-width:1650px;margin:auto;padding:18px}
-.topbar{
-    display:grid;
-    grid-template-columns:360px 1fr 260px;
-    gap:16px;
-    align-items:center;
-    margin-bottom:18px;
-}
-.brand{display:flex;align-items:center;gap:14px}
-.logo{
-    width:70px;height:70px;border-radius:50%;
-    border:2px solid var(--line);
-    display:flex;align-items:center;justify-content:center;
-    font-size:30px;font-weight:bold;color:#dffaff;
-    box-shadow:0 0 28px rgba(24,199,255,.55),inset 0 0 22px rgba(24,199,255,.25);
-    background:radial-gradient(circle,rgba(24,199,255,.28),rgba(0,0,0,.25));
-}
-.brand h1{font-size:28px;letter-spacing:2px}
-.brand p{font-size:12px;color:#b7eaff;margin-top:6px;letter-spacing:1.5px}
-.nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-.nav button{
-    border:1px solid rgba(53,200,255,.55);
-    color:#e8fbff;
-    background:linear-gradient(180deg,rgba(8,37,70,.95),rgba(3,13,30,.95));
-    padding:12px 8px;
-    border-radius:4px 18px 4px 18px;
-    font-size:15px;
-    cursor:pointer;
-}
-.nav button.active{
-    background:linear-gradient(135deg,rgba(0,162,255,.5),rgba(2,20,45,.95));
-    box-shadow:0 0 24px rgba(0,180,255,.35);
-}
-.clock-box{text-align:right;color:#bfefff}
-.clock{font-size:27px;color:var(--blue);font-weight:bold;margin-top:6px}
-.grid{display:grid;grid-template-columns:360px 1fr 480px;gap:16px}
-.panel{
-    position:relative;
-    background:linear-gradient(180deg,rgba(6,25,52,.94),rgba(2,10,22,.96));
-    border:1px solid rgba(53,200,255,.62);
-    padding:18px;
-    box-shadow:0 0 18px rgba(0,180,255,.16), inset 0 0 26px rgba(0,180,255,.045);
-    margin-bottom:16px;
-}
-.panel:before,.panel:after{
-    content:"";
-    position:absolute;
-    width:70px;height:1px;
-    background:var(--line);
-    top:0;left:18px;
-    box-shadow:0 0 12px var(--line);
-}
-.panel:after{left:auto;right:18px;top:auto;bottom:0}
-.panel-title{font-size:22px;color:#bfefff;font-weight:bold;margin-bottom:16px}
-.sub{font-size:10px;color:#4bd7ff;opacity:.6;margin-left:6px;letter-spacing:1.6px}
-.ai-orb{
-    width:180px;height:180px;border-radius:50%;
-    border:8px solid rgba(20,190,255,.9);
-    margin:8px auto 18px;
-    display:flex;align-items:center;justify-content:center;
-    font-size:42px;font-weight:bold;color:#89eaff;
-    box-shadow:0 0 42px rgba(0,210,255,.5),inset 0 0 32px rgba(0,210,255,.22);
-}
-.stat-line{display:flex;justify-content:space-between;gap:10px;margin-top:11px;font-size:16px}
-.green{color:var(--green)!important;font-weight:bold}
-.red{color:var(--red)!important;font-weight:bold}
-.blue{color:var(--blue)!important;font-weight:bold}
-.yellow{color:var(--yellow)!important;font-weight:bold}
-select,input{
-    background:#071b36;color:#e9fbff;
-    border:1px solid rgba(53,200,255,.55);
-    border-radius:10px;padding:10px;font-size:15px;outline:none;width:100%;
-}
-button{cursor:pointer}
-.primary{
-    border:none;background:linear-gradient(90deg,#006dff,#35c8ff);
-    color:white;font-weight:bold;padding:11px;border-radius:10px;width:100%;
-}
-.danger{background:linear-gradient(90deg,#7f0025,#ff2d65)!important}
-.warn{background:linear-gradient(90deg,#a57400,#ffd84d)!important;color:#071326!important}
-.ok{background:linear-gradient(90deg,#087344,#22c55e)!important}
-.predict-area{
-    display:grid;
-    grid-template-columns:1fr 160px 1fr;
-    gap:18px;align-items:center;min-height:210px;
-}
-.side{
-    min-height:180px;border:1px solid rgba(53,200,255,.35);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    background:linear-gradient(135deg,rgba(0,90,255,.16),rgba(0,0,0,.1));
-}
-.side.banker{border-color:rgba(255,66,104,.55);background:linear-gradient(135deg,rgba(255,20,70,.14),rgba(0,0,0,.08))}
-.zh{font-size:58px;font-weight:bold;text-shadow:0 0 18px currentColor}
-.pct{font-size:36px;font-weight:bold;margin-top:14px}
-.conf{
-    width:150px;height:150px;border-radius:50%;
-    border:9px solid rgba(48,255,232,.78);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    box-shadow:0 0 35px rgba(48,255,232,.42),inset 0 0 25px rgba(48,255,232,.12);
-}
-.conf strong{font-size:42px}
-.suggest{text-align:center;color:#43eaff;font-size:24px;margin-top:15px}
-.row-buttons{display:flex;gap:8px;flex-wrap:wrap}
-.road-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
-.road-tabs button{
-    border:1px solid rgba(53,200,255,.45);
-    background:rgba(10,35,65,.75);
-    color:#c9efff;padding:10px;border-radius:7px;
-}
-.road-tabs button.active{background:linear-gradient(90deg,#006dff,#35c8ff);color:#fff}
-.road-grid{
-    height:280px;border:1px solid rgba(53,200,255,.35);
-    background:
-        linear-gradient(rgba(53,200,255,.08) 1px,transparent 1px),
-        linear-gradient(90deg,rgba(53,200,255,.08) 1px,transparent 1px),
-        rgba(0,0,0,.18);
-    background-size:36px 36px;border-radius:8px;padding:10px;overflow:auto;
-}
-.beads{display:grid;grid-template-rows:repeat(6,28px);grid-auto-flow:column;grid-auto-columns:28px;gap:6px}
-.bead{
-    width:26px;height:26px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-size:13px;font-weight:bold;
-}
-.B{border:2px solid #ff3b57;color:#ff8ca0}
-.P{border:2px solid #2d85ff;color:#86c5ff}
-.T{border:2px solid #22c55e;color:#9cffc3}
-.monitor-row{
-    display:grid;grid-template-columns:58px 54px 72px 1fr 70px;
-    gap:8px;align-items:center;
-    padding:9px 8px;border:1px solid rgba(53,200,255,.25);
-    margin-bottom:8px;background:rgba(2,15,30,.7);
-}
-.monitor-row.hot{border-color:#13ffc4;box-shadow:0 0 14px rgba(19,255,196,.18)}
-.table-id{font-size:21px;color:#c7f5ff}
-.badge{
-    display:inline-flex;align-items:center;justify-content:center;
-    min-width:38px;height:32px;border-radius:5px;
-    font-size:20px;font-weight:bold;
-}
-.badge.P{background:#0646c9;color:#a8d7ff;border:none}
-.badge.B{background:#9b1232;color:#ffc1cb;border:none}
-.badge.T{background:#087344;color:#caffdf;border:none}
-.badge.W{background:#475569;color:#e2e8f0;border:none}
-.mini-road{white-space:nowrap;overflow:hidden;color:#9ecbf0;font-size:13px}
-.normal{color:#22c55e;font-weight:bold}
-.maintenance{color:#ffd84d;font-weight:bold}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.full{grid-column:1/3}
-.member-card{
-    border:1px solid rgba(53,200,255,.25);
-    background:rgba(0,10,24,.62);
-    padding:12px;border-radius:10px;margin-top:10px;
-}
-.member-card .r{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#bfefff;font-size:14px}
-.member-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
-.small-btn{
-    border:1px solid rgba(53,200,255,.45);
-    background:rgba(8,35,70,.9);
-    color:white;padding:9px;border-radius:9px;font-weight:bold;
-}
-.scroll{max-height:520px;overflow:auto;padding-right:4px}
-.hidden{display:none!important}
-@media(max-width:1200px){
-    .topbar,.grid{grid-template-columns:1fr}
-    .clock-box{text-align:left}
-    .predict-area{grid-template-columns:1fr}
-    .conf{margin:auto}
-}
-@media(max-width:700px){
-    .wrap{padding:10px}
-    .brand h1{font-size:21px}.logo{width:58px;height:58px;font-size:24px}
-    .nav{grid-template-columns:repeat(2,1fr)}
-    .form-grid{grid-template-columns:1fr}.full{grid-column:1}
-    .road-tabs{grid-template-columns:repeat(2,1fr)}
-    .monitor-row{grid-template-columns:50px 48px 55px 1fr 60px;font-size:13px}
-}
-</style>
-</head>
+app = Flask(__name__)
+app.secret_key = "baccarat_admin_secret_2026"
 
-<body>
-<div class="wrap">
+DB_PATH = "baccarat_system.db"
 
-<div class="topbar">
-    <div class="brand">
-        <div class="logo">AI</div>
-        <div>
-            <h1>百家樂 AI 管理中心</h1>
-            <p>BACCARAT AI BACK OFFICE</p>
-        </div>
-    </div>
+ADMIN_USER = "admin"
+ADMIN_PASS = "Baccarat2026!"
 
-    <div class="nav">
-        <button class="active" onclick="showTab('overview',this)">總覽</button>
-        <button onclick="showTab('tables',this)">多桌</button>
-        <button onclick="showTab('roads',this)">路線</button>
-        <button onclick="showTab('members',this)">會員</button>
-        <button onclick="showTab('settings',this)">設定</button>
-    </div>
+DG_TABLES = ["RB01","RB02","RB03","RB04","RB05","RB06","RB07"]
+MT_TABLES = ["1","2","3","3A","5","6","7","8","9","10","11","12","13","13A","15"]
 
-    <div class="clock-box">
-        <div class="green">☁ 雲端同步：已連線</div>
-        <div>v3.6 PRO</div>
-        <div class="clock" id="clock">--:--:--</div>
-    </div>
-</div>
 
-<div class="grid">
+def now():
+    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-<div>
-    <div class="panel">
-        <div class="panel-title">系統狀態 <span class="sub">SYSTEM</span></div>
-        <div class="ai-orb">AI</div>
-        <div class="stat-line"><span>AI 模型</span><span class="blue">混合權重</span></div>
-        <div class="stat-line"><span>共享資料庫</span><span class="green">永久保留</span></div>
-        <div class="stat-line"><span>清桌模式</span><span class="green">只隱藏畫面</span></div>
-        <div class="stat-line"><span>撤回模式</span><span class="yellow">不進AI</span></div>
-    </div>
 
-    <div class="panel">
-        <div class="panel-title">AI 核心數據 <span class="sub">CORE</span></div>
-        <div class="stat-line"><span>總預測次數</span><span id="totalRecords">0</span></div>
-        <div class="stat-line"><span>共享學習筆數</span><span id="totalShared">0</span></div>
-        <div class="stat-line"><span>資料同步率</span><span class="green" id="accuracy">0%</span></div>
-        <div class="stat-line"><span>在線會員</span><span class="blue" id="onlineMembers">0</span></div>
-    </div>
-</div>
+def normalize_expire(value):
+    value = (value or "").strip()
+    if not value:
+        return "2026-12-31 23:59:59"
+    if len(value) == 10:
+        return value + " 23:59:59"
+    return value
 
-<div>
-    <section id="tab-overview" class="tab-page">
-        <div class="panel">
-            <div class="panel-title">AI 即時預測 <span class="sub">PREDICTOR</span></div>
-            <div class="row-buttons" style="justify-content:center;margin-bottom:14px">
-                <select id="platformSelect" onchange="loadTablesMonitor()">
-                    <option value="DG">DG</option>
-                    <option value="MT">MT</option>
-                </select>
-                <select id="tableSelect" onchange="selectMonitorTable()"></select>
-            </div>
 
-            <div class="predict-area">
-                <div class="side">
-                    <div class="zh blue">閒</div>
-                    <div class="pct blue" id="playerScore">0%</div>
-                </div>
-                <div>
-                    <div class="conf"><small>AI信心</small><strong id="mainConfidence">0%</strong></div>
-                    <div class="suggest">建議：<span id="mainSuggest">觀望</span></div>
-                </div>
-                <div class="side banker">
-                    <div class="zh red">莊</div>
-                    <div class="pct red" id="bankerScore">0%</div>
-                </div>
-            </div>
-        </div>
-    </section>
+def db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
-    <section id="tab-tables" class="tab-page hidden">
-        <div class="panel">
-            <div class="panel-title">多桌分析 <span class="sub">ALL TABLES</span></div>
-            <div id="allTablesBox">讀取中...</div>
-        </div>
-    </section>
 
-    <section id="tab-roads" class="tab-page hidden">
-        <div class="panel">
-            <div class="panel-title">路線圖分析 <span class="sub">ROAD MAP</span></div>
-            <div class="road-tabs">
-                <button class="active" onclick="setRoadMode('big',this)">大路</button>
-                <button onclick="setRoadMode('bigEye',this)">大眼路</button>
-                <button onclick="setRoadMode('small',this)">小路</button>
-                <button onclick="setRoadMode('cockroach',this)">曱甴路</button>
-                <button onclick="setRoadMode('hollow',this)">空心路</button>
-                <button onclick="setRoadMode('trend',this)">趨勢</button>
-            </div>
-            <div class="road-grid">
-                <div class="beads" id="mainRoad"></div>
-            </div>
-            <div class="stat-line">
-                <span id="roadNote">請選擇桌號</span>
-                <span>顆數：<span id="roadCount">0</span></span>
-            </div>
-        </div>
-    </section>
+def ensure_column(cur, table, col, typ):
+    cols = [r["name"] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
+    if col not in cols:
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
 
-    <section id="tab-members" class="tab-page hidden">
-        <div class="panel">
-            <div class="panel-title">新增會員 <span class="sub">CREATE</span></div>
-            <div class="form-grid">
-                <input id="username" placeholder="會員帳號">
-                <input id="password" placeholder="會員密碼">
-                <input class="full" id="expire" type="date" value="2026-12-31">
-                <button class="primary full" onclick="createMember()">新增會員</button>
-            </div>
-        </div>
-        <div class="panel">
-            <div class="panel-title">會員管理 <span class="sub">EDIT / DELETE / RESET</span></div>
-            <div class="scroll" id="memberList">讀取中...</div>
-        </div>
-    </section>
 
-    <section id="tab-settings" class="tab-page hidden">
-        <div class="panel">
-            <div class="panel-title">房間維護 <span class="sub">MAINTENANCE</span></div>
-            <div class="form-grid">
-                <select id="maintPlatform" onchange="loadMaintTables()">
-                    <option value="DG">DG</option>
-                    <option value="MT">MT</option>
-                </select>
-                <select id="maintTable"></select>
-                <select class="full" id="maintStatus">
-                    <option value="normal">正常開放</option>
-                    <option value="maintenance">維護中</option>
-                </select>
-                <input class="full" id="maintNote" placeholder="維護備註">
-                <button class="primary full" onclick="setTableStatus()">更新狀態</button>
-            </div>
-        </div>
-    </section>
-</div>
+def init_db():
+    conn = db()
+    cur = conn.cursor()
 
-<div>
-    <div class="panel">
-        <div class="panel-title">多桌監控 <span class="sub">LIVE TABLES</span></div>
-        <div id="monitorBox">讀取中...</div>
-    </div>
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS members (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        password TEXT,
+        expire TEXT,
+        enabled INTEGER DEFAULT 1,
+        role TEXT DEFAULT 'member',
+        created_at TEXT,
+        last_login TEXT,
+        last_active TEXT,
+        current_platform TEXT,
+        current_table TEXT,
+        ip TEXT,
+        device TEXT
+    )
+    """)
 
-    <div class="panel">
-        <div class="panel-title">目前選擇 <span class="sub">SELECTED</span></div>
-        <div class="stat-line"><span>桌號</span><span id="currentTable">-</span></div>
-        <div class="stat-line"><span>路線</span><span id="currentRoadMode">大路</span></div>
-        <div class="stat-line"><span>狀態</span><span class="green" id="currentStatus">正常</span></div>
-    </div>
-</div>
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS records (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        platform TEXT,
+        table_no TEXT,
+        result TEXT,
+        cards TEXT,
+        player_point INTEGER DEFAULT 0,
+        banker_point INTEGER DEFAULT 0,
+        player_pair INTEGER DEFAULT 0,
+        banker_pair INTEGER DEFAULT 0,
+        lucky6 INTEGER DEFAULT 0,
+        tie INTEGER DEFAULT 0,
+        source TEXT,
+        count_bet INTEGER DEFAULT 0,
+        ai_learn INTEGER DEFAULT 1,
+        ai_suggest_before TEXT,
+        ai_hit INTEGER DEFAULT 0,
+        hidden INTEGER DEFAULT 0,
+        created_at TEXT
+    )
+    """)
 
-</div>
-</div>
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS shared_ai_stats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        record_id INTEGER,
+        platform TEXT,
+        table_no TEXT,
+        result TEXT,
+        cards TEXT,
+        player_point INTEGER DEFAULT 0,
+        banker_point INTEGER DEFAULT 0,
+        player_pair INTEGER DEFAULT 0,
+        banker_pair INTEGER DEFAULT 0,
+        lucky6 INTEGER DEFAULT 0,
+        tie INTEGER DEFAULT 0,
+        source TEXT,
+        username TEXT,
+        created_at TEXT
+    )
+    """)
 
-<script>
-let monitorTables = [];
-let selectedTableKey = "";
-let roadMode = "big";
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS table_status (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        platform TEXT,
+        table_no TEXT,
+        status TEXT DEFAULT 'normal',
+        note TEXT,
+        updated_at TEXT,
+        UNIQUE(platform, table_no)
+    )
+    """)
 
-function showTab(name, btn){
-    document.querySelectorAll(".tab-page").forEach(x=>x.classList.add("hidden"));
-    document.getElementById("tab-"+name).classList.remove("hidden");
-    document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    if(name === "roads") renderRoad();
-}
+    for col, typ in [
+        ("expire", "TEXT"),
+        ("enabled", "INTEGER DEFAULT 1"),
+        ("role", "TEXT DEFAULT 'member'"),
+        ("created_at", "TEXT"),
+        ("last_login", "TEXT"),
+        ("last_active", "TEXT"),
+        ("current_platform", "TEXT"),
+        ("current_table", "TEXT"),
+        ("ip", "TEXT"),
+        ("device", "TEXT")
+    ]:
+        ensure_column(cur, "members", col, typ)
 
-function tick(){
-    document.getElementById("clock").textContent = new Date().toLocaleTimeString("zh-TW",{hour12:false});
-}
-setInterval(tick,1000); tick();
+    for col, typ in [
+        ("platform", "TEXT"),
+        ("table_no", "TEXT"),
+        ("cards", "TEXT"),
+        ("player_point", "INTEGER DEFAULT 0"),
+        ("banker_point", "INTEGER DEFAULT 0"),
+        ("player_pair", "INTEGER DEFAULT 0"),
+        ("banker_pair", "INTEGER DEFAULT 0"),
+        ("lucky6", "INTEGER DEFAULT 0"),
+        ("tie", "INTEGER DEFAULT 0"),
+        ("source", "TEXT"),
+        ("count_bet", "INTEGER DEFAULT 0"),
+        ("ai_learn", "INTEGER DEFAULT 1"),
+        ("ai_suggest_before", "TEXT"),
+        ("ai_hit", "INTEGER DEFAULT 0"),
+        ("hidden", "INTEGER DEFAULT 0")
+    ]:
+        ensure_column(cur, "records", col, typ)
 
-function cssClass(r){
-    if(r==="莊" || r==="B" || r==="R") return "B";
-    if(r==="閒" || r==="P" || r==="B") return "P";
-    if(r==="和" || r==="T" || r==="G") return "T";
-    return "P";
-}
-function resultText(r){
-    if(r==="B") return "莊";
-    if(r==="P") return "閒";
-    if(r==="T") return "和";
-    if(r==="R") return "紅";
-    if(r==="L") return "藍";
-    return r || "-";
-}
+    for col, typ in [
+        ("record_id", "INTEGER"),
+        ("platform", "TEXT"),
+        ("table_no", "TEXT"),
+        ("result", "TEXT"),
+        ("cards", "TEXT"),
+        ("player_point", "INTEGER DEFAULT 0"),
+        ("banker_point", "INTEGER DEFAULT 0"),
+        ("player_pair", "INTEGER DEFAULT 0"),
+        ("banker_pair", "INTEGER DEFAULT 0"),
+        ("lucky6", "INTEGER DEFAULT 0"),
+        ("tie", "INTEGER DEFAULT 0"),
+        ("source", "TEXT"),
+        ("username", "TEXT"),
+        ("created_at", "TEXT")
+    ]:
+        ensure_column(cur, "shared_ai_stats", col, typ)
 
-function setRoadMode(mode,btn){
-    roadMode = mode;
-    document.querySelectorAll(".road-tabs button").forEach(x=>x.classList.remove("active"));
-    btn.classList.add("active");
-    const names = {big:"大路",bigEye:"大眼路",small:"小路",cockroach:"曱甴路",hollow:"空心路",trend:"趨勢"};
-    document.getElementById("currentRoadMode").textContent = names[mode] || mode;
-    renderRoad();
-}
+    for col, typ in [
+        ("platform", "TEXT"),
+        ("table_no", "TEXT"),
+        ("status", "TEXT DEFAULT 'normal'"),
+        ("note", "TEXT"),
+        ("updated_at", "TEXT")
+    ]:
+        ensure_column(cur, "table_status", col, typ)
 
-function deriveRoad(raw, gap){
-    const bp = [...(raw || "")].filter(x=>x==="B" || x==="P");
-    let out = [];
-    for(let i=gap;i<bp.length;i++){
-        out.push(bp[i] === bp[i-gap] ? "R" : "L");
-    }
-    return out;
-}
+    for platform, tables in [("DG", DG_TABLES), ("MT", MT_TABLES)]:
+        for table in tables:
+            cur.execute("""
+            INSERT OR IGNORE INTO table_status
+            (platform, table_no, status, note, updated_at)
+            VALUES (?, ?, 'normal', '', ?)
+            """, (platform, table, now()))
 
-function trendRoad(raw){
-    const bp = [...(raw || "")].filter(x=>x==="B" || x==="P");
-    let out = [];
-    for(let i=1;i<bp.length;i++){
-        out.push(bp[i] === bp[i-1] ? bp[i] : (bp[i]==="B" ? "P" : "B"));
-    }
-    return out;
-}
+    cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
+    if cur.fetchone()["c"] == 0:
+        cur.execute("""
+        INSERT INTO members
+        (username,password,expire,enabled,role,created_at)
+        VALUES (?,?,?,?,?,?)
+        """, ("test01", "123456", "2026-12-31 23:59:59", 1, "member", now()))
 
-function getSelectedTable(){
-    const key = document.getElementById("tableSelect").value || selectedTableKey;
-    return monitorTables.find(x=>`${x.platform}-${x.table}` === key) || monitorTables[0];
-}
+    conn.commit()
+    conn.close()
 
-function renderRoad(){
-    const t = getSelectedTable();
-    const box = document.getElementById("mainRoad");
-    box.innerHTML = "";
-    if(!t){return;}
 
-    const raw = (t.road || "").replace("-","");
-    let arr = [];
-    let note = "";
+def detect_device():
+    ua = request.headers.get("User-Agent", "")
+    if "iPhone" in ua:
+        return "iPhone"
+    if "Android" in ua:
+        return "Android"
+    if "Windows" in ua:
+        return "Windows"
+    if "Macintosh" in ua:
+        return "Mac"
+    return "Unknown"
 
-    if(roadMode === "big"){
-        arr = [...raw];
-        note = "大路：依實際莊閒和結果顯示";
-    }else if(roadMode === "bigEye"){
-        arr = deriveRoad(raw,2);
-        note = "大眼路：後台用來判斷整齊度與反打權重";
-    }else if(roadMode === "small"){
-        arr = deriveRoad(raw,3);
-        note = "小路：後台用來判斷短週期變化";
-    }else if(roadMode === "cockroach"){
-        arr = deriveRoad(raw,4);
-        note = "曱甴路/蟑螂路：後台用來判斷延伸趨勢";
-    }else if(roadMode === "hollow"){
-        arr = deriveRoad(raw,5);
-        note = "空心路：後台用來判斷長週期偏移";
-    }else{
-        arr = trendRoad(raw);
-        note = "趨勢：同路與反路交叉推演";
+
+def client_ip():
+    return request.headers.get("X-Forwarded-For", request.remote_addr)
+
+
+def get_member(username):
+    conn = db()
+    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
+    conn.close()
+    return row
+
+
+def parse_expire_time(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        try:
+            return datetime.strptime(value, "%Y-%m-%d")
+        except Exception:
+            return None
+
+
+def disable_member(username):
+    conn = db()
+    conn.execute("UPDATE members SET enabled=0 WHERE username=?", (username,))
+    conn.commit()
+    conn.close()
+
+
+def require_active_member():
+    username = session.get("member")
+
+    if not username:
+        return None, (jsonify({"ok": False, "msg": "請重新登入"}), 403)
+
+    member = get_member(username)
+
+    if not member:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "帳號不存在，請重新登入"}), 403)
+
+    expire_time = parse_expire_time(member["expire"])
+
+    if expire_time and datetime.now() > expire_time:
+        disable_member(member["username"])
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員已到期，已自動停權"}), 403)
+
+    if not member["enabled"]:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員已停權，請聯絡管理員"}), 403)
+
+    return member, None
+
+
+def get_table_status_map():
+    conn = db()
+    rows = conn.execute("SELECT platform, table_no, status, note FROM table_status").fetchall()
+    conn.close()
+    return {(r["platform"], r["table_no"]): {"status": r["status"] or "normal", "note": r["note"] or ""} for r in rows}
+
+
+def update_member_active(platform="", table=""):
+    username = session.get("member")
+    if not username:
+        return
+    conn = db()
+    conn.execute("""
+    UPDATE members
+    SET last_active=?, current_platform=?, current_table=?, ip=?, device=?
+    WHERE username=?
+    """, (now(), platform, table, client_ip(), detect_device(), username))
+    conn.commit()
+    conn.close()
+
+
+def calc_cards(cards):
+    try:
+        nums = [int(x) for x in cards]
+        if len(nums) < 4 or len(nums) > 6:
+            return None
+        player_cards = [nums[0], nums[2]]
+        banker_cards = [nums[1], nums[3]]
+        player_two = sum(player_cards) % 10
+        banker_two = sum(banker_cards) % 10
+        if player_two < 8 and banker_two < 8:
+            if player_two <= 5:
+                if len(nums) >= 5:
+                    player_cards.append(nums[4])
+                    player_third = nums[4]
+                else:
+                    player_third = None
+                banker_draw = False
+                if banker_two <= 2:
+                    banker_draw = True
+                elif banker_two == 3 and player_third != 8:
+                    banker_draw = True
+                elif banker_two == 4 and player_third in [2,3,4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 5 and player_third in [4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 6 and player_third in [6,7]:
+                    banker_draw = True
+                if banker_draw and len(nums) >= 6:
+                    banker_cards.append(nums[5])
+            else:
+                if banker_two <= 5 and len(nums) >= 5:
+                    banker_cards.append(nums[4])
+        player_point = sum(player_cards) % 10
+        banker_point = sum(banker_cards) % 10
+        if player_point > banker_point:
+            result = "P"
+        elif banker_point > player_point:
+            result = "B"
+        else:
+            result = "T"
+        return {
+            "result": result,
+            "playerPoint": player_point,
+            "bankerPoint": banker_point,
+            "playerPair": nums[0] == nums[2],
+            "bankerPair": nums[1] == nums[3],
+            "lucky6": result == "B" and banker_point == 6,
+            "tie": result == "T"
+        }
+    except Exception:
+        return None
+
+
+def row_to_record(row):
+    return {
+        "id": row["id"], "platform": row["platform"], "table": row["table_no"],
+        "result": row["result"], "cards": json.loads(row["cards"]) if row["cards"] else [],
+        "playerPoint": row["player_point"], "bankerPoint": row["banker_point"],
+        "playerPair": bool(row["player_pair"]), "bankerPair": bool(row["banker_pair"]),
+        "lucky6": bool(row["lucky6"]), "tie": bool(row["tie"]), "source": row["source"],
+        "countBet": bool(row["count_bet"]), "aiLearn": bool(row["ai_learn"]),
+        "aiSuggestBefore": row["ai_suggest_before"], "aiHit": bool(row["ai_hit"]),
+        "hidden": bool(row["hidden"]) if "hidden" in row.keys() else False,
+        "createdAt": row["created_at"]
     }
 
-    arr.forEach(r=>{
-        const d = document.createElement("div");
-        d.className = "bead " + (r==="R" ? "B" : r==="L" ? "P" : cssClass(r));
-        d.textContent = resultText(r);
-        box.appendChild(d);
-    });
 
-    document.getElementById("roadCount").textContent = arr.length;
-    document.getElementById("roadNote").textContent = note;
-}
+def shared_row_to_record(row):
+    return {
+        "id": row["id"], "platform": row["platform"], "table": row["table_no"],
+        "result": row["result"], "cards": json.loads(row["cards"]) if row["cards"] else [],
+        "playerPoint": row["player_point"], "bankerPoint": row["banker_point"],
+        "playerPair": bool(row["player_pair"]), "bankerPair": bool(row["banker_pair"]),
+        "lucky6": bool(row["lucky6"]), "tie": bool(row["tie"]), "source": row["source"],
+        "createdAt": row["created_at"]
+    }
 
-async function loadCoreStats(){
-    const r = await fetch("/api/admin/core-stats");
-    const d = await r.json();
-    if(!d.ok) return;
-    document.getElementById("totalRecords").textContent = d.totalRecords || 0;
-    document.getElementById("totalShared").textContent = d.totalShared || 0;
-    document.getElementById("accuracy").textContent = (d.accuracy || 0) + "%";
-    document.getElementById("onlineMembers").textContent = d.onlineMembers || 0;
-}
 
-async function loadTablesMonitor(){
-    const r = await fetch("/api/admin/tables-monitor");
-    const d = await r.json();
-    if(!d.ok) return;
+def get_records(platform, table):
+    conn = db()
+    rows = conn.execute("""
+    SELECT * FROM records
+    WHERE platform=? AND table_no=? AND hidden=0
+    ORDER BY id ASC
+    """, (platform, table)).fetchall()
+    conn.close()
+    return [row_to_record(r) for r in rows]
 
-    monitorTables = d.tables || [];
-    const platform = document.getElementById("platformSelect").value;
-    const filtered = monitorTables.filter(t=>t.platform === platform);
-    const select = document.getElementById("tableSelect");
 
-    select.innerHTML = "";
-    filtered.forEach(t=>{
-        const op = document.createElement("option");
-        op.value = `${t.platform}-${t.table}`;
-        op.textContent = `${t.platform} ${t.table}`;
-        select.appendChild(op);
-    });
+def get_ai_history(where_sql="", params=(), limit=600):
+    conn = db()
+    rows = conn.execute(f"""
+    SELECT * FROM shared_ai_stats
+    {where_sql}
+    ORDER BY id DESC
+    LIMIT ?
+    """, (*params, limit)).fetchall()
+    conn.close()
+    return [shared_row_to_record(r) for r in reversed(rows)]
 
-    if(!selectedTableKey && filtered.length) selectedTableKey = `${filtered[0].platform}-${filtered[0].table}`;
-    if(filtered.find(t=>`${t.platform}-${t.table}`===selectedTableKey)) select.value = selectedTableKey;
-    else if(filtered.length){selectedTableKey = `${filtered[0].platform}-${filtered[0].table}`; select.value = selectedTableKey;}
 
-    renderMonitor();
-    selectMonitorTable();
-}
+def get_mixed_ai_history(platform, table):
+    return {
+        "table": get_ai_history("WHERE platform=? AND table_no=?", (platform, table), 500),
+        "platform": get_ai_history("WHERE platform=? AND table_no<>?", (platform, table), 500),
+        "global": get_ai_history("WHERE NOT (platform=? AND table_no=?)", (platform, table), 500)
+    }
 
-function renderMonitor(){
-    const box = document.getElementById("monitorBox");
-    const all = document.getElementById("allTablesBox");
-    let html = "";
 
-    monitorTables.forEach(t=>{
-        const hot = (t.bankerScore||0)>=65 || (t.playerScore||0)>=65;
-        const statusClass = t.status === "maintenance" ? "maintenance" : "normal";
-        const statusText = t.status === "maintenance" ? "維護" : "正常";
-        html += `
-        <div class="monitor-row ${hot ? "hot":""}" onclick="chooseTable('${t.platform}-${t.table}')">
-            <div class="table-id">${t.table}</div>
-            <div class="blue">${t.platform}</div>
-            <div><span class="badge ${cssClass(t.ai)}">${t.ai || "觀"}</span></div>
-            <div class="mini-road">${t.road || "-"}</div>
-            <div class="${statusClass}">${statusText}</div>
-        </div>`;
-    });
+def make_hidden_route(results, gap):
+    bp = [r for r in results if r in ["B", "P"]]
+    route = []
 
-    box.innerHTML = html || "尚無資料";
-    if(all) all.innerHTML = html || "尚無資料";
-}
+    for i in range(gap, len(bp)):
+        # 紅 = 結構相同，藍 = 結構不同。
+        route.append("R" if bp[i] == bp[i - gap] else "L")
 
-function chooseTable(key){
-    selectedTableKey = key;
-    const select = document.getElementById("tableSelect");
-    if([...select.options].some(o=>o.value===key)) select.value = key;
-    selectMonitorTable();
-}
+    return route
 
-function selectMonitorTable(){
-    selectedTableKey = document.getElementById("tableSelect").value || selectedTableKey;
-    const t = getSelectedTable();
-    if(!t) return;
 
-    document.getElementById("currentTable").textContent = `${t.platform}-${t.table}`;
-    document.getElementById("bankerScore").textContent = (t.bankerScore || 0) + "%";
-    document.getElementById("playerScore").textContent = (t.playerScore || 0) + "%";
-    document.getElementById("mainConfidence").textContent = Math.max(t.bankerScore || 0, t.playerScore || 0) + "%";
-    document.getElementById("mainSuggest").textContent = t.ai || "觀望";
-    document.getElementById("currentStatus").textContent = t.status === "maintenance" ? "維護中" : "正常";
-    document.getElementById("currentStatus").className = t.status === "maintenance" ? "maintenance" : "green";
-    renderRoad();
-}
+def hidden_route_bias(results):
+    bp = [r for r in results if r in ["B", "P"]]
 
-async function loadMembers(){
-    const r = await fetch("/api/admin/members");
-    const d = await r.json();
-    if(!d.ok){document.getElementById("memberList").innerHTML = "讀取失敗";return;}
+    if len(bp) < 8:
+        return {
+            "bigEye": [],
+            "small": [],
+            "cockroach": [],
+            "hollow": [],
+            "bankerBias": 0,
+            "playerBias": 0,
+            "routePower": 0
+        }
 
-    let html = "";
-    d.members.forEach(m=>{
-        html += `
-        <div class="member-card">
-            <div class="r"><span>帳號</span><b>${m.username}</b></div>
-            <div class="r"><span>狀態</span><span class="${m.enabled ? "green":"red"}">${m.enabled ? "啟用":"停權"}</span></div>
-            <div class="r"><span>到期</span><span>${m.expire || "-"}</span></div>
-            <div class="r"><span>所在桌</span><span>${m.current_platform || "-"} ${m.current_table || ""}</span></div>
-            <div class="r"><span>裝置</span><span>${m.device || "-"}</span></div>
-            <div class="member-actions">
-                <button class="small-btn" onclick="editMember('${m.username}','${m.expire || ""}',${m.enabled})">編輯帳號/時間</button>
-                <button class="small-btn warn" onclick="resetPassword('${m.username}')">重製密碼</button>
-                <button class="small-btn ok" onclick="setExpire('${m.username}')">調整時間</button>
-                <button class="small-btn ${m.enabled ? "danger":""}" onclick="toggleMember('${m.username}')">${m.enabled ? "停權":"啟用"}</button>
-                <button class="small-btn danger" onclick="deleteMember('${m.username}')">刪除會員</button>
-                <button class="small-btn warn" onclick="addDays('${m.username}')">補天數</button>
-            </div>
-        </div>`;
-    });
-    document.getElementById("memberList").innerHTML = html || "尚無會員";
-}
+    routes = {
+        "bigEye": make_hidden_route(bp, 2),
+        "small": make_hidden_route(bp, 3),
+        "cockroach": make_hidden_route(bp, 4),
+        "hollow": make_hidden_route(bp, 5)
+    }
 
-async function createMember(){
-    const username = document.getElementById("username").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const expire = document.getElementById("expire").value;
-    const r = await fetch("/api/admin/create-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password,expire})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    if(d.ok){document.getElementById("username").value="";document.getElementById("password").value="";loadMembers();loadCoreStats();}
-}
+    weights = {
+        "bigEye": 2.5,
+        "small": 3.5,
+        "cockroach": 5.0,
+        "hollow": 4.0
+    }
 
-async function editMember(oldUsername, oldExpire, enabled){
-    const username = prompt("新的會員帳號", oldUsername);
-    if(!username) return;
-    const expire = prompt("到期時間，例：2026-12-31 23:59:59", oldExpire || "2026-12-31 23:59:59");
-    if(!expire) return;
-    const en = confirm("按確定＝啟用，按取消＝停權") ? 1 : 0;
-    const r = await fetch("/api/admin/update-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({oldUsername,username,expire,enabled:en})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    if(d.ok) loadMembers();
-}
+    banker_bias = 0
+    player_bias = 0
+    last = bp[-1]
+    opposite = "P" if last == "B" else "B"
 
-async function resetPassword(username){
-    const password = prompt(`輸入 ${username} 的新密碼`);
-    if(!password) return;
-    const r = await fetch("/api/admin/reset-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-}
+    for name, arr in routes.items():
+        recent = arr[-8:]
+        if len(recent) < 4:
+            continue
 
-async function setExpire(username){
-    const expire = prompt("新的到期時間，例：2026-12-31 23:59:59");
-    if(!expire) return;
-    const r = await fetch("/api/admin/set-expire",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,expire})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    if(d.ok) loadMembers();
-}
+        red_count = recent.count("R")
+        blue_count = recent.count("L")
+        weight = weights[name]
 
-async function deleteMember(username){
-    if(!confirm(`確定刪除會員 ${username}？`)) return;
-    const r = await fetch("/api/admin/delete-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    if(d.ok){loadMembers();loadCoreStats();}
-}
+        # 紅多：路線結構穩定，偏向延續目前方向。
+        if red_count >= blue_count + 2:
+            target = last
+            power = weight
 
-async function toggleMember(username){
-    const r = await fetch("/api/admin/toggle-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});
-    const d = await r.json();
-    if(d.ok) loadMembers();
-}
+        # 藍多：路線結構混亂，偏向反打目前方向。
+        elif blue_count >= red_count + 2:
+            target = opposite
+            power = weight
 
-async function addDays(username){
-    const days = prompt("要補幾天？", "30");
-    if(!days) return;
-    const r = await fetch("/api/admin/add-days",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,days:Number(days)})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    if(d.ok) loadMembers();
-}
+        else:
+            continue
 
-function loadMaintTables(){
-    const platform = document.getElementById("maintPlatform").value;
-    const select = document.getElementById("maintTable");
-    const tables = platform === "DG"
-        ? ["RB01","RB02","RB03","RB04","RB05","RB06","RB07"]
-        : ["1","2","3","3A","5","6","7","8","9","10","11","12","13","13A","15"];
-    select.innerHTML = "";
-    tables.forEach(t=>{
-        const op = document.createElement("option");
-        op.value = t; op.textContent = t; select.appendChild(op);
-    });
-}
+        if target == "B":
+            banker_bias += power
+        else:
+            player_bias += power
 
-async function setTableStatus(){
-    const platform = document.getElementById("maintPlatform").value;
-    const table = document.getElementById("maintTable").value;
-    const status = document.getElementById("maintStatus").value;
-    const note = document.getElementById("maintNote").value;
-    const r = await fetch("/api/admin/set-table-status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform,table,status,note})});
-    const d = await r.json();
-    alert(d.msg || "完成");
-    loadTablesMonitor();
-}
+    return {
+        "bigEye": routes["bigEye"],
+        "small": routes["small"],
+        "cockroach": routes["cockroach"],
+        "hollow": routes["hollow"],
+        "bankerBias": banker_bias,
+        "playerBias": player_bias,
+        "routePower": round(banker_bias + player_bias, 1)
+    }
 
-loadCoreStats();
-loadTablesMonitor();
-loadMembers();
-loadMaintTables();
-setInterval(loadCoreStats,5000);
-setInterval(loadTablesMonitor,5000);
-setInterval(loadMembers,8000);
-</script>
-</body>
-</html>
+
+def calc_pattern_routes(bp):
+    results = [x["result"] if isinstance(x, dict) else x for x in bp]
+    results = [r for r in results if r in ["B", "P"]]
+
+    if not results:
+        return {
+            "cockroachBias": 0,
+            "hollowBias": 0,
+            "bankerHiddenBias": 0,
+            "playerHiddenBias": 0,
+            "routePower": 0
+        }
+
+    hidden = hidden_route_bias(results)
+
+    switches = sum(1 for i in range(1, len(results)) if results[i] != results[i - 1])
+    switch_rate = switches / max(1, len(results) - 1)
+
+    groups = []
+    current = results[0]
+    count = 1
+
+    for r in results[1:]:
+        if r == current:
+            count += 1
+        else:
+            groups.append((current, count))
+            current = r
+            count = 1
+
+    groups.append((current, count))
+
+    last = results[-1]
+    opposite = "P" if last == "B" else "B"
+
+    cockroach_bias = 0
+    hollow_bias = 0
+
+    if switch_rate >= 0.58:
+        cockroach_bias = 7 if opposite == "B" else -7
+    elif groups and groups[-1][1] >= 3:
+        cockroach_bias = 6 if last == "B" else -6
+
+    last_groups = groups[-6:]
+    same_pair_count = len([g for g in last_groups if g[1] == 2])
+
+    if same_pair_count >= 3:
+        hollow_bias = 6 if last == "B" else -6
+    elif len(last_groups) >= 4 and last_groups[-1][1] == 1 and last_groups[-2][1] == 1:
+        hollow_bias = 5 if opposite == "B" else -5
+
+    return {
+        "cockroachBias": cockroach_bias,
+        "hollowBias": hollow_bias,
+        "bankerHiddenBias": hidden["bankerBias"],
+        "playerHiddenBias": hidden["playerBias"],
+        "routePower": round(abs(cockroach_bias) + abs(hollow_bias) + hidden["routePower"], 1)
+    }
+
+
+def road_stats(data):
+    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
+    bp = [x for x in valid if x.get("result") in ["B", "P"]]
+    b = len([x for x in bp if x["result"] == "B"])
+    p = len([x for x in bp if x["result"] == "P"])
+    t = len([x for x in valid if x["result"] == "T"])
+    total = len(bp)
+    banker_rate = round((b / total) * 100, 1) if total else 0
+    player_rate = round((p / total) * 100, 1) if total else 0
+    tie_rate = round((t / len(valid)) * 100, 1) if valid else 0
+    recent = bp[-12:]
+    recent_b = len([x for x in recent if x["result"] == "B"])
+    recent_p = len([x for x in recent if x["result"] == "P"])
+    streak_result = None
+    streak_count = 0
+    for item in reversed(bp):
+        r = item["result"]
+        if streak_result is None:
+            streak_result = r
+            streak_count = 1
+        elif r == streak_result:
+            streak_count += 1
+        else:
+            break
+    jump_count = sum(1 for i in range(1, len(bp)) if bp[i]["result"] != bp[i - 1]["result"])
+    jump_rate = round((jump_count / (len(bp) - 1)) * 100, 1) if len(bp) > 1 else 0
+    route = calc_pattern_routes(bp)
+    banker_score = 50 + (banker_rate - 50) * 0.55 + (recent_b - recent_p) * 2.6
+    player_score = 50 + (player_rate - 50) * 0.55 + (recent_p - recent_b) * 2.6
+    tie_score = max(1, min(18, tie_rate))
+    lucky6_score = 3
+    if streak_result == "B":
+        banker_score += streak_count * 1.8
+        if streak_count >= 4:
+            player_score += 6
+    elif streak_result == "P":
+        player_score += streak_count * 1.8
+        if streak_count >= 4:
+            banker_score += 6
+    if jump_rate >= 60:
+        if bp and bp[-1]["result"] == "B":
+            player_score += 7
+        elif bp and bp[-1]["result"] == "P":
+            banker_score += 7
+    route_bias = route["cockroachBias"] + route["hollowBias"]
+    if route_bias > 0:
+        banker_score += route_bias
+    elif route_bias < 0:
+        player_score += abs(route_bias)
+
+    # 後台隱藏演算：大眼路、小路、曱甴路、空心路不跳提醒，直接回饋AI權重。
+    banker_score += route.get("bankerHiddenBias", 0)
+    player_score += route.get("playerHiddenBias", 0)
+    card_rows = [x for x in valid if x.get("cards")]
+    recent_cards = card_rows[-30:]
+    lucky6_count = len([x for x in recent_cards if x.get("lucky6")])
+    banker_point_6 = len([x for x in recent_cards if x.get("result") == "B" and x.get("bankerPoint") == 6])
+    pair_count = len([x for x in recent_cards if x.get("playerPair") or x.get("bankerPair")])
+    if recent_cards:
+        lucky6_score += lucky6_count * 4 + banker_point_6 * 2
+        tie_score += len([x for x in recent_cards if x.get("tie")]) * 3
+        if pair_count >= 3:
+            tie_score += 2
+    banker_score = max(0, min(100, round(banker_score, 1)))
+    player_score = max(0, min(100, round(player_score, 1)))
+    tie_score = max(0, min(35, round(tie_score, 1)))
+    lucky6_score = max(0, min(30, round(lucky6_score, 1)))
+    suggest = "觀望"
+    stable = max(banker_score, player_score)
+    if banker_score >= player_score + 6 and banker_score >= 55:
+        suggest = "莊"
+        stable = banker_score
+    elif player_score >= banker_score + 6 and player_score >= 55:
+        suggest = "閒"
+        stable = player_score
+    alerts = []
+    if streak_count >= 4: alerts.append("長龍注意，可能續龍或斷龍")
+    if jump_rate >= 60: alerts.append("跳路偏高，注意反打")
+    if len(bp) < 10: alerts.append("資料量不足，建議觀望")
+    if tie_score >= 18: alerts.append("和局機率偏高")
+    if lucky6_score >= 15: alerts.append("Lucky 6 機率偏高")
+    if banker_score >= 65: alerts.append("莊方勝率偏高")
+    if player_score >= 65: alerts.append("閒方勝率偏高")
+    if not alerts: alerts.append("共享AI正常分析中")
+    return {
+        "bankerRate": banker_rate, "playerRate": player_rate, "tieRate": tie_rate,
+        "bankerScore": banker_score, "playerScore": player_score,
+        "tieScore": tie_score, "lucky6Score": lucky6_score,
+        "tieCount": t, "suggest": suggest, "stableRate": stable,
+        "betCount": len(valid), "totalAnalysis": len(valid),
+        "streakResult": streak_result, "streakCount": streak_count,
+        "jumpRate": jump_rate, "routePower": route["routePower"], "alerts": alerts
+    }
+
+
+def weighted_stats_for_table(platform, table, fallback_screen_data=None):
+    mixed = get_mixed_ai_history(platform, table)
+    table_stats = road_stats(mixed["table"] if mixed["table"] else (fallback_screen_data or []))
+    platform_stats = road_stats(mixed["platform"])
+    global_stats = road_stats(mixed["global"])
+    weights = {"table": 0.70, "platform": 0.20, "global": 0.10}
+    if not mixed["platform"]:
+        weights["table"] += weights["platform"]
+        weights["platform"] = 0
+    if not mixed["global"]:
+        weights["table"] += weights["global"]
+        weights["global"] = 0
+    def wavg(key):
+        return round(table_stats.get(key, 0) * weights["table"] + platform_stats.get(key, 0) * weights["platform"] + global_stats.get(key, 0) * weights["global"], 1)
+    banker_score = wavg("bankerScore")
+    player_score = wavg("playerScore")
+    tie_score = wavg("tieScore")
+    lucky6_score = wavg("lucky6Score")
+    stable = max(banker_score, player_score)
+    suggest = "觀望"
+    if banker_score >= player_score + 5 and banker_score >= 55:
+        suggest = "莊"
+    elif player_score >= banker_score + 5 and player_score >= 55:
+        suggest = "閒"
+    alerts = []
+    alerts.extend(table_stats.get("alerts", []))
+    if tie_score >= 18: alerts.append("和局機率偏高")
+    if lucky6_score >= 15: alerts.append("Lucky 6 機率偏高")
+    if not alerts: alerts.append("共享AI混合模型分析中")
+    return {
+        "bankerRate": wavg("bankerRate"), "playerRate": wavg("playerRate"), "tieRate": wavg("tieRate"),
+        "bankerScore": banker_score, "playerScore": player_score, "tieScore": tie_score,
+        "lucky6Score": lucky6_score, "suggest": suggest, "stableRate": stable,
+        "betCount": len(fallback_screen_data or []),
+        "totalAnalysis": table_stats.get("totalAnalysis", 0) + platform_stats.get("totalAnalysis", 0) + global_stats.get("totalAnalysis", 0),
+        "streakResult": table_stats.get("streakResult"), "streakCount": table_stats.get("streakCount", 0),
+        "jumpRate": table_stats.get("jumpRate", 0), "routePower": wavg("routePower"),
+        "modelMix": "本桌70%＋同平台20%＋全站10%", "alerts": list(dict.fromkeys(alerts))[:6]
+    }
+
+
+@app.route("/")
+def index():
+    member, error = require_active_member()
+    if error:
+        session.clear()
+        return redirect("/login")
+    return render_template("index.html")
+
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/admin-login")
+def admin_login_page():
+    return render_template("admin_login.html")
+
+
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/admin-login")
+    return render_template("admin.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    member = get_member(username)
+    if not member:
+        return jsonify({"ok": False, "msg": "帳號不存在"})
+    expire_time = parse_expire_time(member["expire"])
+    if expire_time and datetime.now() > expire_time:
+        disable_member(username)
+        return jsonify({"ok": False, "msg": "會員已到期，已自動停權"})
+
+    if not member["enabled"]:
+        return jsonify({"ok": False, "msg": "會員停權"})
+    if member["password"] != password:
+        return jsonify({"ok": False, "msg": "密碼錯誤"})
+    session["member"] = username
+    update_member_active()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin-login", methods=["POST"])
+def api_admin_login():
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        session["admin"] = True
+        return jsonify({"ok": True})
+    return jsonify({"ok": False})
+
+
+@app.route("/api/admin/members")
+def api_admin_members():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+    conn = db()
+    rows = conn.execute("""
+    SELECT id, username, expire, enabled, role, created_at, last_login, last_active,
+           current_platform, current_table, ip, device
+    FROM members
+    ORDER BY id DESC
+    """).fetchall()
+    conn.close()
+    return jsonify({"ok": True, "members": [dict(r) for r in rows]})
+
+
+@app.route("/api/admin/create-member", methods=["POST"])
+def api_admin_create_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    expire = normalize_expire(body.get("expire", "2026-12-31 23:59:59"))
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號密碼必填"})
+    conn = db()
+    try:
+        conn.execute("""
+        INSERT INTO members (username,password,expire,enabled,role,created_at)
+        VALUES (?, ?, ?, 1, 'member', ?)
+        """, (username, password, expire, now()))
+        conn.commit()
+        ok = True
+        msg = "新增成功"
+    except sqlite3.IntegrityError:
+        ok = False
+        msg = "帳號已存在"
+    conn.close()
+    return jsonify({"ok": ok, "msg": msg})
+
+
+@app.route("/api/admin/toggle-member", methods=["POST"])
+def api_admin_toggle_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    conn = db()
+    row = conn.execute("SELECT enabled FROM members WHERE username=?", (username,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+    new_status = 0 if row["enabled"] else 1
+    conn.execute("UPDATE members SET enabled=? WHERE username=?", (new_status, username))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/add-days", methods=["POST"])
+def api_admin_add_days():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    days = int(body.get("days", 0))
+    if not username or days <= 0:
+        return jsonify({"ok": False, "msg": "資料錯誤"})
+    member = get_member(username)
+    if not member:
+        return jsonify({"ok": False, "msg": "找不到會員"})
+    try:
+        old_expire = datetime.strptime(member["expire"], "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        old_expire = datetime.now()
+    base_time = old_expire if old_expire > datetime.now() else datetime.now()
+    new_expire = base_time.replace(microsecond=0) + timedelta(days=days)
+    conn = db()
+    conn.execute("UPDATE members SET expire=?, enabled=1 WHERE username=?", (new_expire.strftime("%Y-%m-%d %H:%M:%S"), username))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "msg": f"已補 {days} 天"})
+
+
+
+
+@app.route("/api/admin/delete-member", methods=["POST"])
+def api_admin_delete_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+
+    if not username:
+        return jsonify({"ok": False, "msg": "會員帳號錯誤"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("DELETE FROM members WHERE username=?", (username,))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員已刪除"})
+
+
+@app.route("/api/admin/update-member", methods=["POST"])
+def api_admin_update_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    old_username = body.get("oldUsername", "").strip()
+    new_username = body.get("username", "").strip()
+    expire = normalize_expire(body.get("expire", ""))
+    enabled = 1 if str(body.get("enabled", "1")) in ["1", "true", "True", "啟用"] else 0
+
+    if not old_username or not new_username:
+        return jsonify({"ok": False, "msg": "會員帳號必填"})
+
+    conn = db()
+
+    row = conn.execute("SELECT id FROM members WHERE username=?", (old_username,)).fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    dup = conn.execute(
+        "SELECT id FROM members WHERE username=? AND username<>?",
+        (new_username, old_username)
+    ).fetchone()
+
+    if dup:
+        conn.close()
+        return jsonify({"ok": False, "msg": "新帳號已存在"})
+
+    conn.execute("""
+    UPDATE members
+    SET username=?, expire=?, enabled=?
+    WHERE username=?
+    """, (new_username, expire, enabled, old_username))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員資料已更新"})
+
+
+@app.route("/api/admin/reset-password", methods=["POST"])
+def api_admin_reset_password():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號與新密碼必填"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("UPDATE members SET password=? WHERE username=?", (password, username))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "密碼已重置"})
+
+
+@app.route("/api/admin/set-expire", methods=["POST"])
+def api_admin_set_expire():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    expire = normalize_expire(body.get("expire", ""))
+
+    if not username or not expire:
+        return jsonify({"ok": False, "msg": "帳號與時間必填"})
+
+    conn = db()
+    row = conn.execute("SELECT id FROM members WHERE username=?", (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False, "msg": "找不到會員"})
+
+    conn.execute("UPDATE members SET expire=?, enabled=1 WHERE username=?", (expire, username))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, "msg": "會員時間已更新"})
+
+@app.route("/api/admin/set-table-status", methods=["POST"])
+def api_admin_set_table_status():
+    if not session.get("admin"):
+        return jsonify({"ok": False, "msg": "未登入"}), 403
+    body = request.json or {}
+    platform = body.get("platform", "").strip()
+    table = body.get("table", "").strip()
+    status = body.get("status", "normal").strip()
+    note = body.get("note", "").strip()
+    if platform not in ["DG", "MT"]:
+        return jsonify({"ok": False, "msg": "平台錯誤"})
+    if status not in ["normal", "maintenance"]:
+        return jsonify({"ok": False, "msg": "狀態錯誤"})
+    tables = DG_TABLES if platform == "DG" else MT_TABLES
+    if table not in tables:
+        return jsonify({"ok": False, "msg": "桌號錯誤"})
+    conn = db()
+    conn.execute("""
+    INSERT INTO table_status (platform, table_no, status, note, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(platform, table_no)
+    DO UPDATE SET status=excluded.status, note=excluded.note, updated_at=excluded.updated_at
+    """, (platform, table, status, note, now()))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "msg": "狀態已更新"})
+
+
+@app.route("/api/admin/tables-monitor")
+def api_admin_tables_monitor():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    conn = db()
+    result = []
+    for platform, tables in [("DG", DG_TABLES), ("MT", MT_TABLES)]:
+        for table in tables:
+            status_row = conn.execute("SELECT status, note FROM table_status WHERE platform=? AND table_no=?", (platform, table)).fetchone()
+            status = status_row["status"] if status_row else "normal"
+            note = status_row["note"] if status_row else ""
+            rows = conn.execute("""
+            SELECT result FROM records
+            WHERE platform=? AND table_no=? AND hidden=0
+            ORDER BY id DESC LIMIT 120
+            """, (platform, table)).fetchall()
+            road = "".join([r["result"] for r in reversed(rows)])
+            ai_stats = weighted_stats_for_table(platform, table)
+            result.append({
+                "platform": platform, "table": table, "road": road if road else "-",
+                "ai": ai_stats["suggest"], "bankerScore": ai_stats["bankerScore"],
+                "playerScore": ai_stats["playerScore"], "tieScore": ai_stats["tieScore"],
+                "lucky6Score": ai_stats["lucky6Score"], "status": status, "note": note,
+                "statusText": "維護中" if status == "maintenance" else "正常"
+            })
+    conn.close()
+    return jsonify({"ok": True, "tables": result})
+
+
+@app.route("/api/admin/core-stats")
+def api_admin_core_stats():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    conn = db()
+    screen_records = conn.execute("SELECT COUNT(*) c FROM records WHERE hidden=0").fetchone()["c"]
+    total_shared = conn.execute("SELECT COUNT(*) c FROM shared_ai_stats").fetchone()["c"]
+    total_members = conn.execute("SELECT COUNT(*) c FROM members").fetchone()["c"]
+    online_members = conn.execute("""
+    SELECT COUNT(*) c FROM members
+    WHERE last_active >= datetime('now','-5 minutes')
+    """).fetchone()["c"]
+    maintenance_tables = conn.execute("SELECT COUNT(*) c FROM table_status WHERE status='maintenance'").fetchone()["c"]
+    conn.close()
+    return jsonify({
+        "ok": True,
+        "totalRecords": total_shared,
+        "screenRecords": screen_records,
+        "totalShared": total_shared,
+        "accuracy": 100 if total_shared else 0,
+        "totalMembers": total_members,
+        "onlineMembers": online_members,
+        "maintenanceTables": maintenance_tables
+    })
+
+
+@app.route("/api/tables")
+def api_tables():
+    platform = request.args.get("platform", "DG")
+    full = request.args.get("full", "0")
+    tables = MT_TABLES if platform == "MT" else DG_TABLES
+    if full != "1":
+        return jsonify(tables)
+    status_map = get_table_status_map()
+    return jsonify([{
+        "table": table,
+        "status": status_map.get((platform, table), {}).get("status", "normal"),
+        "label": f"{table}（維護中）" if status_map.get((platform, table), {}).get("status") == "maintenance" else table
+    } for table in tables])
+
+
+@app.route("/api/data")
+def api_data():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    platform = request.args.get("platform", "DG")
+    table = request.args.get("table", "RB01")
+    status_map = get_table_status_map()
+    if status_map.get((platform, table), {}).get("status") == "maintenance":
+        return jsonify({"ok": False, "msg": "此桌維護中"})
+    update_member_active(platform, table)
+    screen_data = get_records(platform, table)
+    stats = weighted_stats_for_table(platform, table, screen_data)
+    return jsonify({
+        "ok": True,
+        "records": screen_data,
+        "stats": stats,
+        "betCount": len(screen_data),
+        "memberExpireTime": member["expire"] if member else "-"
+    })
+
+
+@app.route("/api/manual", methods=["POST"])
+def api_manual():
+    member, error = require_active_member()
+    if error:
+        return error
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    result = body.get("result")
+    status_map = get_table_status_map()
+    if status_map.get((platform, table), {}).get("status") == "maintenance":
+        return jsonify({"ok": False, "msg": "此桌維護中，暫停輸入"})
+    if result not in ["B", "P", "T"]:
+        return jsonify({"ok": False, "msg": "結果錯誤"})
+    conn = db()
+    cur = conn.execute("""
+    INSERT INTO records
+    (platform, table_no, result, cards, player_point, banker_point, player_pair, banker_pair,
+     lucky6, tie, source, count_bet, ai_learn, ai_suggest_before, ai_hit, hidden, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (platform, table, result, "", 0, 0, 0, 0, 0, 1 if result == "T" else 0, "manual", 0, 1, "", 0, 0, now()))
+    record_id = cur.lastrowid
+    conn.execute("""
+    INSERT INTO shared_ai_stats
+    (record_id, platform, table_no, result, cards, player_point, banker_point,
+     player_pair, banker_pair, lucky6, tie, source, username, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (record_id, platform, table, result, "", 0, 0, 0, 0, 0, 1 if result == "T" else 0, "manual", session.get("member", ""), now()))
+    conn.commit()
+    conn.close()
+    update_member_active(platform, table)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+    member, error = require_active_member()
+    if error:
+        return error
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    cards = body.get("cards", [])
+    status_map = get_table_status_map()
+    if status_map.get((platform, table), {}).get("status") == "maintenance":
+        return jsonify({"ok": False, "msg": "此桌維護中，暫停輸入"})
+    calc = calc_cards(cards)
+    if calc is None:
+        return jsonify({"ok": False, "msg": "牌型錯誤"})
+    conn = db()
+    cur = conn.execute("""
+    INSERT INTO records
+    (platform, table_no, result, cards, player_point, banker_point, player_pair, banker_pair,
+     lucky6, tie, source, count_bet, ai_learn, ai_suggest_before, ai_hit, hidden, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (platform, table, calc["result"], json.dumps(cards), calc["playerPoint"], calc["bankerPoint"],
+          1 if calc["playerPair"] else 0, 1 if calc["bankerPair"] else 0,
+          1 if calc["lucky6"] else 0, 1 if calc["tie"] else 0,
+          "card_button", 1, 1, "", 0, 0, now()))
+    record_id = cur.lastrowid
+    conn.execute("""
+    INSERT INTO shared_ai_stats
+    (record_id, platform, table_no, result, cards, player_point, banker_point,
+     player_pair, banker_pair, lucky6, tie, source, username, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (record_id, platform, table, calc["result"], json.dumps(cards), calc["playerPoint"], calc["bankerPoint"],
+          1 if calc["playerPair"] else 0, 1 if calc["bankerPair"] else 0,
+          1 if calc["lucky6"] else 0, 1 if calc["tie"] else 0,
+          "cards", session.get("member", ""), now()))
+    conn.commit()
+    conn.close()
+    update_member_active(platform, table)
+    return jsonify({"ok": True, **calc})
+
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+    member, error = require_active_member()
+    if error:
+        return error
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    conn = db()
+    row = conn.execute("""
+    SELECT id FROM records
+    WHERE platform=? AND table_no=? AND hidden=0
+    ORDER BY id DESC LIMIT 1
+    """, (platform, table)).fetchone()
+    if row:
+        # 撤回代表輸入錯誤：畫面隱藏，同時不進AI永久學習。
+        conn.execute("UPDATE records SET hidden=1, count_bet=0, ai_learn=0 WHERE id=?", (row["id"],))
+        conn.execute("DELETE FROM shared_ai_stats WHERE record_id=?", (row["id"],))
+        conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+    member, error = require_active_member()
+    if error:
+        return error
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    conn = db()
+    conn.execute("""
+    UPDATE records SET hidden=1
+    WHERE platform=? AND table_no=? AND hidden=0
+    """, (platform, table))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True, "msg": "已清除此桌畫面，AI學習資料已保留"})
+
+
+init_db()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
