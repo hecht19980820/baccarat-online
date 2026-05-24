@@ -558,7 +558,7 @@ def hidden_route_bias(results):
         else:
             player_bias += power
 
-    return {
+        return {
         "bigEye": routes["bigEye"],
         "small": routes["small"],
         "cockroach": routes["cockroach"],
@@ -570,3 +570,58 @@ def hidden_route_bias(results):
             1
         )
     }
+
+
+@app.route("/")
+def index():
+    member, error = require_active_member()
+
+    if error:
+        session.clear()
+        return redirect("/login")
+
+    return render_template("index.html")
+
+
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
+
+
+@app.route("/admin-login")
+def admin_login_page():
+    return render_template("admin_login.html")
+
+
+@app.route("/admin")
+def admin():
+    if not session.get("admin"):
+        return redirect("/admin-login")
+
+    return render_template("admin.html")
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/login")
+
+
+@app.route("/api/admin-login", methods=["POST"])
+def api_admin_login():
+    body = request.json or {}
+
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+
+    if username == ADMIN_USER and password == ADMIN_PASS:
+        session["admin"] = True
+        return jsonify({"ok": True})
+
+    return jsonify({"ok": False})
+
+
+init_db()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
