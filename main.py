@@ -1,3 +1,5 @@
+main.py 完整覆蓋版
+
 from flask import Flask, render_template, request, jsonify, redirect, session
 from datetime import datetime
 import sqlite3
@@ -5,7 +7,6 @@ import json
 
 app = Flask(__name__)
 app.secret_key = "baccarat_admin_secret_2026"
-
 DB_PATH = "baccarat_system.db"
 
 ADMIN_USER = "admin"
@@ -25,139 +26,435 @@ def db():
     return conn
 
 
-def init_db():
+def ensure_column(cur, table, col, typ):
+    cols = [r["name"] for r in cur.execute(f"PRAGMA table_info({table})").fetchall()]
+    if col not in cols:
+        cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typ}")
 
+
+def init_db():
     conn = db()
     cur = conn.cursor()
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS members(
+    CREATE TABLE IF NOT EXISTS members (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         password TEXT,
         expire TEXT,
         enabled INTEGER DEFAULT 1,
+        role TEXT DEFAULT 'member',
         created_at TEXT,
+        last_login TEXT,
         last_active TEXT,
         current_platform TEXT,
         current_table TEXT,
-        device TEXT,
-        ip TEXT
+        ip TEXT,
+        device TEXT
     )
     """)
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS records(
+    CREATE TABLE IF NOT EXISTS records (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         platform TEXT,
         table_no TEXT,
         result TEXT,
-        count_bet INTEGER DEFAULT 1,
+        cards TEXT,
+        player_point INTEGER DEFAULT 0,
+        banker_point INTEGER DEFAULT 0,
+        player_pair INTEGER DEFAULT 0,
+        banker_pair INTEGER DEFAULT 0,
+        lucky6 INTEGER DEFAULT 0,
+        tie INTEGER DEFAULT 0,
+        source TEXT,
+        count_bet INTEGER DEFAULT 0,
+        road_only INTEGER DEFAULT 0,
+        ai_learn INTEGER DEFAULT 1,
         hidden INTEGER DEFAULT 0,
-        created_at TEXT
+        created_at TEXT,
+        username TEXT
     )
     """)
 
     cur.execute("""
-    CREATE TABLE IF NOT EXISTS shared_ai_stats(
+    CREATE TABLE IF NOT EXISTS shared_ai_stats (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        record_id INTEGER,
         platform TEXT,
         table_no TEXT,
         result TEXT,
+        cards TEXT,
+        player_point INTEGER DEFAULT 0,
+        banker_point INTEGER DEFAULT 0,
+        player_pair INTEGER DEFAULT 0,
+        banker_pair INTEGER DEFAULT 0,
+        lucky6 INTEGER DEFAULT 0,
+        tie INTEGER DEFAULT 0,
+        source TEXT,
+        road_only INTEGER DEFAULT 0,
+        username TEXT,
         created_at TEXT
     )
     """)
 
-    cur.execute("""
-    SELECT COUNT(*) c
-    FROM members
-    WHERE username='test01'
-    """)
+    for col, typ in [
+        ("role", "TEXT DEFAULT 'member'"),
+        ("last_login", "TEXT"),
+        ("last_active", "TEXT"),
+        ("current_platform", "TEXT"),
+        ("current_table", "TEXT"),
+        ("ip", "TEXT"),
+        ("device", "TEXT")
+    ]:
+        ensure_column(cur, "members", col, typ)
 
+    for col, typ in [
+        ("cards", "TEXT"),
+        ("player_point", "INTEGER DEFAULT 0"),
+        ("banker_point", "INTEGER DEFAULT 0"),
+        ("player_pair", "INTEGER DEFAULT 0"),
+        ("banker_pair", "INTEGER DEFAULT 0"),
+        ("lucky6", "INTEGER DEFAULT 0"),
+        ("tie", "INTEGER DEFAULT 0"),
+        ("source", "TEXT"),
+        ("count_bet", "INTEGER DEFAULT 0"),
+        ("road_only", "INTEGER DEFAULT 0"),
+        ("ai_learn", "INTEGER DEFAULT 1"),
+        ("hidden", "INTEGER DEFAULT 0"),
+        ("username", "TEXT")
+    ]:
+        ensure_column(cur, "records", col, typ)
+
+    for col, typ in [
+        ("record_id", "INTEGER"),
+        ("platform", "TEXT"),
+        ("table_no", "TEXT"),
+        ("result", "TEXT"),
+        ("cards", "TEXT"),
+        ("player_point", "INTEGER DEFAULT 0"),
+        ("banker_point", "INTEGER DEFAULT 0"),
+        ("player_pair", "INTEGER DEFAULT 0"),
+        ("banker_pair", "INTEGER DEFAULT 0"),
+        ("lucky6", "INTEGER DEFAULT 0"),
+        ("tie", "INTEGER DEFAULT 0"),
+        ("source", "TEXT"),
+        ("road_only", "INTEGER DEFAULT 0"),
+        ("username", "TEXT"),
+        ("created_at", "TEXT")
+    ]:
+        ensure_column(cur, "shared_ai_stats", col, typ)
+
+    cur.execute("SELECT COUNT(*) AS c FROM members WHERE username='test01'")
     if cur.fetchone()["c"] == 0:
-
         cur.execute("""
-        INSERT INTO members
-        (username,password,expire,enabled,created_at)
-        VALUES (?,?,?,?,?)
-        """, (
-            "test01",
-            "123456",
-            "2026-12-31 23:59:59",
-            1,
-            now()
-        ))
+        INSERT INTO members (username,password,expire,enabled,role,created_at)
+        VALUES (?,?,?,?,?,?)
+        """, ("test01", "123456", "2026-12-31 23:59:59", 1, "member", now()))
 
     conn.commit()
     conn.close()
+
+
+def detect_device():
+    ua = request.headers.get("User-Agent", "")
+    if "iPhone" in ua:
+        return "iPhone"
+    if "Android" in ua:
+        return "Android"
+    if "Windows" in ua:
+        return "Windows"
+    if "Macintosh" in ua:
+        return "Mac"
+    return "Unknown"
+
+
+def client_ip():
+    return request.headers.get("X-Forwarded-For", request.remote_addr or "")
 
 
 def get_member(username):
-
     conn = db()
-
-    row = conn.execute("""
-    SELECT *
-    FROM members
-    WHERE username=?
-    """, (username,)).fetchone()
-
+    row = conn.execute("SELECT * FROM members WHERE username=?", (username,)).fetchone()
     conn.close()
-
     return row
 
 
-def update_member_active(platform="", table=""):
+def parse_expire_time(value):
+    value = (value or "").strip()
+    if not value:
+        return None
+    for fmt in ["%Y-%m-%d %H:%M:%S", "%Y-%m-%d"]:
+        try:
+            return datetime.strptime(value, fmt)
+        except Exception:
+            pass
+    return None
 
+
+def require_active_member():
     username = session.get("member")
+    if not username:
+        return None, (jsonify({"ok": False, "msg": "請重新登入"}), 403)
 
+    member = get_member(username)
+    if not member:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "帳號不存在"}), 403)
+
+    expire_time = parse_expire_time(member["expire"])
+    if expire_time and datetime.now() > expire_time:
+        conn = db()
+        conn.execute("UPDATE members SET enabled=0 WHERE username=?", (username,))
+        conn.commit()
+        conn.close()
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員已到期"}), 403)
+
+    if not member["enabled"]:
+        session.clear()
+        return None, (jsonify({"ok": False, "msg": "會員停權"}), 403)
+
+    return member, None
+
+
+def update_member_active(platform="", table=""):
+    username = session.get("member")
     if not username:
         return
-
     conn = db()
-
     conn.execute("""
     UPDATE members
-    SET last_active=?,
-        current_platform=?,
-        current_table=?
+    SET last_active=?, current_platform=?, current_table=?, ip=?, device=?
     WHERE username=?
-    """, (
-        now(),
-        platform,
-        table,
-        username
-    ))
-
+    """, (now(), platform, table, client_ip(), detect_device(), username))
     conn.commit()
     conn.close()
 
 
+def calc_cards(cards):
+    try:
+        nums = [int(x) for x in cards]
+        if len(nums) < 4 or len(nums) > 6:
+            return None
+
+        player_cards = [nums[0], nums[2]]
+        banker_cards = [nums[1], nums[3]]
+        player_two = sum(player_cards) % 10
+        banker_two = sum(banker_cards) % 10
+
+        if player_two < 8 and banker_two < 8:
+            if player_two <= 5:
+                if len(nums) >= 5:
+                    player_cards.append(nums[4])
+                    player_third = nums[4]
+                else:
+                    player_third = None
+
+                banker_draw = False
+                if banker_two <= 2:
+                    banker_draw = True
+                elif banker_two == 3 and player_third != 8:
+                    banker_draw = True
+                elif banker_two == 4 and player_third in [2,3,4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 5 and player_third in [4,5,6,7]:
+                    banker_draw = True
+                elif banker_two == 6 and player_third in [6,7]:
+                    banker_draw = True
+
+                if banker_draw and len(nums) >= 6:
+                    banker_cards.append(nums[5])
+            else:
+                if banker_two <= 5 and len(nums) >= 5:
+                    banker_cards.append(nums[4])
+
+        player_point = sum(player_cards) % 10
+        banker_point = sum(banker_cards) % 10
+
+        if player_point > banker_point:
+            result = "P"
+        elif banker_point > player_point:
+            result = "B"
+        else:
+            result = "T"
+
+        return {
+            "result": result,
+            "playerPoint": player_point,
+            "bankerPoint": banker_point,
+            "playerPair": nums[0] == nums[2],
+            "bankerPair": nums[1] == nums[3],
+            "lucky6": result == "B" and banker_point == 6,
+            "tie": result == "T"
+        }
+    except Exception:
+        return None
+
+
+def safe_cards(value):
+    try:
+        return json.loads(value) if value else []
+    except Exception:
+        return []
+
+
+def row_to_record(row):
+    return {
+        "id": row["id"],
+        "platform": row["platform"],
+        "table": row["table_no"],
+        "result": row["result"],
+        "cards": safe_cards(row["cards"]),
+        "playerPoint": row["player_point"],
+        "bankerPoint": row["banker_point"],
+        "playerPair": bool(row["player_pair"]),
+        "bankerPair": bool(row["banker_pair"]),
+        "lucky6": bool(row["lucky6"]),
+        "tie": bool(row["tie"]),
+        "source": row["source"],
+        "countBet": bool(row["count_bet"]),
+        "roadOnly": bool(row["road_only"]),
+        "createdAt": row["created_at"]
+    }
+
+
 def get_records(platform, table):
-
     conn = db()
-
     rows = conn.execute("""
-    SELECT *
-    FROM records
+    SELECT * FROM records
     WHERE platform=? AND table_no=? AND hidden=0
     ORDER BY id ASC
-    """, (
-        platform,
-        table
-    )).fetchall()
-
+    """, (platform, table)).fetchall()
     conn.close()
+    return [row_to_record(r) for r in rows]
 
-    return rows
+
+def get_ai_history(platform=None, table=None, limit=600):
+    conn = db()
+    if platform and table:
+        rows = conn.execute("""
+        SELECT * FROM shared_ai_stats
+        WHERE platform=? AND table_no=?
+        ORDER BY id DESC LIMIT ?
+        """, (platform, table, limit)).fetchall()
+    elif platform:
+        rows = conn.execute("""
+        SELECT * FROM shared_ai_stats
+        WHERE platform=?
+        ORDER BY id DESC LIMIT ?
+        """, (platform, limit)).fetchall()
+    else:
+        rows = conn.execute("""
+        SELECT * FROM shared_ai_stats
+        ORDER BY id DESC LIMIT ?
+        """, (limit,)).fetchall()
+    conn.close()
+    return [row_to_record(r) if "count_bet" in r.keys() else {
+        "result": r["result"],
+        "cards": safe_cards(r["cards"]),
+        "playerPoint": r["player_point"],
+        "bankerPoint": r["banker_point"],
+        "playerPair": bool(r["player_pair"]),
+        "bankerPair": bool(r["banker_pair"]),
+        "lucky6": bool(r["lucky6"]),
+        "tie": bool(r["tie"]),
+        "countBet": False,
+        "roadOnly": bool(r["road_only"])
+    } for r in reversed(rows)]
+
+
+def road_stats(data):
+    valid = [x for x in data if x.get("result") in ["B", "P", "T"]]
+    bp = [x for x in valid if x.get("result") in ["B", "P"]]
+    b = len([x for x in bp if x["result"] == "B"])
+    p = len([x for x in bp if x["result"] == "P"])
+    t = len([x for x in valid if x["result"] == "T"])
+    total = b + p
+
+    banker_rate = round((b / total) * 100, 1) if total else 0
+    player_rate = round((p / total) * 100, 1) if total else 0
+
+    recent = bp[-12:]
+    recent_b = len([x for x in recent if x["result"] == "B"])
+    recent_p = len([x for x in recent if x["result"] == "P"])
+
+    banker_score = 50 + (banker_rate - 50) * 0.5 + (recent_b - recent_p) * 2
+    player_score = 50 + (player_rate - 50) * 0.5 + (recent_p - recent_b) * 2
+
+    streak_result = None
+    streak_count = 0
+    for item in reversed(bp):
+        if streak_result is None:
+            streak_result = item["result"]
+            streak_count = 1
+        elif item["result"] == streak_result:
+            streak_count += 1
+        else:
+            break
+
+    if streak_result == "B":
+        banker_score += min(streak_count * 1.5, 8)
+    elif streak_result == "P":
+        player_score += min(streak_count * 1.5, 8)
+
+    card_rows = [x for x in valid if x.get("cards")]
+    recent_cards = card_rows[-30:]
+    lucky6_score = 3 + len([x for x in recent_cards if x.get("lucky6")]) * 5
+    tie_score = 3 + len([x for x in recent_cards if x.get("tie")]) * 4
+
+    banker_score = max(0, min(100, round(banker_score, 1)))
+    player_score = max(0, min(100, round(player_score, 1)))
+    lucky6_score = max(0, min(35, round(lucky6_score, 1)))
+    tie_score = max(0, min(35, round(tie_score, 1)))
+
+    suggest = "觀望"
+    stable = 0
+    if banker_score >= player_score + 6 and banker_score >= 55:
+        suggest = "莊"
+        stable = banker_score
+    elif player_score >= banker_score + 6 and player_score >= 55:
+        suggest = "閒"
+        stable = player_score
+
+    alerts = []
+    if len(bp) < 8:
+        alerts.append("目前無提醒")
+    if lucky6_score >= 15:
+        alerts.append("幸運6機率偏高")
+    if tie_score >= 15:
+        alerts.append("和局機率偏高")
+    if not alerts:
+        alerts.append("AI正常分析中")
+
+    return {
+        "bankerRate": banker_rate,
+        "playerRate": player_rate,
+        "bankerScore": banker_score,
+        "playerScore": player_score,
+        "tieScore": tie_score,
+        "lucky6Score": lucky6_score,
+        "tieCount": t,
+        "suggest": suggest,
+        "stableRate": stable,
+        "betCount": len([x for x in valid if x.get("countBet")]),
+        "totalAnalysis": len(valid),
+        "streakResult": streak_result,
+        "streakCount": streak_count,
+        "alerts": alerts
+    }
+
+
+def mixed_stats(platform, table, screen_data):
+    table_ai = get_ai_history(platform, table, 600)
+    stats = road_stats(table_ai if table_ai else screen_data)
+    return stats
 
 
 @app.route("/")
 def index():
-
     if not session.get("member"):
         return redirect("/login")
-
     return render_template("index.html")
 
 
@@ -166,18 +463,16 @@ def login_page():
     return render_template("login.html")
 
 
+@app.route("/admin-login")
+def admin_login_page():
+    return render_template("admin_login.html")
+
+
 @app.route("/admin")
 def admin():
-
     if not session.get("admin"):
         return redirect("/admin-login")
-
     return render_template("admin.html")
-
-
-@app.route("/admin-login")
-def admin_login():
-    return render_template("admin_login.html")
 
 
 @app.route("/logout")
@@ -188,303 +483,322 @@ def logout():
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
-
     body = request.json or {}
-
-    username = body.get("username", "")
-    password = body.get("password", "")
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
 
     member = get_member(username)
-
     if not member:
-        return jsonify({
-            "ok": False,
-            "msg": "帳號不存在"
-        })
-
+        return jsonify({"ok": False, "msg": "帳號不存在"})
     if not member["enabled"]:
-        return jsonify({
-            "ok": False,
-            "msg": "會員停權"
-        })
-
+        return jsonify({"ok": False, "msg": "會員停權"})
     if member["password"] != password:
-        return jsonify({
-            "ok": False,
-            "msg": "密碼錯誤"
-        })
+        return jsonify({"ok": False, "msg": "密碼錯誤"})
 
     session["member"] = username
-
-    return jsonify({
-        "ok": True
-    })
+    conn = db()
+    conn.execute("UPDATE members SET last_login=?, last_active=?, ip=?, device=? WHERE username=?", (now(), now(), client_ip(), detect_device(), username))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 @app.route("/api/admin-login", methods=["POST"])
 def api_admin_login():
-
     body = request.json or {}
-
-    username = body.get("username", "")
-    password = body.get("password", "")
-
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
     if username == ADMIN_USER and password == ADMIN_PASS:
-
         session["admin"] = True
-
-        return jsonify({
-            "ok": True
-        })
-
-    return jsonify({
-        "ok": False
-    })
+        return jsonify({"ok": True})
+    return jsonify({"ok": False})
 
 
-@app.route("/api/update-active", methods=["POST"])
-def api_update_active():
+@app.route("/api/tables")
+def api_tables():
+    platform = request.args.get("platform", "DG")
+    if platform == "MT":
+        return jsonify(MT_TABLES)
+    return jsonify(DG_TABLES)
 
-    if not session.get("member"):
-        return jsonify({"ok": False})
 
-    body = request.json or {}
+@app.route("/api/data")
+def api_data():
+    member, error = require_active_member()
+    if error:
+        return error
 
-    platform = body.get("platform", "DG")
-    table = body.get("table", "RB01")
-
+    platform = request.args.get("platform", "DG")
+    table = request.args.get("table", "RB01")
     update_member_active(platform, table)
 
+    screen_data = get_records(platform, table)
+    stats = mixed_stats(platform, table, screen_data)
+
     return jsonify({
-        "ok": True
+        "ok": True,
+        "records": screen_data,
+        "stats": stats,
+        "betCount": len([x for x in screen_data if x.get("countBet")]),
+        "memberExpireTime": member["expire"] if member else "-"
     })
 
 
 @app.route("/api/manual", methods=["POST"])
 def api_manual():
-
-    if not session.get("member"):
-        return jsonify({"ok": False})
+    member, error = require_active_member()
+    if error:
+        return error
 
     body = request.json or {}
-
-    platform = body.get("platform")
-    table = body.get("table")
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
     result = body.get("result")
 
-    conn = db()
+    if result not in ["B", "P", "T"]:
+        return jsonify({"ok": False, "msg": "結果錯誤"})
 
-    conn.execute("""
+    conn = db()
+    cur = conn.execute("""
     INSERT INTO records
-    (platform,table_no,result,count_bet,created_at)
-    VALUES (?,?,?,?,?)
+    (platform, table_no, result, cards, player_point, banker_point,
+     player_pair, banker_pair, lucky6, tie, source, count_bet,
+     road_only, ai_learn, hidden, created_at, username)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        platform,
-        table,
-        result,
-        0,
-        now()
+        platform, table, result, "", 0, 0, 0, 0, 0,
+        1 if result == "T" else 0,
+        "manual_road", 0, 1, 1, 0, now(), session.get("member", "")
     ))
+    record_id = cur.lastrowid
 
     conn.execute("""
     INSERT INTO shared_ai_stats
-    (platform,table_no,result,created_at)
-    VALUES (?,?,?,?)
+    (record_id, platform, table_no, result, cards, player_point,
+     banker_point, player_pair, banker_pair, lucky6, tie, source,
+     road_only, username, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
     """, (
-        platform,
-        table,
-        result,
-        now()
+        record_id, platform, table, result, "", 0, 0, 0, 0, 0,
+        1 if result == "T" else 0,
+        "manual_road", 1, session.get("member", ""), now()
     ))
 
     conn.commit()
     conn.close()
-
-    return jsonify({
-        "ok": True
-    })
+    update_member_active(platform, table)
+    return jsonify({"ok": True})
 
 
-@app.route("/api/data")
-def api_data():
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+    member, error = require_active_member()
+    if error:
+        return error
 
-    if not session.get("member"):
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    cards = body.get("cards", [])
+    calc = calc_cards(cards)
+
+    if calc is None:
+        return jsonify({"ok": False, "msg": "牌型錯誤"})
+
+    conn = db()
+    cur = conn.execute("""
+    INSERT INTO records
+    (platform, table_no, result, cards, player_point, banker_point,
+     player_pair, banker_pair, lucky6, tie, source, count_bet,
+     road_only, ai_learn, hidden, created_at, username)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        platform, table, calc["result"], json.dumps(cards), calc["playerPoint"], calc["bankerPoint"],
+        1 if calc["playerPair"] else 0, 1 if calc["bankerPair"] else 0,
+        1 if calc["lucky6"] else 0, 1 if calc["tie"] else 0,
+        "cards", 1, 0, 1, 0, now(), session.get("member", "")
+    ))
+    record_id = cur.lastrowid
+
+    conn.execute("""
+    INSERT INTO shared_ai_stats
+    (record_id, platform, table_no, result, cards, player_point,
+     banker_point, player_pair, banker_pair, lucky6, tie, source,
+     road_only, username, created_at)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+    """, (
+        record_id, platform, table, calc["result"], json.dumps(cards), calc["playerPoint"], calc["bankerPoint"],
+        1 if calc["playerPair"] else 0, 1 if calc["bankerPair"] else 0,
+        1 if calc["lucky6"] else 0, 1 if calc["tie"] else 0,
+        "cards", 0, session.get("member", ""), now()
+    ))
+
+    conn.commit()
+    conn.close()
+    update_member_active(platform, table)
+    return jsonify({"ok": True, **calc})
+
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+
+    conn = db()
+    row = conn.execute("""
+    SELECT id FROM records
+    WHERE platform=? AND table_no=? AND hidden=0
+    ORDER BY id DESC LIMIT 1
+    """, (platform, table)).fetchone()
+
+    if row:
+        conn.execute("UPDATE records SET hidden=1, count_bet=0, ai_learn=0 WHERE id=?", (row["id"],))
+        conn.execute("DELETE FROM shared_ai_stats WHERE record_id=?", (row["id"],))
+        conn.commit()
+
+    conn.close()
+    update_member_active(platform, table)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+    member, error = require_active_member()
+    if error:
+        return error
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    conn = db()
+    conn.execute("UPDATE records SET hidden=1 WHERE platform=? AND table_no=? AND hidden=0", (platform, table))
+    conn.commit()
+    conn.close()
+    update_member_active(platform, table)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/members")
+def api_admin_members():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    conn = db()
+    rows = conn.execute("SELECT * FROM members ORDER BY id DESC").fetchall()
+    conn.close()
+    return jsonify({"ok": True, "members": [dict(r) for r in rows]})
+
+
+@app.route("/api/admin/create-member", methods=["POST"])
+def api_admin_create_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    expire = body.get("expire", "2026-12-31 23:59:59").strip()
+    if len(expire) == 10:
+        expire += " 23:59:59"
+
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號密碼必填"})
+
+    conn = db()
+    try:
+        conn.execute("""
+        INSERT INTO members (username,password,expire,enabled,role,created_at)
+        VALUES (?,?,?,?,?,?)
+        """, (username, password, expire, 1, "member", now()))
+        conn.commit()
+        ok, msg = True, "新增成功"
+    except sqlite3.IntegrityError:
+        ok, msg = False, "帳號已存在"
+    conn.close()
+    return jsonify({"ok": ok, "msg": msg})
+
+
+@app.route("/api/admin/toggle-member", methods=["POST"])
+def api_admin_toggle_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    conn = db()
+    row = conn.execute("SELECT enabled FROM members WHERE username=?", (username,)).fetchone()
+    if not row:
+        conn.close()
         return jsonify({"ok": False})
-
-    platform = request.args.get("platform", "DG")
-    table = request.args.get("table", "RB01")
-
-    rows = get_records(platform, table)
-
-    data = []
-
-    for r in rows:
-
-        data.append({
-            "result": r["result"]
-        })
-
-    return jsonify({
-        "ok": True,
-        "records": data
-    })
+    new_status = 0 if row["enabled"] else 1
+    conn.execute("UPDATE members SET enabled=? WHERE username=?", (new_status, username))
+    conn.commit()
+    conn.close()
+    return jsonify({"ok": True})
 
 
 @app.route("/api/admin/core-stats")
 def api_admin_core_stats():
-
     if not session.get("admin"):
-        return jsonify({"ok": False})
-
+        return jsonify({"ok": False}), 403
     conn = db()
-
-    total_records = conn.execute("""
-    SELECT COUNT(*) c
-    FROM records
-    """).fetchone()["c"]
-
-    total_shared = conn.execute("""
-    SELECT COUNT(*) c
-    FROM shared_ai_stats
-    """).fetchone()["c"]
-
-    online_members = conn.execute("""
-    SELECT COUNT(*) c
-    FROM members
-    WHERE enabled=1
-    """).fetchone()["c"]
-
+    total_records = conn.execute("SELECT COUNT(*) c FROM records").fetchone()["c"]
+    total_shared = conn.execute("SELECT COUNT(*) c FROM shared_ai_stats").fetchone()["c"]
+    total_members = conn.execute("SELECT COUNT(*) c FROM members").fetchone()["c"]
+    online_members = conn.execute("SELECT COUNT(*) c FROM members WHERE last_active >= datetime('now','-10 minutes')").fetchone()["c"]
     conn.close()
-
     return jsonify({
         "ok": True,
         "totalRecords": total_records,
         "totalShared": total_shared,
+        "totalMembers": total_members,
         "onlineMembers": online_members,
         "accuracy": 92
     })
 
 
-@app.route("/api/admin/members")
-def api_admin_members():
-
+@app.route("/api/admin/tables-monitor")
+def api_admin_tables_monitor():
     if not session.get("admin"):
-        return jsonify({"ok": False})
-
-    conn = db()
-
-    rows = conn.execute("""
-    SELECT *
-    FROM members
-    ORDER BY id DESC
-    """).fetchall()
-
-    conn.close()
-
-    members = []
-
-    for r in rows:
-
-        members.append({
-            "username": r["username"],
-            "enabled": bool(r["enabled"]),
-            "expire": r["expire"],
-            "current_platform": r["current_platform"],
-            "current_table": r["current_table"],
-            "last_active": r["last_active"]
-        })
-
-    return jsonify({
-        "ok": True,
-        "members": members
-    })
-
-
-@app.route("/api/admin/create-member", methods=["POST"])
-def api_admin_create_member():
-
-    if not session.get("admin"):
-        return jsonify({"ok": False})
-
-    body = request.json or {}
-
-    username = body.get("username")
-    password = body.get("password")
-    expire = body.get("expire")
-
-    conn = db()
-
-    try:
-
-        conn.execute("""
-        INSERT INTO members
-        (username,password,expire,enabled,created_at)
-        VALUES (?,?,?,?,?)
-        """, (
-            username,
-            password,
-            expire,
-            1,
-            now()
-        ))
-
-        conn.commit()
-
-    except:
-
-        conn.close()
-
-        return jsonify({
-            "ok": False,
-            "msg": "帳號已存在"
-        })
-
-    conn.close()
-
-    return jsonify({
-        "ok": True,
-        "msg": "新增成功"
-    })
-
-
-@app.route("/api/admin/toggle-member", methods=["POST"])
-def api_admin_toggle_member():
-
-    if not session.get("admin"):
-        return jsonify({"ok": False})
-
-    body = request.json or {}
-
-    username = body.get("username")
-
-    conn = db()
-
-    row = conn.execute("""
-    SELECT enabled
-    FROM members
-    WHERE username=?
-    """, (username,)).fetchone()
-
-    new_status = 0 if row["enabled"] else 1
-
-    conn.execute("""
-    UPDATE members
-    SET enabled=?
-    WHERE username=?
-    """, (
-        new_status,
-        username
-    ))
-
-    conn.commit()
-    conn.close()
-
-    return jsonify({
-        "ok": True
-    })
+        return jsonify({"ok": False}), 403
+    result = []
+    for platform, tables in [("DG", DG_TABLES), ("MT", MT_TABLES)]:
+        for table in tables:
+            records = get_records(platform, table)
+            stats = mixed_stats(platform, table, records)
+            road = "".join([r["result"] for r in records[-30:]]) or "-"
+            result.append({
+                "platform": platform,
+                "table": table,
+                "road": road,
+                "ai": stats["suggest"],
+                "bankerScore": stats["bankerScore"],
+                "playerScore": stats["playerScore"],
+                "tieScore": stats["tieScore"],
+                "lucky6Score": stats["lucky6Score"],
+                "online": True
+            })
+    return jsonify({"ok": True, "tables": result})
 
 
 init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+
+
+⸻
+
+templates/index.html 完整覆蓋版
+
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>百家樂 AI 輔助分析系統</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--line:#0878d8;--blue:#0b7cff;--red:#ff174f;--green:#10b85a;--yellow:#ffd21f;--pink:#ff4db8;--text:#dbeafe}
+html,body{min-height:100%;background:radial-gradient(circle at top,#092340 0%,#020814 48%,#000 100%);color:var(--text);font-family:Arial,'Microsoft JhengHei',sans-serif}body{padding:12px;overflow-x:hidden}button,select,input{font-family:inherit}.app{width:100%;max-width:1180px;margin:0 auto;padding-bottom:24px}.topbar{display:grid;grid-template-columns:160px 160px 1fr 170px 180px;gap:14px;align-items:center;margin-bottom:12px}.select-wrap{position:relative;height:50px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(180deg,#071a31,#030b18);box-shadow:0 0 12px rgba(0,132,255,.18);overflow:hidden}.select-wrap:before{content:'♠';position:absolute;left:16px;top:11px;color:#9bc8ff;font-size:22px;z-index:1}.select-wrap select{width:100%;height:100%;appearance:none;background:transparent;color:white;border:0;font-size:22px;font-weight:800;padding:0 42px 0 48px;outline:0}.select-wrap.version:before{content:'▣'}.select-wrap:after{content:'⌄';position:absolute;right:14px;top:8px;font-size:28px;color:white;pointer-events:none}.expire{justify-self:center;font-size:18px;font-weight:800;color:var(--yellow);white-space:nowrap}.update-time{justify-self:end;font-size:16px;color:#dcecff;white-space:nowrap}.update-time b{font-size:25px;margin-right:6px;color:white;font-weight:400}.card{background:linear-gradient(180deg,rgba(5,20,39,.96),rgba(3,12,25,.96));border:1px solid var(--line);border-radius:14px;box-shadow:0 0 24px rgba(0,132,255,.16),inset 0 0 30px rgba(0,132,255,.04);padding:14px;margin-bottom:12px}.card-title{font-size:24px;font-weight:900;color:#b9dcff;margin-bottom:12px;display:flex;align-items:center;gap:8px}.card-title:before{content:'♠';color:#a8cdff;font-size:24px}.main-card{display:grid;grid-template-columns:1fr 1fr;min-height:210px;align-items:stretch;padding:20px 22px}.ai-suggest,.ai-alert{position:relative;padding:8px 22px}.ai-suggest{border-right:1px solid rgba(143,182,223,.35)}.ai-big{text-align:center;margin-top:12px;color:var(--pink);font-size:78px;line-height:1;font-weight:1000;text-shadow:0 0 16px rgba(255,77,184,.75),0 0 38px rgba(255,77,184,.25)}.ai-rate{text-align:center;margin-top:8px;color:var(--pink);font-size:34px;font-weight:900}.alert-box{height:112px;border:1px solid #203955;border-radius:10px;background:linear-gradient(180deg,#07192c,#030b16);display:flex;align-items:center;padding:18px 24px;color:var(--yellow);font-size:24px;font-weight:900;margin-top:22px}.road-card{padding:18px}.road-grid{width:100%;height:300px;border:1px solid #203955;border-radius:8px;background:rgba(3,12,25,.55);display:grid;grid-template-rows:repeat(6,1fr);grid-auto-flow:column;grid-auto-columns:50px;overflow-x:auto;overflow-y:hidden}.road-slot{border-right:1px solid rgba(143,182,223,.18);border-bottom:1px solid rgba(143,182,223,.18);display:flex;align-items:center;justify-content:center}.road-chip{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;background:#061426}.road-chip.B{border:2px solid var(--red);color:#ffb2c2;box-shadow:0 0 8px rgba(255,23,79,.45)}.road-chip.P{border:2px solid var(--blue);color:#91c2ff;box-shadow:0 0 8px rgba(11,124,255,.45)}.road-chip.T{border:2px solid var(--green);color:#91ffc0;box-shadow:0 0 8px rgba(16,184,90,.45)}.road-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-top:14px}.action-btn{height:58px;border-radius:10px;border:1px solid #315070;color:white;font-size:30px;font-weight:900;background:#061426;cursor:pointer}.action-btn.red{background:linear-gradient(180deg,#bb0033,#7b001d);
