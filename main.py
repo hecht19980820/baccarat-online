@@ -868,19 +868,37 @@ def api_cards():
 def api_undo():
     if not session.get("member"):
         return jsonify({"ok": False, "msg": "未登入"}), 403
+
     body = request.json or {}
     platform = body.get("platform", "DG")
     table = body.get("table", "RB01")
+
     conn = db()
+
     row = conn.execute("""
-    SELECT id FROM records
+    SELECT id
+    FROM records
     WHERE platform=? AND table_no=? AND hidden=0
-    ORDER BY id DESC LIMIT 1
+    ORDER BY id DESC
+    LIMIT 1
     """, (platform, table)).fetchone()
+
     if row:
-        conn.execute("UPDATE records SET hidden=1 WHERE id=?", (row["id"],))
+        conn.execute("""
+        UPDATE records
+        SET hidden=1, count_bet=0, ai_learn=0
+        WHERE id=?
+        """, (row["id"],))
+
+        conn.execute("""
+        DELETE FROM shared_ai_stats
+        WHERE record_id=?
+        """, (row["id"],))
+
         conn.commit()
+
     conn.close()
+
     return jsonify({"ok": True})
 
 
