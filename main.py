@@ -640,6 +640,109 @@ def api_login():
     })
 
 
+@app.route("/api/status")
+def api_status():
+    member, error = require_active_member()
+
+    if error:
+        return error
+
+    update_member_active()
+
+    return jsonify({
+        "ok": True,
+        "platforms": {
+            "DG": DG_TABLES,
+            "MT": MT_TABLES
+        }
+    })
+
+
+@app.route("/api/tables-monitor")
+def api_tables_monitor():
+    member, error = require_active_member()
+
+    if error:
+        return error
+
+    tables = []
+
+    for t in DG_TABLES:
+        records = get_records("DG", t)
+
+        road = "".join([
+            r["result"]
+            for r in records[-12:]
+        ])
+
+        ai = "莊"
+
+        if len(records):
+            last = records[-1]["result"]
+
+            if last == "B":
+                ai = "閒"
+            else:
+                ai = "莊"
+
+        tables.append({
+            "platform": "DG",
+            "table": t,
+            "road": road if road else "-",
+            "ai": ai,
+            "online": True
+        })
+
+    for t in MT_TABLES:
+        records = get_records("MT", t)
+
+        road = "".join([
+            r["result"]
+            for r in records[-12:]
+        ])
+
+        ai = "莊"
+
+        if len(records):
+            last = records[-1]["result"]
+
+            if last == "B":
+                ai = "閒"
+            else:
+                ai = "莊"
+
+        tables.append({
+            "platform": "MT",
+            "table": t,
+            "road": road if road else "-",
+            "ai": ai,
+            "online": True
+        })
+
+    return jsonify({
+        "ok": True,
+        "tables": tables
+    })
+
+
+@app.route("/api/records")
+def api_records():
+    member, error = require_active_member()
+
+    if error:
+        return error
+
+    platform = request.args.get("platform", "DG")
+    table = request.args.get("table", "RB01")
+
+    update_member_active(platform, table)
+
+    return jsonify({
+        "ok": True,
+        "records": get_records(platform, table)
+    })
+
+
 @app.route("/api/admin-login", methods=["POST"])
 def api_admin_login():
     body = request.json or {}
