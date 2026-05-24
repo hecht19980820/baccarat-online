@@ -1,6 +1,4 @@
-main.py 完整覆蓋版
-
-from flask import Flask, render_template, request, jsonify, redirect, session
+maifrom flask import Flask, render_template, request, jsonify, redirect, session
 from datetime import datetime
 import sqlite3
 import json
