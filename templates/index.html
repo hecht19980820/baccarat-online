@@ -15,6 +15,10 @@ body{
     font-family:Arial,"Microsoft JhengHei",sans-serif;
 }
 
+html{
+    overflow-y:scroll;
+}
+
 .container{
     max-width:1450px;
     margin:auto;
@@ -77,6 +81,9 @@ select,button{
     grid-template-columns:1fr 1fr;
     gap:10px;
     align-items:center;
+
+    min-height:160px;
+    max-height:160px;
 }
 
 .ai-result{
@@ -103,10 +110,16 @@ select,button{
     grid-auto-flow:column;
     grid-auto-columns:32px;
     gap:4px;
+
     overflow-x:auto;
     overflow-y:hidden;
+
     padding:6px;
+
+    height:210px;
     min-height:210px;
+    max-height:210px;
+
     background:rgba(255,255,255,.045);
     border-radius:14px;
 }
@@ -139,6 +152,7 @@ select,button{
     display:grid;
     grid-template-columns:1fr 320px;
     gap:12px;
+    align-items:start;
 }
 
 .help{
@@ -155,8 +169,16 @@ select,button{
     gap:8px;
     margin:10px 0;
     flex-wrap:wrap;
-}
 
+    height:72px;
+    min-height:72px;
+    max-height:72px;
+
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    align-content:flex-start;
+}
 .preview-wrap{text-align:center}
 
 .preview-number{
@@ -305,11 +327,12 @@ body.force-desktop .stats-row{
     }
 
     .grid-top,
-    .grid-mid,
-    .input-layout{
-        grid-template-columns:1fr;
-        gap:10px;
-    }
+.grid-mid,
+.input-layout{
+    grid-template-columns:1fr;
+    gap:10px;
+    align-items:start;
+}
 
     .card{
         padding:8px;
@@ -342,13 +365,19 @@ body.force-desktop .stats-row{
     }
 
     .road{
-        grid-template-rows:repeat(6,20px);
-        grid-auto-columns:20px;
-        gap:2px;
-        min-height:135px;
-        max-height:140px;
-        padding:5px;
-    }
+    grid-template-rows:repeat(6,20px);
+    grid-auto-columns:20px;
+    gap:2px;
+
+    overflow-x:auto;
+    overflow-y:hidden;
+
+    height:140px;
+    min-height:140px;
+    max-height:140px;
+
+    padding:5px;
+}
 
     .cell{
         width:18px;
@@ -357,17 +386,22 @@ body.force-desktop .stats-row{
     }
 
     .help{
-        font-size:12px;
-        padding:8px;
-        line-height:1.35;
-    }
+    font-size:12px;
+    padding:8px;
+    line-height:1.35;
+}
 
-    .preview-number{
-        width:38px;
-        height:38px;
-        font-size:18px;
-    }
+.card-preview{
+    height:64px;
+    min-height:64px;
+    max-height:64px;
+}
 
+.preview-number{
+    width:38px;
+    height:38px;
+    font-size:18px;
+}
     .preview-label{
         font-size:10px;
     }
@@ -472,6 +506,8 @@ body.force-desktop .stats-row{
 
             <div class="input-layout">
                 <div>
+                <div style="min-height:170px;">
+                    
                     <div class="help">
                         輸入順序：
                         <b style="color:#2d85ff">閒1</b> →
@@ -483,6 +519,8 @@ body.force-desktop .stats-row{
                     </div>
 
                     <div id="cardPreview" class="card-preview"></div>
+                    
+                    </div>
                 </div>
 
                 <div>
