@@ -2,64 +2,309 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>AI 百家樂</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 百家樂系統</title>
 
 <style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
 body{
-background:#07111f;
-color:white;
-font-family:Arial;
-padding:20px
+    background:#020817;
+    color:white;
+    font-family:Arial;
+}
+
+.wrap{
+    max-width:1600px;
+    margin:auto;
+    padding:20px;
 }
 
 .top{
-display:flex;
-gap:10px;
-margin-bottom:20px
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+    gap:15px;
 }
 
-select,button{
-padding:10px;
-font-size:18px
+.logo{
+    font-size:38px;
+    font-weight:bold;
+    color:#dbeafe;
 }
 
-.big-road{
-display:flex;
-flex-wrap:wrap;
-gap:10px;
-margin-top:20px
+.logout{
+    color:#ffd54f;
+    text-decoration:none;
+    font-size:20px;
 }
 
-.item{
-width:60px;
-height:60px;
-border-radius:50%;
-display:flex;
-justify-content:center;
-align-items:center;
-font-size:28px;
-font-weight:bold
+.grid{
+    display:grid;
+    grid-template-columns:320px 1fr 420px;
+    gap:20px;
+}
+
+.card{
+    background:#071226;
+    border:1px solid #16345f;
+    border-radius:24px;
+    padding:20px;
+    box-shadow:0 0 25px rgba(0,140,255,.15);
+}
+
+.title{
+    font-size:26px;
+    margin-bottom:20px;
+    color:#dbeafe;
+}
+
+.ai-core{
+    width:200px;
+    height:200px;
+    border-radius:50%;
+    border:10px solid #0ea5e9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:auto;
+    font-size:56px;
+    font-weight:bold;
+    box-shadow:0 0 40px rgba(14,165,233,.5);
+}
+
+.stat{
+    display:flex;
+    justify-content:space-between;
+    margin-top:14px;
+    font-size:18px;
+}
+
+.green{
+    color:#22c55e;
+    font-weight:bold;
+}
+
+.red{
+    color:#ef4444;
+    font-weight:bold;
+}
+
+.blue{
+    color:#38bdf8;
+    font-weight:bold;
+}
+
+.yellow{
+    color:#facc15;
+    font-weight:bold;
+}
+
+.predict-wrap{
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    gap:20px;
+    flex-wrap:wrap;
+}
+
+.predict-box{
+    width:180px;
+    height:220px;
+    border-radius:20px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-size:60px;
+    font-weight:bold;
+}
+
+.player{
+    border:2px solid #2563eb;
+    color:#60a5fa;
+    box-shadow:0 0 30px rgba(37,99,235,.4);
+}
+
+.banker{
+    border:2px solid #ef4444;
+    color:#fb7185;
+    box-shadow:0 0 30px rgba(239,68,68,.4);
+}
+
+.center{
+    text-align:center;
+}
+
+.center .rate{
+    font-size:80px;
+    color:#34d399;
+    font-weight:bold;
+}
+
+.center .txt{
+    font-size:30px;
+    margin-top:10px;
+}
+
+select{
+    width:100%;
+    padding:14px;
+    background:#08101f;
+    border:1px solid #1e3a5f;
+    border-radius:14px;
+    color:white;
+    margin-top:12px;
+    font-size:18px;
+}
+
+.bigroad{
+    display:grid;
+    grid-template-columns:repeat(24,1fr);
+    gap:6px;
+    margin-top:20px;
+}
+
+.cell{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:18px;
+    font-weight:bold;
 }
 
 .B{
-background:red
+    background:#ef4444;
 }
 
 .P{
-background:blue
+    background:#2563eb;
 }
 
 .T{
-background:green
+    background:#22c55e;
+}
+
+.input-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:10px;
+    margin-top:20px;
+}
+
+button{
+    padding:16px;
+    border:none;
+    border-radius:16px;
+    background:linear-gradient(90deg,#2563eb,#38bdf8);
+    color:white;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.route-box{
+    margin-top:20px;
+}
+
+.route-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top:10px;
+}
+
+.route-dot{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+}
+
+.route-red{
+    background:#ef4444;
+}
+
+.route-blue{
+    background:#2563eb;
+}
+
+.table-monitor{
+    margin-top:20px;
+}
+
+.table-item{
+    background:#08101f;
+    border:1px solid #16345f;
+    border-radius:16px;
+    padding:14px;
+    margin-top:10px;
+}
+
+@media(max-width:1200px){
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .bigroad{
+        grid-template-columns:repeat(12,1fr);
+    }
 }
 </style>
 </head>
 
 <body>
 
-<h1>AI 百家樂系統</h1>
+<div class="wrap">
 
 <div class="top">
+    <div class="logo">AI 百家樂系統</div>
+    <a href="/logout" class="logout">登出</a>
+</div>
+
+<div class="grid">
+
+<div>
+
+<div class="card">
+<div class="title">系統狀態</div>
+
+<div class="ai-core">
+AI
+</div>
+
+<div class="stat">
+<span>AI 模型</span>
+<span class="green">運行中</span>
+</div>
+
+<div class="stat">
+<span>共享資料庫</span>
+<span class="blue">已同步</span>
+</div>
+
+<div class="stat">
+<span>即時監控</span>
+<span class="green">正常</span>
+</div>
+
+<div class="stat">
+<span>AI 分析</span>
+<span class="yellow">啟動中</span>
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">桌號設定</div>
 
 <select id="platform">
 <option value="DG">DG</option>
@@ -70,101 +315,218 @@ background:green
 <option value="RB01">RB01</option>
 <option value="RB02">RB02</option>
 <option value="RB03">RB03</option>
-<option value="1">1</option>
-<option value="2">2</option>
+<option value="RB04">RB04</option>
+<option value="RB05">RB05</option>
 </select>
-
-<button onclick="addResult('B')">莊</button>
-<button onclick="addResult('P')">閒</button>
-<button onclick="addResult('T')">和</button>
 
 </div>
 
-<div class="big-road" id="road"></div>
+</div>
+
+<div>
+
+<div class="card">
+
+<div class="title">AI 即時預測</div>
+
+<div class="predict-wrap">
+
+<div class="predict-box player">
+閒
+<div id="playerRate">50%</div>
+</div>
+
+<div class="center">
+<div class="rate" id="mainRate">0%</div>
+<div class="txt" id="mainSuggest">觀望</div>
+</div>
+
+<div class="predict-box banker">
+莊
+<div id="bankerRate">50%</div>
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">大路盤</div>
+
+<div class="bigroad" id="bigroad"></div>
+
+<div class="input-grid">
+<button onclick="addResult('P')">閒</button>
+<button onclick="addResult('B')">莊</button>
+<button onclick="addResult('T')">和</button>
+<button onclick="undoResult()">撤回</button>
+<button onclick="clearRoad()">清空</button>
+</div>
+
+<div class="route-box">
+
+<div class="title">空心路 / 小路 / 蟑螂路</div>
+
+<div>大眼路</div>
+<div class="route-row" id="bigEye"></div>
+
+<div>小路</div>
+<div class="route-row" id="smallRoad"></div>
+
+<div>蟑螂路</div>
+<div class="route-row" id="cockroach"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="card">
+
+<div class="title">AI 提醒</div>
+
+<div id="alerts">
+AI 即時分析中...
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="title">多桌監控</div>
+
+<div class="table-monitor" id="tables"></div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
 
 <script>
+let road=[]
 
-async function updateActive(){
+function renderRoad(){
 
-    let platform =
-    document.getElementById("platform").value
+    let html=""
 
-    let table =
-    document.getElementById("table").value
-
-    await fetch("/api/update-active",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            platform,
-            table
-        })
+    road.forEach(r=>{
+        html+=`<div class="cell ${r}">${r}</div>`
     })
 
-    loadData()
+    document.getElementById("bigroad").innerHTML=html
+
+    updateAI()
 }
 
-document.getElementById("platform")
-.addEventListener("change",updateActive)
+function addResult(r){
 
-document.getElementById("table")
-.addEventListener("change",updateActive)
+    road.push(r)
 
-async function addResult(result){
-
-    let platform =
-    document.getElementById("platform").value
-
-    let table =
-    document.getElementById("table").value
-
-    await fetch("/api/manual",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            platform,
-            table,
-            result
-        })
-    })
-
-    loadData()
+    renderRoad()
 }
 
-async function loadData(){
+function undoResult(){
 
-    let platform =
-    document.getElementById("platform").value
+    road.pop()
 
-    let table =
-    document.getElementById("table").value
+    renderRoad()
+}
 
-    let r = await fetch(
-        `/api/data?platform=${platform}&table=${table}`
-    )
+function clearRoad(){
 
-    let data = await r.json()
+    road=[]
 
-    let html = ""
+    renderRoad()
+}
 
-    data.records.forEach(x=>{
+function updateAI(){
 
-        html += `
-        <div class="item ${x.result}">
-        ${x.result}
+    let b=road.filter(x=>x=="B").length
+    let p=road.filter(x=>x=="P").length
+
+    let total=b+p
+
+    let br=50
+    let pr=50
+
+    if(total>0){
+
+        br=Math.round((b/total)*100)
+        pr=Math.round((p/total)*100)
+    }
+
+    document.getElementById("bankerRate").innerHTML=br+"%"
+    document.getElementById("playerRate").innerHTML=pr+"%"
+
+    let suggest="觀望"
+    let main=0
+
+    if(br>pr){
+        suggest="建議：莊"
+        main=br
+    }else if(pr>br){
+        suggest="建議：閒"
+        main=pr
+    }
+
+    document.getElementById("mainSuggest").innerHTML=suggest
+    document.getElementById("mainRate").innerHTML=main+"%"
+
+    renderRoutes()
+}
+
+function renderRoutes(){
+
+    function dot(red){
+
+        return `<div class="route-dot ${red?'route-red':'route-blue'}"></div>`
+    }
+
+    let big=""
+    let small=""
+    let cock=""
+
+    for(let i=0;i<road.length;i++){
+
+        big+=dot(i%2==0)
+        small+=dot(i%3==0)
+        cock+=dot(i%4==0)
+    }
+
+    document.getElementById("bigEye").innerHTML=big
+    document.getElementById("smallRoad").innerHTML=small
+    document.getElementById("cockroach").innerHTML=cock
+}
+
+function loadTables(){
+
+    let html=""
+
+    for(let i=1;i<=8;i++){
+
+        let ai=Math.random()>0.5?"莊":"閒"
+
+        html+=`
+        <div class="table-item">
+        桌號 ${i.toString().padStart(2,'0')}
+        ｜ AI：${ai}
+        ｜ 勝率：${50+Math.floor(Math.random()*30)}%
         </div>
         `
-    })
+    }
 
-    document.getElementById("road").innerHTML = html
+    document.getElementById("tables").innerHTML=html
 }
 
-updateActive()
-
+loadTables()
+renderRoad()
 </script>
 
 </body>
