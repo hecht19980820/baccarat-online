@@ -1,4 +1,4 @@
-maifrom flask import Flask, render_template, request, jsonify, redirect, session
+from flask import Flask, render_template, request, jsonify, redirect, session
 from datetime import datetime
 import sqlite3
 import json
@@ -784,19 +784,3 @@ init_db()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
-
-
-⸻
-
-templates/index.html 完整覆蓋版
-
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>百家樂 AI 輔助分析系統</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--line:#0878d8;--blue:#0b7cff;--red:#ff174f;--green:#10b85a;--yellow:#ffd21f;--pink:#ff4db8;--text:#dbeafe}
-html,body{min-height:100%;background:radial-gradient(circle at top,#092340 0%,#020814 48%,#000 100%);color:var(--text);font-family:Arial,'Microsoft JhengHei',sans-serif}body{padding:12px;overflow-x:hidden}button,select,input{font-family:inherit}.app{width:100%;max-width:1180px;margin:0 auto;padding-bottom:24px}.topbar{display:grid;grid-template-columns:160px 160px 1fr 170px 180px;gap:14px;align-items:center;margin-bottom:12px}.select-wrap{position:relative;height:50px;border:1px solid var(--line);border-radius:11px;background:linear-gradient(180deg,#071a31,#030b18);box-shadow:0 0 12px rgba(0,132,255,.18);overflow:hidden}.select-wrap:before{content:'♠';position:absolute;left:16px;top:11px;color:#9bc8ff;font-size:22px;z-index:1}.select-wrap select{width:100%;height:100%;appearance:none;background:transparent;color:white;border:0;font-size:22px;font-weight:800;padding:0 42px 0 48px;outline:0}.select-wrap.version:before{content:'▣'}.select-wrap:after{content:'⌄';position:absolute;right:14px;top:8px;font-size:28px;color:white;pointer-events:none}.expire{justify-self:center;font-size:18px;font-weight:800;color:var(--yellow);white-space:nowrap}.update-time{justify-self:end;font-size:16px;color:#dcecff;white-space:nowrap}.update-time b{font-size:25px;margin-right:6px;color:white;font-weight:400}.card{background:linear-gradient(180deg,rgba(5,20,39,.96),rgba(3,12,25,.96));border:1px solid var(--line);border-radius:14px;box-shadow:0 0 24px rgba(0,132,255,.16),inset 0 0 30px rgba(0,132,255,.04);padding:14px;margin-bottom:12px}.card-title{font-size:24px;font-weight:900;color:#b9dcff;margin-bottom:12px;display:flex;align-items:center;gap:8px}.card-title:before{content:'♠';color:#a8cdff;font-size:24px}.main-card{display:grid;grid-template-columns:1fr 1fr;min-height:210px;align-items:stretch;padding:20px 22px}.ai-suggest,.ai-alert{position:relative;padding:8px 22px}.ai-suggest{border-right:1px solid rgba(143,182,223,.35)}.ai-big{text-align:center;margin-top:12px;color:var(--pink);font-size:78px;line-height:1;font-weight:1000;text-shadow:0 0 16px rgba(255,77,184,.75),0 0 38px rgba(255,77,184,.25)}.ai-rate{text-align:center;margin-top:8px;color:var(--pink);font-size:34px;font-weight:900}.alert-box{height:112px;border:1px solid #203955;border-radius:10px;background:linear-gradient(180deg,#07192c,#030b16);display:flex;align-items:center;padding:18px 24px;color:var(--yellow);font-size:24px;font-weight:900;margin-top:22px}.road-card{padding:18px}.road-grid{width:100%;height:300px;border:1px solid #203955;border-radius:8px;background:rgba(3,12,25,.55);display:grid;grid-template-rows:repeat(6,1fr);grid-auto-flow:column;grid-auto-columns:50px;overflow-x:auto;overflow-y:hidden}.road-slot{border-right:1px solid rgba(143,182,223,.18);border-bottom:1px solid rgba(143,182,223,.18);display:flex;align-items:center;justify-content:center}.road-chip{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;background:#061426}.road-chip.B{border:2px solid var(--red);color:#ffb2c2;box-shadow:0 0 8px rgba(255,23,79,.45)}.road-chip.P{border:2px solid var(--blue);color:#91c2ff;box-shadow:0 0 8px rgba(11,124,255,.45)}.road-chip.T{border:2px solid var(--green);color:#91ffc0;box-shadow:0 0 8px rgba(16,184,90,.45)}.road-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-top:14px}.action-btn{height:58px;border-radius:10px;border:1px solid #315070;color:white;font-size:30px;font-weight:900;background:#061426;cursor:pointer}.action-btn.red{background:linear-gradient(180deg,#bb0033,#7b001d);
