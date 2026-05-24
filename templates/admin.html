@@ -2,42 +2,146 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<title>AI 管理後台</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 百家樂管理中心</title>
 
 <style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
 body{
 background:#020817;
 color:white;
 font-family:Arial;
-padding:20px
+}
+
+.wrap{
+max-width:1500px;
+margin:auto;
+padding:20px;
+}
+
+.top{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+
+.logo{
+font-size:36px;
+font-weight:bold;
+}
+
+.logout{
+color:#ffd54f;
+text-decoration:none;
+font-size:20px;
+}
+
+.grid{
+display:grid;
+grid-template-columns:1fr 420px;
+gap:20px;
 }
 
 .card{
 background:#071226;
+border:1px solid #16345f;
+border-radius:24px;
 padding:20px;
-border-radius:20px;
-margin-bottom:20px
+box-shadow:0 0 25px rgba(0,140,255,.15);
+margin-bottom:20px;
+}
+
+.title{
+font-size:26px;
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-top:10px;
+background:#08101f;
+border:1px solid #1e3a5f;
+border-radius:14px;
+color:white;
+font-size:18px;
+}
+
+button{
+padding:14px;
+border:none;
+border-radius:14px;
+background:linear-gradient(90deg,#2563eb,#38bdf8);
+color:white;
+font-size:18px;
+font-weight:bold;
+margin-top:12px;
 }
 
 .member{
-padding:15px;
-border-bottom:1px solid #1e3a5f
+background:#08101f;
+border:1px solid #16345f;
+border-radius:18px;
+padding:16px;
+margin-top:14px;
 }
 
-button,input{
-padding:10px;
-margin-top:10px
+.stat{
+margin-top:10px;
+font-size:18px;
+}
+
+.green{
+color:#22c55e;
+font-weight:bold;
+}
+
+.red{
+color:#ef4444;
+font-weight:bold;
+}
+
+@media(max-width:1200px){
+.grid{
+grid-template-columns:1fr;
+}
 }
 </style>
 </head>
 
 <body>
 
-<h1>AI 百家樂管理中心</h1>
+<div class="wrap">
+
+<div class="top">
+<div class="logo">AI 百家樂管理中心</div>
+<a href="/logout" class="logout">登出</a>
+</div>
+
+<div class="grid">
+
+<div>
 
 <div class="card">
 
-<h2>新增會員</h2>
+<div class="title">AI 系統監控</div>
+
+<div class="stat">共享 AI：<span class="green">運行中</span></div>
+<div class="stat">SQLite：<span class="green">正常</span></div>
+<div class="stat">Render：<span class="green">在線</span></div>
+<div class="stat">共享分析：<span class="green">同步中</span></div>
+
+</div>
+
+<div class="card">
+
+<div class="title">新增會員</div>
 
 <input id="username" placeholder="帳號">
 <input id="password" placeholder="密碼">
@@ -49,12 +153,20 @@ margin-top:10px
 
 </div>
 
+</div>
+
+<div>
+
 <div class="card">
 
-<h2>會員列表</h2>
+<div class="title">會員列表</div>
 
-<div id="memberList">
-讀取中...
+<div id="members"></div>
+
+</div>
+
+</div>
+
 </div>
 
 </div>
@@ -63,100 +175,101 @@ margin-top:10px
 
 async function loadMembers(){
 
-    let r =
-    await fetch("/api/admin/members")
+    let r=await fetch("/api/admin/members")
+    let data=await r.json()
 
-    let data = await r.json()
-
-    let html = ""
+    let html=""
 
     data.members.forEach(m=>{
 
-        html += `
+        html+=`
         <div class="member">
 
-        <div>帳號：${m.username}</div>
+        <div class="stat">
+        帳號：${m.username}
+        </div>
 
-        <div>
+        <div class="stat">
         狀態：
-        ${m.enabled ? '啟用':'停權'}
+        <span class="${m.enabled?'green':'red'}">
+        ${m.enabled?'啟用':'停權'}
+        </span>
         </div>
 
-        <div>
-        桌號：
-        ${m.current_platform || '-'}
-        ${m.current_table || ''}
+        <div class="stat">
+        到期：${m.expire}
         </div>
 
-        <div>
-        最後操作：
-        ${m.last_active || '-'}
+        <div class="stat">
+        裝置：${m.device||'-'}
         </div>
 
-        <button onclick="toggleMember('${m.username}')">
-        ${m.enabled ? '停權':'啟用'}
+        <div class="stat">
+        IP：${m.ip||'-'}
+        </div>
+
+        <div class="stat">
+        桌號：${m.current_platform||'-'} ${m.current_table||''}
+        </div>
+
+        <div class="stat">
+        最後操作：${m.last_active||'-'}
+        </div>
+
+        <button onclick="toggle('${m.username}')">
+        ${m.enabled?'停權':'啟用'}
         </button>
 
         </div>
         `
     })
 
-    document.getElementById("memberList")
-    .innerHTML = html
+    document.getElementById("members").innerHTML=html
 }
 
 async function createMember(){
 
-    let username =
-    document.getElementById("username").value
+    let username=document.getElementById("username").value
+    let password=document.getElementById("password").value
+    let expire=document.getElementById("expire").value
 
-    let password =
-    document.getElementById("password").value
+    let r=await fetch("/api/admin/create-member",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            username,
+            password,
+            expire
+        })
+    })
 
-    let expire =
-    document.getElementById("expire").value
-
-    let r = await fetch(
-        "/api/admin/create-member",
-        {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                username,
-                password,
-                expire
-            })
-        }
-    )
-
-    let data = await r.json()
+    let data=await r.json()
 
     alert(data.msg)
 
     loadMembers()
 }
 
-async function toggleMember(username){
+async function toggle(username){
 
-    await fetch(
-        "/api/admin/toggle-member",
-        {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                username
-            })
-        }
-    )
+    await fetch("/api/admin/toggle-member",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            username
+        })
+    })
 
     loadMembers()
 }
 
 loadMembers()
+
+setInterval(loadMembers,5000)
 
 </script>
 
