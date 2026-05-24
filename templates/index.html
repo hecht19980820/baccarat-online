@@ -1,533 +1,168 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 百家樂系統</title>
-
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>百家樂 AI 輔助分析系統</title>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#020814;
+  --panel:#041326;
+  --panel2:#071a33;
+  --line:#0569b7;
+  --line2:#123b68;
+  --text:#d8ecff;
+  --muted:#8fb2d9;
+  --blue:#087bff;
+  --red:#ff164c;
+  --green:#00a94f;
+  --yellow:#ffd400;
+  --pink:#ff4db8;
 }
-
 body{
-    background:#020817;
-    color:white;
-    font-family:Arial;
+  min-height:100vh;
+  background:radial-gradient(circle at top,#062044 0%,#020814 52%,#00040b 100%);
+  color:var(--text);
+  font-family:Arial,"Microsoft JhengHei",sans-serif;
 }
-
-.wrap{
-    max-width:1600px;
-    margin:auto;
-    padding:20px;
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 22px}
+.topbar{
+  display:grid;
+  grid-template-columns:160px 160px 1fr 170px 180px;
+  gap:14px;
+  align-items:center;
+  margin-bottom:12px;
 }
-
-.top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:20px;
-    flex-wrap:wrap;
-    gap:15px;
+.select-shell{
+  height:50px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:linear-gradient(180deg,rgba(8,31,60,.95),rgba(2,11,25,.95));
+  box-shadow:0 0 14px rgba(0,124,255,.18) inset,0 0 10px rgba(0,124,255,.16);
+  position:relative;
+  overflow:hidden;
 }
-
-.logo{
-    font-size:38px;
-    font-weight:bold;
-    color:#dbeafe;
+.select-shell select{
+  width:100%;height:100%;appearance:none;-webkit-appearance:none;
+  background:transparent;color:#fff;border:0;outline:0;
+  padding:0 38px 0 18px;font-size:20px;font-weight:800;
 }
-
-.logout{
-    color:#ffd54f;
-    text-decoration:none;
-    font-size:20px;
+.select-shell:after{
+  content:"⌄";position:absolute;right:14px;top:8px;font-size:28px;color:#fff;pointer-events:none;
 }
-
-.grid{
-    display:grid;
-    grid-template-columns:320px 1fr 420px;
-    gap:20px;
-}
-
+.expire{font-size:18px;color:var(--yellow);font-weight:900;text-align:center;white-space:nowrap}
+.update-time{font-size:16px;color:#dcecff;text-align:right;white-space:nowrap}
+.logout{display:none;color:var(--yellow);text-decoration:none;font-weight:900;text-align:right}
 .card{
-    background:#071226;
-    border:1px solid #16345f;
-    border-radius:24px;
-    padding:20px;
-    box-shadow:0 0 25px rgba(0,140,255,.15);
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(4,20,40,.96),rgba(2,10,23,.96));
+  box-shadow:0 0 18px rgba(0,123,255,.22), inset 0 0 22px rgba(0,85,170,.1);
+  padding:14px;
+  margin-bottom:12px;
 }
-
-.title{
-    font-size:26px;
-    margin-bottom:20px;
-    color:#dbeafe;
+.title{font-size:24px;font-weight:900;color:#b9ddff;margin-bottom:12px;letter-spacing:1px}
+.ai-card{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  min-height:205px;
+  align-items:stretch;
 }
-
-.ai-core{
-    width:200px;
-    height:200px;
-    border-radius:50%;
-    border:10px solid #0ea5e9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    margin:auto;
-    font-size:56px;
-    font-weight:bold;
-    box-shadow:0 0 40px rgba(14,165,233,.5);
+.ai-left,.ai-right{padding:10px 22px;display:flex;flex-direction:column;justify-content:center}
+.ai-left{border-right:1px solid rgba(100,160,220,.34);text-align:center}
+.ai-right{padding-left:42px}
+.ai-label{font-size:25px;color:#b9ddff;font-weight:900;margin-bottom:12px;text-align:left}
+.ai-main{font-size:74px;font-weight:1000;color:var(--pink);text-shadow:0 0 18px rgba(255,77,184,.9);letter-spacing:6px;line-height:1.05}
+.ai-percent{font-size:38px;color:var(--pink);font-weight:900;text-shadow:0 0 12px rgba(255,77,184,.7)}
+.alert-box{
+  border:1px solid #264866;border-radius:12px;background:rgba(2,12,28,.82);
+  min-height:88px;display:flex;align-items:center;padding:18px;font-size:22px;font-weight:900;color:var(--yellow)
 }
-
-.stat{
-    display:flex;
-    justify-content:space-between;
-    margin-top:14px;
-    font-size:18px;
+.road-card{padding:14px 18px}
+.road-board{
+  display:grid;
+  grid-template-rows:repeat(6,42px);
+  grid-auto-flow:column;
+  grid-auto-columns:42px;
+  gap:0;
+  overflow-x:auto;overflow-y:hidden;
+  min-height:252px;
+  border:1px solid rgba(100,160,220,.22);
+  border-radius:8px;
+  background:
+    linear-gradient(rgba(80,130,180,.16) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(80,130,180,.16) 1px, transparent 1px),
+    rgba(3,15,32,.74);
+  background-size:42px 42px;
+  padding:0;
 }
-
-.green{
-    color:#22c55e;
-    font-weight:bold;
+.road-cell{width:42px;height:42px;display:flex;align-items:center;justify-content:center}
+.dot{
+  width:31px;height:31px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:900;background:rgba(0,0,0,.35)
 }
-
-.red{
-    color:#ef4444;
-    font-weight:bold;
+.dot.B{border:2px solid var(--red);color:#ff8da3;box-shadow:0 0 9px rgba(255,22,76,.45)}
+.dot.P{border:2px solid var(--blue);color:#80bdff;box-shadow:0 0 9px rgba(8,123,255,.45)}
+.dot.T{border:2px solid var(--green);color:#65ff9c;box-shadow:0 0 9px rgba(0,169,79,.45)}
+.road-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:18px;margin-top:14px}
+.btn{height:58px;border-radius:8px;border:1px solid #24445f;color:#fff;font-size:28px;font-weight:900;cursor:pointer}
+.btn-red{background:linear-gradient(180deg,#b80036,#760018);border-color:#ff1951;box-shadow:0 0 14px rgba(255,22,76,.32)}
+.btn-blue{background:linear-gradient(180deg,#075dea,#003080);border-color:#0989ff;box-shadow:0 0 14px rgba(8,123,255,.32)}
+.btn-green{background:linear-gradient(180deg,#009b48,#005b2b);border-color:#00d466;box-shadow:0 0 14px rgba(0,169,79,.32)}
+.btn-dark{background:linear-gradient(180deg,#10243b,#071324);border-color:#355778;color:#d8ecff;font-size:36px}
+.input-card{padding:14px 16px}
+.input-layout{display:grid;grid-template-columns:1fr 1.25fr;gap:26px;align-items:stretch}
+.current-box{
+  border:1px solid #24445f;border-radius:8px;min-height:156px;background:rgba(2,12,28,.7);padding:14px;
+  display:flex;flex-direction:column;justify-content:space-between
 }
-
-.blue{
-    color:#38bdf8;
-    font-weight:bold;
-}
-
-.yellow{
-    color:#facc15;
-    font-weight:bold;
-}
-
-.predict-wrap{
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    gap:20px;
-    flex-wrap:wrap;
-}
-
-.predict-box{
-    width:180px;
-    height:220px;
-    border-radius:20px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    font-size:60px;
-    font-weight:bold;
-}
-
-.player{
-    border:2px solid #2563eb;
-    color:#60a5fa;
-    box-shadow:0 0 30px rgba(37,99,235,.4);
-}
-
-.banker{
-    border:2px solid #ef4444;
-    color:#fb7185;
-    box-shadow:0 0 30px rgba(239,68,68,.4);
-}
-
-.center{
-    text-align:center;
-}
-
-.center .rate{
-    font-size:80px;
-    color:#34d399;
-    font-weight:bold;
-}
-
-.center .txt{
-    font-size:30px;
-    margin-top:10px;
-}
-
-select{
-    width:100%;
-    padding:14px;
-    background:#08101f;
-    border:1px solid #1e3a5f;
-    border-radius:14px;
-    color:white;
-    margin-top:12px;
-    font-size:18px;
-}
-
-.bigroad{
-    display:grid;
-    grid-template-columns:repeat(24,1fr);
-    gap:6px;
-    margin-top:20px;
-}
-
-.cell{
-    width:34px;
-    height:34px;
-    border-radius:50%;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.B{
-    background:#ef4444;
-}
-
-.P{
-    background:#2563eb;
-}
-
-.T{
-    background:#22c55e;
-}
-
-.input-grid{
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:10px;
-    margin-top:20px;
-}
-
-button{
-    padding:16px;
-    border:none;
-    border-radius:16px;
-    background:linear-gradient(90deg,#2563eb,#38bdf8);
-    color:white;
-    font-size:22px;
-    font-weight:bold;
-}
-
-.route-box{
-    margin-top:20px;
-}
-
-.route-row{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-    margin-top:10px;
-}
-
-.route-dot{
-    width:22px;
-    height:22px;
-    border-radius:50%;
-}
-
-.route-red{
-    background:#ef4444;
-}
-
-.route-blue{
-    background:#2563eb;
-}
-
-.table-monitor{
-    margin-top:20px;
-}
-
-.table-item{
-    background:#08101f;
-    border:1px solid #16345f;
-    border-radius:16px;
-    padding:14px;
-    margin-top:10px;
-}
-
-@media(max-width:1200px){
-    .grid{
-        grid-template-columns:1fr;
-    }
-
-    .bigroad{
-        grid-template-columns:repeat(12,1fr);
-    }
+.current-title{font-size:17px;color:#aac6e8;margin-bottom:12px}
+.slot-row{display:grid;grid-template-columns:repeat(6,56px);gap:14px}
+.slot{width:56px;height:56px;border-radius:8px;border:1px solid #37557d;background:rgba(6,20,40,.7);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff}
+.slot-hint{text-align:right;color:#9eb5d0;font-size:17px;padding-top:10px;border-top:1px solid rgba(80,130,180,.18)}
+.input-guide{font-size:18px;color:#b7c9e5;margin-bottom:14px;white-space:nowrap}
+.input-guide b:nth-child(1),.input-guide b:nth-child(3){color:#0d8bff}.input-guide b:nth-child(2),.input-guide b:nth-child(4){color:#ff164c}
+.keypad{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.keypad .num,.keypad .send,.keypad .clear{height:58px;border-radius:8px;background:rgba(12,28,50,.9);border:1px solid #39597e;color:#fff;font-size:26px;font-weight:900;cursor:pointer}
+.keypad .clear{background:linear-gradient(180deg,#b57b00,#6f4300);border-color:#ffb000;font-size:22px}
+.keypad .send{background:linear-gradient(180deg,#c80038,#760018);border-color:#ff1951;font-size:22px}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:12px}
+.stat{border:1px solid var(--line2);border-radius:10px;background:rgba(4,18,38,.92);padding:12px;min-height:78px}
+.stat .k{font-size:15px;color:#abc8e7}.stat .v{font-size:26px;font-weight:900;margin-top:8px}.red-text{color:#ff4973}.blue-text{color:#1e90ff}.green-text{color:#24e477}.yellow-text{color:#ffd400}
+@media(max-width:720px){
+  body{background:#020814}.wrap{width:100%;padding:10px 10px 18px}
+  .topbar{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}.select-shell{height:48px}.select-shell select{font-size:18px;padding-left:15px}
+  .expire{grid-column:1/3;text-align:left;font-size:16px}.update-time{grid-column:1/3;text-align:left;font-size:15px}.logout{display:block;position:absolute;right:16px;top:86px}
+  .card{border-radius:12px;padding:10px;margin-bottom:10px}.title{font-size:21px;margin-bottom:8px}
+  .ai-card{grid-template-columns:1fr 1fr;min-height:150px}.ai-left,.ai-right{padding:8px 10px}.ai-left{border-right:1px solid rgba(100,160,220,.34)}.ai-right{padding-left:12px}
+  .ai-label{font-size:17px;margin-bottom:8px}.ai-main{font-size:46px;letter-spacing:2px}.ai-percent{font-size:24px}.alert-box{min-height:76px;font-size:16px;padding:10px}
+  .road-board{grid-template-rows:repeat(6,32px);grid-auto-columns:32px;min-height:192px;background-size:32px 32px}.road-cell{width:32px;height:32px}.dot{width:25px;height:25px;font-size:14px}
+  .road-actions{gap:9px;margin-top:10px}.btn{height:46px;font-size:24px}.btn-dark{font-size:31px}
+  .input-layout{grid-template-columns:1fr;gap:10px}.current-box{min-height:118px}.slot-row{grid-template-columns:repeat(6,1fr);gap:10px}.slot{width:100%;height:42px;font-size:22px}.slot-hint{text-align:center;font-size:15px}.input-guide{font-size:14px;white-space:normal;line-height:1.7}.keypad{grid-template-columns:repeat(6,1fr);gap:8px}.keypad .num,.keypad .send,.keypad .clear{height:42px;font-size:19px}.keypad .send,.keypad .clear{font-size:15px}
+  .stats{grid-template-columns:repeat(3,1fr);gap:8px}.stat{min-height:64px;padding:9px}.stat .k{font-size:13px}.stat .v{font-size:20px}
 }
 </style>
 </head>
-
 <body>
-
 <div class="wrap">
-
-<div class="top">
-    <div class="logo">AI 百家樂系統</div>
-    <a href="/logout" class="logout">登出</a>
-</div>
-
-<div class="grid">
-
-<div>
-
-<div class="card">
-<div class="title">系統狀態</div>
-
-<div class="ai-core">
-AI
-</div>
-
-<div class="stat">
-<span>AI 模型</span>
-<span class="green">運行中</span>
-</div>
-
-<div class="stat">
-<span>共享資料庫</span>
-<span class="blue">已同步</span>
-</div>
-
-<div class="stat">
-<span>即時監控</span>
-<span class="green">正常</span>
-</div>
-
-<div class="stat">
-<span>AI 分析</span>
-<span class="yellow">啟動中</span>
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="title">桌號設定</div>
-
-<select id="platform">
-<option value="DG">DG</option>
-<option value="MT">MT</option>
-</select>
-
-<select id="table">
-<option value="RB01">RB01</option>
-<option value="RB02">RB02</option>
-<option value="RB03">RB03</option>
-<option value="RB04">RB04</option>
-<option value="RB05">RB05</option>
-</select>
-
-</div>
-
-</div>
-
-<div>
-
-<div class="card">
-
-<div class="title">AI 即時預測</div>
-
-<div class="predict-wrap">
-
-<div class="predict-box player">
-閒
-<div id="playerRate">50%</div>
-</div>
-
-<div class="center">
-<div class="rate" id="mainRate">0%</div>
-<div class="txt" id="mainSuggest">觀望</div>
-</div>
-
-<div class="predict-box banker">
-莊
-<div id="bankerRate">50%</div>
-</div>
-
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="title">大路盤</div>
-
-<div class="bigroad" id="bigroad"></div>
-
-<div class="input-grid">
-<button onclick="addResult('P')">閒</button>
-<button onclick="addResult('B')">莊</button>
-<button onclick="addResult('T')">和</button>
-<button onclick="undoResult()">撤回</button>
-<button onclick="clearRoad()">清空</button>
-</div>
-
-<div class="route-box">
-
-<div class="title">空心路 / 小路 / 蟑螂路</div>
-
-<div>大眼路</div>
-<div class="route-row" id="bigEye"></div>
-
-<div>小路</div>
-<div class="route-row" id="smallRoad"></div>
-
-<div>蟑螂路</div>
-<div class="route-row" id="cockroach"></div>
-
-</div>
-
-</div>
-
-</div>
-
-<div>
-
-<div class="card">
-
-<div class="title">AI 提醒</div>
-
-<div id="alerts">
-AI 即時分析中...
-</div>
-
-</div>
-
-<div class="card">
-
-<div class="title">多桌監控</div>
-
-<div class="table-monitor" id="tables"></div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<script>
-let road=[]
-
-function renderRoad(){
-
-    let html=""
-
-    road.forEach(r=>{
-        html+=`<div class="cell ${r}">${r}</div>`
-    })
-
-    document.getElementById("bigroad").innerHTML=html
-
-    updateAI()
-}
-
-function addResult(r){
-
-    road.push(r)
-
-    renderRoad()
-}
-
-function undoResult(){
-
-    road.pop()
-
-    renderRoad()
-}
-
-function clearRoad(){
-
-    road=[]
-
-    renderRoad()
-}
-
-function updateAI(){
-
-    let b=road.filter(x=>x=="B").length
-    let p=road.filter(x=>x=="P").length
-
-    let total=b+p
-
-    let br=50
-    let pr=50
-
-    if(total>0){
-
-        br=Math.round((b/total)*100)
-        pr=Math.round((p/total)*100)
-    }
-
-    document.getElementById("bankerRate").innerHTML=br+"%"
-    document.getElementById("playerRate").innerHTML=pr+"%"
-
-    let suggest="觀望"
-    let main=0
-
-    if(br>pr){
-        suggest="建議：莊"
-        main=br
-    }else if(pr>br){
-        suggest="建議：閒"
-        main=pr
-    }
-
-    document.getElementById("mainSuggest").innerHTML=suggest
-    document.getElementById("mainRate").innerHTML=main+"%"
-
-    renderRoutes()
-}
-
-function renderRoutes(){
-
-    function dot(red){
-
-        return `<div class="route-dot ${red?'route-red':'route-blue'}"></div>`
-    }
-
-    let big=""
-    let small=""
-    let cock=""
-
-    for(let i=0;i<road.length;i++){
-
-        big+=dot(i%2==0)
-        small+=dot(i%3==0)
-        cock+=dot(i%4==0)
-    }
-
-    document.getElementById("bigEye").innerHTML=big
-    document.getElementById("smallRoad").innerHTML=small
-    document.getElementById("cockroach").innerHTML=cock
-}
-
-function loadTables(){
-
-    let html=""
-
-    for(let i=1;i<=8;i++){
-
-        let ai=Math.random()>0.5?"莊":"閒"
-
-        html+=`
-        <div class="table-item">
-        桌號 ${i.toString().padStart(2,'0')}
-        ｜ AI：${ai}
-        ｜ 勝率：${50+Math.floor(Math.random()*30)}%
-        </div>
-        `
-    }
-
-    document.getElementById("tables").innerHTML=html
-}
-
-loadTables()
-renderRoad()
-</script>
-
-</body>
-</html>
+  <div class="topbar">
+    <div class="select-shell"><select id="platform" onchange="loadTables()"><option value="DG">♠ DG</option><option value="MT">♠ MT</option></select></div>
+    <div class="select-shell"><select id="table" onchange="loadData()"></select></div>
+    <div class="expire">會員到期：<span id="memberExpire">-</span></div>
+    <div class="select-shell"><select id="viewMode" onchange="applyViewMode()"><option value="desktop">電腦版</option><option value="mobile">手機版</option></select></div>
+    <div class="update-time">↻ 更新時間 <span id="updateTime">--:--:--</span></div>
+    <a class="logout" href="/logout">登出</a>
+  </div>
+
+  <div class="card ai-card">
+    <div class="ai-left">
+      <div class="ai-label">♠ AI 建議方向</div>
+      <div class="ai-main" id="aiSuggest">觀望</div>
+      <div class="ai-percent" id="stableRate">0%</div>
+    </div>
+    <div class="ai-right">
+      <div class="ai-label">🔔 AI 提醒</div>
+      <div class="alert-box" id="aiAlert">目前無提醒</div>
+    </div>
