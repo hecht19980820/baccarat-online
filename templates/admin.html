@@ -4,97 +4,683 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>百家樂 AI 管理中心</title>
+
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#020713;--panel:rgba(4,18,38,.88);--line:#12bfff;--blue:#35c8ff;--green:#22c55e;--red:#ff4268;--yellow:#ffd84d;--text:#dff7ff;--muted:#82b6d9}
-body{min-height:100vh;background:radial-gradient(circle at 50% -10%,rgba(0,165,255,.22),transparent 36%),linear-gradient(180deg,#03152d,#020713 58%,#000);color:var(--text);font-family:Arial,"Microsoft JhengHei",sans-serif;overflow-x:hidden}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(0,210,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(0,210,255,.045) 1px,transparent 1px);background-size:42px 42px}
+:root{
+    --bg:#020713;
+    --panel:rgba(4,18,38,.92);
+    --line:#18c7ff;
+    --blue:#35c8ff;
+    --green:#22c55e;
+    --red:#ff4268;
+    --yellow:#ffd84d;
+    --text:#e8fbff;
+    --muted:#8db9d8;
+}
+body{
+    min-height:100vh;
+    color:var(--text);
+    font-family:Arial,"Microsoft JhengHei",sans-serif;
+    background:
+        radial-gradient(circle at top,rgba(0,180,255,.25),transparent 36%),
+        linear-gradient(180deg,#03152d,#020713 62%,#000);
+}
+body:before{
+    content:"";
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    background-image:
+        linear-gradient(rgba(0,210,255,.04) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(0,210,255,.04) 1px,transparent 1px);
+    background-size:42px 42px;
+}
 .wrap{max-width:1650px;margin:auto;padding:18px}
-.topbar{display:grid;grid-template-columns:380px 1fr 310px;gap:18px;align-items:center;margin-bottom:18px}
-.brand{display:flex;align-items:center;gap:16px}.logo{width:76px;height:76px;border-radius:50%;border:2px solid var(--line);display:flex;justify-content:center;align-items:center;font-size:32px;font-weight:bold;background:radial-gradient(circle,rgba(18,191,255,.32),rgba(0,0,0,.1) 55%,rgba(0,0,0,.5));box-shadow:0 0 22px rgba(18,191,255,.55),inset 0 0 20px rgba(18,191,255,.35)}
-.brand h1{font-size:30px;line-height:1.1;letter-spacing:2px}.brand p{margin-top:8px;color:#c5eaff;font-size:13px;letter-spacing:1.5px}
-.nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.nav button{border:1px solid rgba(53,200,255,.55);color:#dff7ff;background:linear-gradient(180deg,rgba(8,37,70,.95),rgba(3,13,30,.95));padding:13px 8px;border-radius:4px 18px 4px 18px;font-size:15px;cursor:pointer;box-shadow:0 0 14px rgba(0,180,255,.14)}
-.nav button.active{background:linear-gradient(135deg,rgba(0,162,255,.5),rgba(2,20,45,.95));box-shadow:0 0 25px rgba(0,180,255,.35),inset 0 0 18px rgba(0,190,255,.18)}
-.status-top{text-align:right;border-left:1px solid rgba(53,200,255,.45);padding-left:18px}.sync{color:#67e8f9;font-weight:bold}.clock{color:var(--blue);font-size:28px;font-weight:bold;letter-spacing:2px;margin-top:8px}.date{color:#8bdcff;font-size:15px;margin-top:4px}
-.grid{display:grid;grid-template-columns:370px 1fr 470px;gap:16px}
-.panel{position:relative;background:linear-gradient(180deg,rgba(6,25,52,.92),rgba(2,10,22,.96));border:1px solid rgba(53,200,255,.62);border-radius:4px;padding:18px;box-shadow:0 0 18px rgba(0,180,255,.18),inset 0 0 26px rgba(0,180,255,.045);overflow:hidden}
-.panel:before,.panel:after{content:"";position:absolute;width:70px;height:1px;background:var(--line);top:0;left:18px;box-shadow:0 0 12px var(--line)}.panel:after{left:auto;right:18px;bottom:0;top:auto}
-.panel-title{font-size:22px;color:#bfefff;font-weight:bold;margin-bottom:16px;letter-spacing:1px}.sub-title{color:#4bd7ff;font-size:10px;opacity:.55;letter-spacing:1.8px;margin-left:6px}
-.ai-orb{width:190px;height:190px;margin:10px auto 18px;border-radius:50%;border:8px solid rgba(20,190,255,.9);display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:bold;color:#89eaff;background:radial-gradient(circle,rgba(0,210,255,.18),rgba(1,15,35,.82) 58%,rgba(0,0,0,.2));box-shadow:0 0 42px rgba(0,210,255,.5),inset 0 0 32px rgba(0,210,255,.22)}
-.stat-line{display:flex;justify-content:space-between;gap:12px;margin-top:12px;font-size:16px}.green{color:var(--green)!important;font-weight:bold}.red{color:var(--red)!important;font-weight:bold}.blue{color:var(--blue)!important;font-weight:bold}.yellow{color:var(--yellow)!important;font-weight:bold}
-.big-kpi{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center}.brain{height:115px;border-radius:12px;border:1px solid rgba(53,200,255,.35);display:flex;align-items:center;justify-content:center;color:#52d6ff;font-size:54px;background:radial-gradient(circle,rgba(18,191,255,.25),rgba(5,15,32,.7))}
-.progress-ring{width:130px;height:130px;border-radius:50%;border:10px solid rgba(35,197,255,.25);border-top-color:#28c8ff;border-right-color:#28c8ff;display:flex;align-items:center;justify-content:center;margin:auto;font-size:32px;font-weight:bold;color:#71ddff;box-shadow:0 0 30px rgba(35,197,255,.25)}
-.select-row{display:flex;justify-content:center;gap:10px;margin-bottom:18px}select,input{background:#071b36;color:#e9fbff;border:1px solid rgba(53,200,255,.55);border-radius:10px;padding:10px;font-size:15px;outline:none}
-.predict-area{display:grid;grid-template-columns:1fr 170px 1fr;gap:20px;align-items:center;min-height:230px}.side-predict{min-height:185px;border:1px solid rgba(53,200,255,.35);display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(0,90,255,.18),rgba(0,0,0,.1));box-shadow:inset 0 0 35px rgba(0,120,255,.1)}.banker-box{border-color:rgba(255,66,104,.55);background:linear-gradient(135deg,rgba(255,20,70,.15),rgba(0,0,0,.08))}
-.side-predict .zh{font-size:58px;font-weight:bold;text-shadow:0 0 18px currentColor}.side-predict .en{margin-top:6px;font-size:18px}.side-predict .pct{margin-top:18px;font-size:38px;font-weight:bold}.confidence{width:160px;height:160px;border-radius:50%;border:10px solid rgba(48,255,232,.78);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#dfffff;box-shadow:0 0 35px rgba(48,255,232,.45),inset 0 0 25px rgba(48,255,232,.12)}.confidence small{font-size:14px;color:#bdefff}.confidence strong{font-size:46px}.suggest{text-align:center;color:#43eaff;font-size:24px;margin-top:18px}
-.road-panel{margin-top:16px}.road-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}.road-tabs button{border:1px solid rgba(53,200,255,.45);background:rgba(10,35,65,.75);color:#c9efff;padding:10px;border-radius:7px}
-.road-grid{height:270px;border:1px solid rgba(53,200,255,.35);background:linear-gradient(rgba(53,200,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(53,200,255,.08) 1px,transparent 1px),rgba(0,0,0,.18);background-size:36px 36px;border-radius:8px;padding:10px;overflow:auto}.beads{display:grid;grid-template-rows:repeat(6,28px);grid-auto-flow:column;grid-auto-columns:28px;gap:6px}.bead{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold}.B{border:2px solid #ff3b57;color:#ff8ca0}.P{border:2px solid #2d85ff;color:#86c5ff}.T{border:2px solid #22c55e;color:#9cffc3}
-.monitor-row{display:grid;grid-template-columns:58px 54px 72px 1fr 70px;gap:8px;align-items:center;padding:9px 8px;border:1px solid rgba(53,200,255,.25);margin-bottom:8px;background:rgba(2,15,30,.7)}.monitor-row.hot{border-color:#13ffc4;box-shadow:0 0 14px rgba(19,255,196,.18)}.table-id{font-size:22px;color:#c7f5ff}.badge{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:32px;border-radius:5px;font-size:21px;font-weight:bold}.badge.P{background:#0646c9;color:#a8d7ff;border:none}.badge.B{background:#9b1232;color:#ffc1cb;border:none}.badge.T{background:#087344;color:#caffdf;border:none}.mini-road{white-space:nowrap;overflow:hidden;color:#9ecbf0;font-size:13px}.status-normal{color:#22c55e;font-weight:bold}.status-maintenance{color:#ffd84d;font-weight:bold}
-.record-row{display:grid;grid-template-columns:78px 55px 70px 70px 70px;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(53,200,255,.12);align-items:center}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/3}.primary-btn{border:none;background:linear-gradient(90deg,#006dff,#35c8ff);color:white;font-weight:bold;padding:12px;border-radius:12px;width:100%;box-shadow:0 0 18px rgba(0,150,255,.25);cursor:pointer}.danger-btn{background:linear-gradient(90deg,#7f0025,#ff2d65)}.warning-btn{background:linear-gradient(90deg,#a57400,#ffd84d);color:#061326}
-.member-card{border:1px solid rgba(53,200,255,.25);background:rgba(0,10,24,.62);padding:12px;border-radius:10px;margin-top:10px}.member-card .row{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#bfefff;font-size:14px}.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.small-btn{border:1px solid rgba(53,200,255,.45);background:rgba(8,35,70,.9);color:white;padding:9px;border-radius:9px;font-weight:bold;cursor:pointer}.scroll-box{max-height:480px;overflow:auto;padding-right:4px}.hidden{display:none!important}
-@media(max-width:1200px){.topbar{grid-template-columns:1fr}.status-top{text-align:left;border-left:none;padding-left:0}.grid{grid-template-columns:1fr}.predict-area{grid-template-columns:1fr}.confidence{margin:auto}}
-@media(max-width:700px){.wrap{padding:10px}.brand h1{font-size:22px}.logo{width:58px;height:58px;font-size:24px}.nav{grid-template-columns:repeat(2,1fr)}.form-grid{grid-template-columns:1fr}.full{grid-column:1}.monitor-row{grid-template-columns:50px 48px 55px 1fr 60px;font-size:13px}}
+.topbar{
+    display:grid;
+    grid-template-columns:360px 1fr 260px;
+    gap:16px;
+    align-items:center;
+    margin-bottom:18px;
+}
+.brand{display:flex;align-items:center;gap:14px}
+.logo{
+    width:70px;height:70px;border-radius:50%;
+    border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:bold;color:#dffaff;
+    box-shadow:0 0 28px rgba(24,199,255,.55),inset 0 0 22px rgba(24,199,255,.25);
+    background:radial-gradient(circle,rgba(24,199,255,.28),rgba(0,0,0,.25));
+}
+.brand h1{font-size:28px;letter-spacing:2px}
+.brand p{font-size:12px;color:#b7eaff;margin-top:6px;letter-spacing:1.5px}
+.nav{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.nav button{
+    border:1px solid rgba(53,200,255,.55);
+    color:#e8fbff;
+    background:linear-gradient(180deg,rgba(8,37,70,.95),rgba(3,13,30,.95));
+    padding:12px 8px;
+    border-radius:4px 18px 4px 18px;
+    font-size:15px;
+    cursor:pointer;
+}
+.nav button.active{
+    background:linear-gradient(135deg,rgba(0,162,255,.5),rgba(2,20,45,.95));
+    box-shadow:0 0 24px rgba(0,180,255,.35);
+}
+.clock-box{text-align:right;color:#bfefff}
+.clock{font-size:27px;color:var(--blue);font-weight:bold;margin-top:6px}
+.grid{display:grid;grid-template-columns:360px 1fr 480px;gap:16px}
+.panel{
+    position:relative;
+    background:linear-gradient(180deg,rgba(6,25,52,.94),rgba(2,10,22,.96));
+    border:1px solid rgba(53,200,255,.62);
+    padding:18px;
+    box-shadow:0 0 18px rgba(0,180,255,.16), inset 0 0 26px rgba(0,180,255,.045);
+    margin-bottom:16px;
+}
+.panel:before,.panel:after{
+    content:"";
+    position:absolute;
+    width:70px;height:1px;
+    background:var(--line);
+    top:0;left:18px;
+    box-shadow:0 0 12px var(--line);
+}
+.panel:after{left:auto;right:18px;top:auto;bottom:0}
+.panel-title{font-size:22px;color:#bfefff;font-weight:bold;margin-bottom:16px}
+.sub{font-size:10px;color:#4bd7ff;opacity:.6;margin-left:6px;letter-spacing:1.6px}
+.ai-orb{
+    width:180px;height:180px;border-radius:50%;
+    border:8px solid rgba(20,190,255,.9);
+    margin:8px auto 18px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:42px;font-weight:bold;color:#89eaff;
+    box-shadow:0 0 42px rgba(0,210,255,.5),inset 0 0 32px rgba(0,210,255,.22);
+}
+.stat-line{display:flex;justify-content:space-between;gap:10px;margin-top:11px;font-size:16px}
+.green{color:var(--green)!important;font-weight:bold}
+.red{color:var(--red)!important;font-weight:bold}
+.blue{color:var(--blue)!important;font-weight:bold}
+.yellow{color:var(--yellow)!important;font-weight:bold}
+select,input{
+    background:#071b36;color:#e9fbff;
+    border:1px solid rgba(53,200,255,.55);
+    border-radius:10px;padding:10px;font-size:15px;outline:none;width:100%;
+}
+button{cursor:pointer}
+.primary{
+    border:none;background:linear-gradient(90deg,#006dff,#35c8ff);
+    color:white;font-weight:bold;padding:11px;border-radius:10px;width:100%;
+}
+.danger{background:linear-gradient(90deg,#7f0025,#ff2d65)!important}
+.warn{background:linear-gradient(90deg,#a57400,#ffd84d)!important;color:#071326!important}
+.ok{background:linear-gradient(90deg,#087344,#22c55e)!important}
+.predict-area{
+    display:grid;
+    grid-template-columns:1fr 160px 1fr;
+    gap:18px;align-items:center;min-height:210px;
+}
+.side{
+    min-height:180px;border:1px solid rgba(53,200,255,.35);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,rgba(0,90,255,.16),rgba(0,0,0,.1));
+}
+.side.banker{border-color:rgba(255,66,104,.55);background:linear-gradient(135deg,rgba(255,20,70,.14),rgba(0,0,0,.08))}
+.zh{font-size:58px;font-weight:bold;text-shadow:0 0 18px currentColor}
+.pct{font-size:36px;font-weight:bold;margin-top:14px}
+.conf{
+    width:150px;height:150px;border-radius:50%;
+    border:9px solid rgba(48,255,232,.78);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:0 0 35px rgba(48,255,232,.42),inset 0 0 25px rgba(48,255,232,.12);
+}
+.conf strong{font-size:42px}
+.suggest{text-align:center;color:#43eaff;font-size:24px;margin-top:15px}
+.row-buttons{display:flex;gap:8px;flex-wrap:wrap}
+.road-tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+.road-tabs button{
+    border:1px solid rgba(53,200,255,.45);
+    background:rgba(10,35,65,.75);
+    color:#c9efff;padding:10px;border-radius:7px;
+}
+.road-tabs button.active{background:linear-gradient(90deg,#006dff,#35c8ff);color:#fff}
+.road-grid{
+    height:280px;border:1px solid rgba(53,200,255,.35);
+    background:
+        linear-gradient(rgba(53,200,255,.08) 1px,transparent 1px),
+        linear-gradient(90deg,rgba(53,200,255,.08) 1px,transparent 1px),
+        rgba(0,0,0,.18);
+    background-size:36px 36px;border-radius:8px;padding:10px;overflow:auto;
+}
+.beads{display:grid;grid-template-rows:repeat(6,28px);grid-auto-flow:column;grid-auto-columns:28px;gap:6px}
+.bead{
+    width:26px;height:26px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:bold;
+}
+.B{border:2px solid #ff3b57;color:#ff8ca0}
+.P{border:2px solid #2d85ff;color:#86c5ff}
+.T{border:2px solid #22c55e;color:#9cffc3}
+.monitor-row{
+    display:grid;grid-template-columns:58px 54px 72px 1fr 70px;
+    gap:8px;align-items:center;
+    padding:9px 8px;border:1px solid rgba(53,200,255,.25);
+    margin-bottom:8px;background:rgba(2,15,30,.7);
+}
+.monitor-row.hot{border-color:#13ffc4;box-shadow:0 0 14px rgba(19,255,196,.18)}
+.table-id{font-size:21px;color:#c7f5ff}
+.badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:38px;height:32px;border-radius:5px;
+    font-size:20px;font-weight:bold;
+}
+.badge.P{background:#0646c9;color:#a8d7ff;border:none}
+.badge.B{background:#9b1232;color:#ffc1cb;border:none}
+.badge.T{background:#087344;color:#caffdf;border:none}
+.badge.W{background:#475569;color:#e2e8f0;border:none}
+.mini-road{white-space:nowrap;overflow:hidden;color:#9ecbf0;font-size:13px}
+.normal{color:#22c55e;font-weight:bold}
+.maintenance{color:#ffd84d;font-weight:bold}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.full{grid-column:1/3}
+.member-card{
+    border:1px solid rgba(53,200,255,.25);
+    background:rgba(0,10,24,.62);
+    padding:12px;border-radius:10px;margin-top:10px;
+}
+.member-card .r{display:flex;justify-content:space-between;gap:10px;margin-top:7px;color:#bfefff;font-size:14px}
+.member-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.small-btn{
+    border:1px solid rgba(53,200,255,.45);
+    background:rgba(8,35,70,.9);
+    color:white;padding:9px;border-radius:9px;font-weight:bold;
+}
+.scroll{max-height:520px;overflow:auto;padding-right:4px}
+.hidden{display:none!important}
+@media(max-width:1200px){
+    .topbar,.grid{grid-template-columns:1fr}
+    .clock-box{text-align:left}
+    .predict-area{grid-template-columns:1fr}
+    .conf{margin:auto}
+}
+@media(max-width:700px){
+    .wrap{padding:10px}
+    .brand h1{font-size:21px}.logo{width:58px;height:58px;font-size:24px}
+    .nav{grid-template-columns:repeat(2,1fr)}
+    .form-grid{grid-template-columns:1fr}.full{grid-column:1}
+    .road-tabs{grid-template-columns:repeat(2,1fr)}
+    .monitor-row{grid-template-columns:50px 48px 55px 1fr 60px;font-size:13px}
+}
 </style>
 </head>
+
 <body>
 <div class="wrap">
+
 <div class="topbar">
-<div class="brand"><div class="logo">AI</div><div><h1>百家樂 AI 預測系統</h1><p>BACCARAT AI PREDICTION SYSTEM</p></div></div>
-<div class="nav">
-<button class="active" onclick="showTab('overview',this)">⌂ 總覽<br><small>OVERVIEW</small></button>
-<button onclick="showTab('tables',this)">▦ 多桌分析<br><small>TABLES</small></button>
-<button onclick="showTab('ai',this)">♞ AI 分析<br><small>AI ANALYSIS</small></button>
-<button onclick="showTab('members',this)">☷ 會員管理<br><small>MEMBERS</small></button>
-<button onclick="showTab('settings',this)">⚙ 系統設定<br><small>SETTINGS</small></button>
-</div>
-<div class="status-top"><div class="sync">☁ 雲端同步：已連線</div><div>版本：v3.5.0 PRO</div><div class="clock" id="clock">--:--:--</div><div class="date" id="dateNow">----</div></div>
+    <div class="brand">
+        <div class="logo">AI</div>
+        <div>
+            <h1>百家樂 AI 管理中心</h1>
+            <p>BACCARAT AI BACK OFFICE</p>
+        </div>
+    </div>
+
+    <div class="nav">
+        <button class="active" onclick="showTab('overview',this)">總覽</button>
+        <button onclick="showTab('tables',this)">多桌</button>
+        <button onclick="showTab('roads',this)">路線</button>
+        <button onclick="showTab('members',this)">會員</button>
+        <button onclick="showTab('settings',this)">設定</button>
+    </div>
+
+    <div class="clock-box">
+        <div class="green">☁ 雲端同步：已連線</div>
+        <div>v3.6 PRO</div>
+        <div class="clock" id="clock">--:--:--</div>
+    </div>
 </div>
 
 <div class="grid">
+
 <div>
-<div class="panel"><div class="panel-title">系統狀態 <span class="sub-title">SYSTEM STATUS</span></div><div class="ai-orb">AI</div><div class="stat-line"><span>AI 學習模型</span><span class="blue">v3.5 PRO</span></div><div class="stat-line"><span>雲端資料庫</span><span class="green">已同步</span></div><div class="stat-line"><span>即時監控</span><span class="green">運行中</span></div><div class="stat-line"><span>系統效能</span><span class="yellow">98%</span></div></div>
-<div class="panel" style="margin-top:16px;"><div class="panel-title">AI 核心數據 <span class="sub-title">AI CORE DATA</span></div><div class="big-kpi"><div class="brain">◎</div><div><div class="stat-line"><span>總預測次數</span><span id="totalRecords">0</span></div><div class="stat-line"><span>共享學習筆數</span><span id="totalShared">0</span></div><div class="stat-line"><span>資料同步率</span><span class="green" id="accuracy">0%</span></div><div class="stat-line"><span>在線會員</span><span class="blue" id="onlineMembers">0</span></div></div></div></div>
-<div class="panel" style="margin-top:16px;"><div class="panel-title">AI 學習狀態 <span class="sub-title">LEARNING STATE</span></div><div class="progress-ring" id="learnRing">72%</div><div class="stat-line"><span>深度學習模型</span><span class="green">運行中</span></div><div class="stat-line"><span>模式識別</span><span class="green">強化中</span></div><div class="stat-line"><span>趨勢分析</span><span class="green">運行中</span></div><div class="stat-line"><span>權重優化</span><span class="green">運行中</span></div></div>
+    <div class="panel">
+        <div class="panel-title">系統狀態 <span class="sub">SYSTEM</span></div>
+        <div class="ai-orb">AI</div>
+        <div class="stat-line"><span>AI 模型</span><span class="blue">混合權重</span></div>
+        <div class="stat-line"><span>共享資料庫</span><span class="green">永久保留</span></div>
+        <div class="stat-line"><span>清桌模式</span><span class="green">只隱藏畫面</span></div>
+        <div class="stat-line"><span>撤回模式</span><span class="yellow">不進AI</span></div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">AI 核心數據 <span class="sub">CORE</span></div>
+        <div class="stat-line"><span>總預測次數</span><span id="totalRecords">0</span></div>
+        <div class="stat-line"><span>共享學習筆數</span><span id="totalShared">0</span></div>
+        <div class="stat-line"><span>資料同步率</span><span class="green" id="accuracy">0%</span></div>
+        <div class="stat-line"><span>在線會員</span><span class="blue" id="onlineMembers">0</span></div>
+    </div>
 </div>
 
 <div>
-<section id="tab-overview" class="tab-page">
-<div class="panel"><div class="panel-title">AI 即時預測 <span class="sub-title">REALTIME PREDICTOR</span></div><div class="select-row"><select id="platformSelect" onchange="loadTablesMonitor()"><option value="DG">DG</option><option value="MT">MT</option></select><select id="tableSelect" onchange="selectMonitorTable()"></select></div><div style="text-align:center;color:#99dfff;margin-bottom:10px;">目前桌號：<span id="currentTable">-</span></div><div class="predict-area"><div class="side-predict"><div class="zh blue">閒</div><div class="en blue">PLAYER</div><div class="pct blue" id="playerScore">0%</div></div><div><div class="confidence"><small>AI 信心度</small><strong id="mainConfidence">0%</strong></div><div class="suggest">建議下注：<span id="mainSuggest">觀望</span></div></div><div class="side-predict banker-box"><div class="zh red">莊</div><div class="en red">BANKER</div><div class="pct red" id="bankerScore">0%</div></div></div><div class="stat-line" style="margin-top:16px;"><span>分析時間：<span id="analysisTime">-</span></span><span class="blue">● 即時分析中</span></div></div>
-<div class="panel road-panel"><div class="panel-title">路線圖分析 <span class="sub-title">ROAD MAP</span></div><div class="road-tabs"><button>大路</button><button>大眼路</button><button>小路</button><button>甲由路</button><button>蟑螂路</button><button>趨勢分析</button></div><div class="road-grid"><div class="beads" id="mainRoad"></div></div><div class="stat-line"><span>藍＝閒　紅＝莊　綠＝和</span><span>總局數：<span id="roadCount">0</span></span></div></div>
-</section>
-<section id="tab-tables" class="tab-page hidden"><div class="panel"><div class="panel-title">多桌分析 <span class="sub-title">ALL TABLES</span></div><div id="allTablesBox"></div></div></section>
-<section id="tab-ai" class="tab-page hidden"><div class="panel"><div class="panel-title">AI 分析中心 <span class="sub-title">WEIGHT ENGINE</span></div><div class="stat-line"><span>混合模型</span><span class="blue">本桌70%＋同平台20%＋全站10%</span></div><div class="stat-line"><span>清桌模式</span><span class="green">只隱藏畫面，學習保留</span></div><div class="stat-line"><span>派生路</span><span class="green">後台權重演算</span></div><div class="stat-line"><span>撤回模式</span><span class="yellow">撤回不進AI</span></div></div></section>
-<section id="tab-members" class="tab-page hidden"><div class="panel"><div class="panel-title">會員管理 <span class="sub-title">MEMBER CONTROL</span></div><div class="form-grid"><input id="username" placeholder="會員帳號"><input id="password" placeholder="會員密碼"><input class="full" id="expire" type="date" value="2026-12-31"><button class="primary-btn full" onclick="createMember()">新增會員</button></div></div><div class="panel" style="margin-top:16px;"><div class="panel-title">即時會員列表 <span class="sub-title">LIVE MEMBERS</span></div><div class="scroll-box" id="memberList">讀取中...</div></div></section>
-<section id="tab-settings" class="tab-page hidden"><div class="panel"><div class="panel-title">房間維護設定 <span class="sub-title">TABLE STATUS</span></div><div class="form-grid"><select id="maintPlatform" onchange="loadMaintTables()"><option value="DG">DG</option><option value="MT">MT</option></select><select id="maintTable"></select><select class="full" id="maintStatus"><option value="normal">正常開放</option><option value="maintenance">維護中</option></select><input class="full" id="maintNote" placeholder="維護備註，可不填"><button class="primary-btn full" onclick="setTableStatus()">更新房間狀態</button></div></div></section>
+    <section id="tab-overview" class="tab-page">
+        <div class="panel">
+            <div class="panel-title">AI 即時預測 <span class="sub">PREDICTOR</span></div>
+            <div class="row-buttons" style="justify-content:center;margin-bottom:14px">
+                <select id="platformSelect" onchange="loadTablesMonitor()">
+                    <option value="DG">DG</option>
+                    <option value="MT">MT</option>
+                </select>
+                <select id="tableSelect" onchange="selectMonitorTable()"></select>
+            </div>
+
+            <div class="predict-area">
+                <div class="side">
+                    <div class="zh blue">閒</div>
+                    <div class="pct blue" id="playerScore">0%</div>
+                </div>
+                <div>
+                    <div class="conf"><small>AI信心</small><strong id="mainConfidence">0%</strong></div>
+                    <div class="suggest">建議：<span id="mainSuggest">觀望</span></div>
+                </div>
+                <div class="side banker">
+                    <div class="zh red">莊</div>
+                    <div class="pct red" id="bankerScore">0%</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-tables" class="tab-page hidden">
+        <div class="panel">
+            <div class="panel-title">多桌分析 <span class="sub">ALL TABLES</span></div>
+            <div id="allTablesBox">讀取中...</div>
+        </div>
+    </section>
+
+    <section id="tab-roads" class="tab-page hidden">
+        <div class="panel">
+            <div class="panel-title">路線圖分析 <span class="sub">ROAD MAP</span></div>
+            <div class="road-tabs">
+                <button class="active" onclick="setRoadMode('big',this)">大路</button>
+                <button onclick="setRoadMode('bigEye',this)">大眼路</button>
+                <button onclick="setRoadMode('small',this)">小路</button>
+                <button onclick="setRoadMode('cockroach',this)">曱甴路</button>
+                <button onclick="setRoadMode('hollow',this)">空心路</button>
+                <button onclick="setRoadMode('trend',this)">趨勢</button>
+            </div>
+            <div class="road-grid">
+                <div class="beads" id="mainRoad"></div>
+            </div>
+            <div class="stat-line">
+                <span id="roadNote">請選擇桌號</span>
+                <span>顆數：<span id="roadCount">0</span></span>
+            </div>
+        </div>
+    </section>
+
+    <section id="tab-members" class="tab-page hidden">
+        <div class="panel">
+            <div class="panel-title">新增會員 <span class="sub">CREATE</span></div>
+            <div class="form-grid">
+                <input id="username" placeholder="會員帳號">
+                <input id="password" placeholder="會員密碼">
+                <input class="full" id="expire" type="date" value="2026-12-31">
+                <button class="primary full" onclick="createMember()">新增會員</button>
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">會員管理 <span class="sub">EDIT / DELETE / RESET</span></div>
+            <div class="scroll" id="memberList">讀取中...</div>
+        </div>
+    </section>
+
+    <section id="tab-settings" class="tab-page hidden">
+        <div class="panel">
+            <div class="panel-title">房間維護 <span class="sub">MAINTENANCE</span></div>
+            <div class="form-grid">
+                <select id="maintPlatform" onchange="loadMaintTables()">
+                    <option value="DG">DG</option>
+                    <option value="MT">MT</option>
+                </select>
+                <select id="maintTable"></select>
+                <select class="full" id="maintStatus">
+                    <option value="normal">正常開放</option>
+                    <option value="maintenance">維護中</option>
+                </select>
+                <input class="full" id="maintNote" placeholder="維護備註">
+                <button class="primary full" onclick="setTableStatus()">更新狀態</button>
+            </div>
+        </div>
+    </section>
 </div>
 
 <div>
-<div class="panel"><div class="panel-title">多桌監控 <span class="sub-title">TABLE MONITORING</span></div><div style="text-align:right;color:#bfefff;margin-top:-34px;margin-bottom:14px;">總桌數：<span id="tableTotal">0</span></div><div id="monitorBox">讀取中...</div></div>
-<div class="panel" style="margin-top:16px;"><div class="panel-title">最近預測紀錄 <span class="sub-title">RECENT RECORDS</span></div><div class="record-row" style="color:#9edcff;font-weight:bold;"><div>時間</div><div>桌號</div><div>預測</div><div>狀態</div><div>信心</div></div><div id="recentRecords"></div></div>
+    <div class="panel">
+        <div class="panel-title">多桌監控 <span class="sub">LIVE TABLES</span></div>
+        <div id="monitorBox">讀取中...</div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">目前選擇 <span class="sub">SELECTED</span></div>
+        <div class="stat-line"><span>桌號</span><span id="currentTable">-</span></div>
+        <div class="stat-line"><span>路線</span><span id="currentRoadMode">大路</span></div>
+        <div class="stat-line"><span>狀態</span><span class="green" id="currentStatus">正常</span></div>
+    </div>
 </div>
+
 </div>
 </div>
 
 <script>
-let monitorTables=[];let selectedTableKey="";
-function showTab(name,btn){document.querySelectorAll(".tab-page").forEach(x=>x.classList.add("hidden"));document.getElementById("tab-"+name).classList.remove("hidden");document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active")}
-function tickClock(){const d=new Date();document.getElementById("clock").textContent=d.toLocaleTimeString("zh-TW",{hour12:false});document.getElementById("dateNow").textContent=d.toLocaleDateString("zh-TW");document.getElementById("analysisTime").textContent=d.toLocaleTimeString("zh-TW",{hour12:false})}
-setInterval(tickClock,1000);tickClock();
-function resultText(r){if(r==="B")return"莊";if(r==="P")return"閒";if(r==="T")return"和";return"-"}
-function cssClass(r){if(r==="莊"||r==="B")return"B";if(r==="閒"||r==="P")return"P";if(r==="和"||r==="T")return"T";return"P"}
-async function loadCoreStats(){const r=await fetch("/api/admin/core-stats");const data=await r.json();if(!data.ok)return;document.getElementById("totalRecords").textContent=data.totalRecords||0;document.getElementById("totalShared").textContent=data.totalShared||0;document.getElementById("accuracy").textContent=(data.accuracy||0)+"%";document.getElementById("onlineMembers").textContent=data.onlineMembers||0;const learn=data.totalShared?Math.min(99,Math.round(55+data.totalShared/20)):0;document.getElementById("learnRing").textContent=learn+"%"}
-async function loadTablesMonitor(){const r=await fetch("/api/admin/tables-monitor");const data=await r.json();if(!data.ok)return;monitorTables=data.tables||[];document.getElementById("tableTotal").textContent=monitorTables.length;const select=document.getElementById("tableSelect");const platform=document.getElementById("platformSelect").value;const filtered=monitorTables.filter(t=>t.platform===platform);select.innerHTML="";filtered.forEach(t=>{const op=document.createElement("option");op.value=`${t.platform}-${t.table}`;op.textContent=`${t.platform} ${t.table}`;select.appendChild(op)});if(!selectedTableKey&&filtered.length){selectedTableKey=`${filtered[0].platform}-${filtered[0].table}`}select.value=selectedTableKey;renderMonitor();selectMonitorTable();loadMaintTables()}
-function renderMonitor(){const box=document.getElementById("monitorBox");const allBox=document.getElementById("allTablesBox");let html="",allHtml="";monitorTables.forEach(t=>{const aiClass=cssClass(t.ai);const isHot=t.bankerScore>=65||t.playerScore>=65;const statusClass=t.status==="maintenance"?"status-maintenance":"status-normal";const statusText=t.status==="maintenance"?"維護":"正常";const road=t.road||"-";const row=`<div class="monitor-row ${isHot?"hot":""}"><div class="table-id">${t.table}</div><div class="blue">${t.platform}</div><div><span class="badge ${aiClass}">${t.ai||"觀"}</span></div><div class="mini-road">${road}</div><div class="${statusClass}">${statusText}</div></div>`;html+=row;allHtml+=row});box.innerHTML=html||"尚無資料";allBox.innerHTML=allHtml||"尚無資料"}
-function selectMonitorTable(){const key=document.getElementById("tableSelect").value||selectedTableKey;selectedTableKey=key;const t=monitorTables.find(x=>`${x.platform}-${x.table}`===key)||monitorTables[0];if(!t)return;document.getElementById("currentTable").textContent=`${t.platform}-${t.table}`;document.getElementById("bankerScore").textContent=(t.bankerScore||0)+"%";document.getElementById("playerScore").textContent=(t.playerScore||0)+"%";document.getElementById("mainConfidence").textContent=Math.max(t.bankerScore||0,t.playerScore||0)+"%";document.getElementById("mainSuggest").textContent=t.ai||"觀望";const roadBox=document.getElementById("mainRoad");roadBox.innerHTML="";const road=(t.road||"").replace("-","");[...road].forEach(r=>{const d=document.createElement("div");d.className="bead "+cssClass(r);d.textContent=resultText(r);roadBox.appendChild(d)});document.getElementById("roadCount").textContent=road.length;renderRecent()}
-function renderRecent(){const box=document.getElementById("recentRecords");const rows=monitorTables.slice(0,5).map(t=>{const now=new Date().toLocaleTimeString("zh-TW",{hour12:false});const conf=Math.max(t.bankerScore||0,t.playerScore||0);return `<div class="record-row"><div>${now}</div><div>${t.table}</div><div><span class="badge ${cssClass(t.ai)}">${t.ai||"觀"}</span></div><div class="${t.status==="maintenance"?"yellow":"green"}">${t.status==="maintenance"?"維護":"正常"}</div><div class="green">${conf}%</div></div>`}).join("");box.innerHTML=rows||""}
-async function loadMembers(){const r=await fetch("/api/admin/members");const data=await r.json();if(!data.ok){document.getElementById("memberList").innerHTML="讀取失敗";return}let html="";data.members.forEach(m=>{html+=`<div class="member-card"><div class="row"><span>帳號</span><b>${m.username}</b></div><div class="row"><span>狀態</span><span class="${m.enabled?"green":"red"}">${m.enabled?"啟用":"停權"}</span></div><div class="row"><span>到期</span><span>${m.expire||"-"}</span></div><div class="row"><span>所在桌</span><span>${m.current_platform||"-"} ${m.current_table||""}</span></div><div class="row"><span>裝置</span><span>${m.device||"-"}</span></div><div class="row"><span>最後操作</span><span>${m.last_active||"-"}</span></div><div class="quick-actions"><button class="small-btn ${m.enabled?"danger-btn":""}" onclick="toggleMember('${m.username}')">${m.enabled?"停權":"啟用"}</button><button class="small-btn warning-btn" onclick="addDays('${m.username}')">補天數</button></div></div>`});document.getElementById("memberList").innerHTML=html||"尚無會員"}
-async function createMember(){const username=document.getElementById("username").value.trim();const password=document.getElementById("password").value.trim();const expire=document.getElementById("expire").value;const r=await fetch("/api/admin/create-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password,expire})});const data=await r.json();alert(data.msg||(data.ok?"完成":"失敗"));if(data.ok){document.getElementById("username").value="";document.getElementById("password").value="";loadMembers();loadCoreStats()}}
-async function toggleMember(username){const r=await fetch("/api/admin/toggle-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});const data=await r.json();if(data.ok)loadMembers()}
-async function addDays(username){const days=prompt("要補幾天？","30");if(!days)return;const r=await fetch("/api/admin/add-days",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,days:Number(days)})});const data=await r.json();alert(data.msg||"完成");loadMembers()}
-function loadMaintTables(){const platform=document.getElementById("maintPlatform").value;const select=document.getElementById("maintTable");const tables=platform==="DG"?["RB01","RB02","RB03","RB04","RB05","RB06","RB07","RB08","RB09","RB10"]:["01","02","03","03A","05","06","07","08","09","10"];select.innerHTML="";tables.forEach(t=>{const op=document.createElement("option");op.value=t;op.textContent=t;select.appendChild(op)})}
-async function setTableStatus(){const platform=document.getElementById("maintPlatform").value;const table=document.getElementById("maintTable").value;const status=document.getElementById("maintStatus").value;const note=document.getElementById("maintNote").value;const r=await fetch("/api/admin/set-table-status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform,table,status,note})});const data=await r.json();alert(data.msg||"完成");loadTablesMonitor()}
-loadCoreStats();loadTablesMonitor();loadMembers();loadMaintTables();setInterval(loadCoreStats,5000);setInterval(loadTablesMonitor,5000);setInterval(loadMembers,7000);
+let monitorTables = [];
+let selectedTableKey = "";
+let roadMode = "big";
+
+function showTab(name, btn){
+    document.querySelectorAll(".tab-page").forEach(x=>x.classList.add("hidden"));
+    document.getElementById("tab-"+name).classList.remove("hidden");
+    document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    if(name === "roads") renderRoad();
+}
+
+function tick(){
+    document.getElementById("clock").textContent = new Date().toLocaleTimeString("zh-TW",{hour12:false});
+}
+setInterval(tick,1000); tick();
+
+function cssClass(r){
+    if(r==="莊" || r==="B" || r==="R") return "B";
+    if(r==="閒" || r==="P" || r==="B") return "P";
+    if(r==="和" || r==="T" || r==="G") return "T";
+    return "P";
+}
+function resultText(r){
+    if(r==="B") return "莊";
+    if(r==="P") return "閒";
+    if(r==="T") return "和";
+    if(r==="R") return "紅";
+    if(r==="L") return "藍";
+    return r || "-";
+}
+
+function setRoadMode(mode,btn){
+    roadMode = mode;
+    document.querySelectorAll(".road-tabs button").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    const names = {big:"大路",bigEye:"大眼路",small:"小路",cockroach:"曱甴路",hollow:"空心路",trend:"趨勢"};
+    document.getElementById("currentRoadMode").textContent = names[mode] || mode;
+    renderRoad();
+}
+
+function deriveRoad(raw, gap){
+    const bp = [...(raw || "")].filter(x=>x==="B" || x==="P");
+    let out = [];
+    for(let i=gap;i<bp.length;i++){
+        out.push(bp[i] === bp[i-gap] ? "R" : "L");
+    }
+    return out;
+}
+
+function trendRoad(raw){
+    const bp = [...(raw || "")].filter(x=>x==="B" || x==="P");
+    let out = [];
+    for(let i=1;i<bp.length;i++){
+        out.push(bp[i] === bp[i-1] ? bp[i] : (bp[i]==="B" ? "P" : "B"));
+    }
+    return out;
+}
+
+function getSelectedTable(){
+    const key = document.getElementById("tableSelect").value || selectedTableKey;
+    return monitorTables.find(x=>`${x.platform}-${x.table}` === key) || monitorTables[0];
+}
+
+function renderRoad(){
+    const t = getSelectedTable();
+    const box = document.getElementById("mainRoad");
+    box.innerHTML = "";
+    if(!t){return;}
+
+    const raw = (t.road || "").replace("-","");
+    let arr = [];
+    let note = "";
+
+    if(roadMode === "big"){
+        arr = [...raw];
+        note = "大路：依實際莊閒和結果顯示";
+    }else if(roadMode === "bigEye"){
+        arr = deriveRoad(raw,2);
+        note = "大眼路：後台用來判斷整齊度與反打權重";
+    }else if(roadMode === "small"){
+        arr = deriveRoad(raw,3);
+        note = "小路：後台用來判斷短週期變化";
+    }else if(roadMode === "cockroach"){
+        arr = deriveRoad(raw,4);
+        note = "曱甴路/蟑螂路：後台用來判斷延伸趨勢";
+    }else if(roadMode === "hollow"){
+        arr = deriveRoad(raw,5);
+        note = "空心路：後台用來判斷長週期偏移";
+    }else{
+        arr = trendRoad(raw);
+        note = "趨勢：同路與反路交叉推演";
+    }
+
+    arr.forEach(r=>{
+        const d = document.createElement("div");
+        d.className = "bead " + (r==="R" ? "B" : r==="L" ? "P" : cssClass(r));
+        d.textContent = resultText(r);
+        box.appendChild(d);
+    });
+
+    document.getElementById("roadCount").textContent = arr.length;
+    document.getElementById("roadNote").textContent = note;
+}
+
+async function loadCoreStats(){
+    const r = await fetch("/api/admin/core-stats");
+    const d = await r.json();
+    if(!d.ok) return;
+    document.getElementById("totalRecords").textContent = d.totalRecords || 0;
+    document.getElementById("totalShared").textContent = d.totalShared || 0;
+    document.getElementById("accuracy").textContent = (d.accuracy || 0) + "%";
+    document.getElementById("onlineMembers").textContent = d.onlineMembers || 0;
+}
+
+async function loadTablesMonitor(){
+    const r = await fetch("/api/admin/tables-monitor");
+    const d = await r.json();
+    if(!d.ok) return;
+
+    monitorTables = d.tables || [];
+    const platform = document.getElementById("platformSelect").value;
+    const filtered = monitorTables.filter(t=>t.platform === platform);
+    const select = document.getElementById("tableSelect");
+
+    select.innerHTML = "";
+    filtered.forEach(t=>{
+        const op = document.createElement("option");
+        op.value = `${t.platform}-${t.table}`;
+        op.textContent = `${t.platform} ${t.table}`;
+        select.appendChild(op);
+    });
+
+    if(!selectedTableKey && filtered.length) selectedTableKey = `${filtered[0].platform}-${filtered[0].table}`;
+    if(filtered.find(t=>`${t.platform}-${t.table}`===selectedTableKey)) select.value = selectedTableKey;
+    else if(filtered.length){selectedTableKey = `${filtered[0].platform}-${filtered[0].table}`; select.value = selectedTableKey;}
+
+    renderMonitor();
+    selectMonitorTable();
+}
+
+function renderMonitor(){
+    const box = document.getElementById("monitorBox");
+    const all = document.getElementById("allTablesBox");
+    let html = "";
+
+    monitorTables.forEach(t=>{
+        const hot = (t.bankerScore||0)>=65 || (t.playerScore||0)>=65;
+        const statusClass = t.status === "maintenance" ? "maintenance" : "normal";
+        const statusText = t.status === "maintenance" ? "維護" : "正常";
+        html += `
+        <div class="monitor-row ${hot ? "hot":""}" onclick="chooseTable('${t.platform}-${t.table}')">
+            <div class="table-id">${t.table}</div>
+            <div class="blue">${t.platform}</div>
+            <div><span class="badge ${cssClass(t.ai)}">${t.ai || "觀"}</span></div>
+            <div class="mini-road">${t.road || "-"}</div>
+            <div class="${statusClass}">${statusText}</div>
+        </div>`;
+    });
+
+    box.innerHTML = html || "尚無資料";
+    if(all) all.innerHTML = html || "尚無資料";
+}
+
+function chooseTable(key){
+    selectedTableKey = key;
+    const select = document.getElementById("tableSelect");
+    if([...select.options].some(o=>o.value===key)) select.value = key;
+    selectMonitorTable();
+}
+
+function selectMonitorTable(){
+    selectedTableKey = document.getElementById("tableSelect").value || selectedTableKey;
+    const t = getSelectedTable();
+    if(!t) return;
+
+    document.getElementById("currentTable").textContent = `${t.platform}-${t.table}`;
+    document.getElementById("bankerScore").textContent = (t.bankerScore || 0) + "%";
+    document.getElementById("playerScore").textContent = (t.playerScore || 0) + "%";
+    document.getElementById("mainConfidence").textContent = Math.max(t.bankerScore || 0, t.playerScore || 0) + "%";
+    document.getElementById("mainSuggest").textContent = t.ai || "觀望";
+    document.getElementById("currentStatus").textContent = t.status === "maintenance" ? "維護中" : "正常";
+    document.getElementById("currentStatus").className = t.status === "maintenance" ? "maintenance" : "green";
+    renderRoad();
+}
+
+async function loadMembers(){
+    const r = await fetch("/api/admin/members");
+    const d = await r.json();
+    if(!d.ok){document.getElementById("memberList").innerHTML = "讀取失敗";return;}
+
+    let html = "";
+    d.members.forEach(m=>{
+        html += `
+        <div class="member-card">
+            <div class="r"><span>帳號</span><b>${m.username}</b></div>
+            <div class="r"><span>狀態</span><span class="${m.enabled ? "green":"red"}">${m.enabled ? "啟用":"停權"}</span></div>
+            <div class="r"><span>到期</span><span>${m.expire || "-"}</span></div>
+            <div class="r"><span>所在桌</span><span>${m.current_platform || "-"} ${m.current_table || ""}</span></div>
+            <div class="r"><span>裝置</span><span>${m.device || "-"}</span></div>
+            <div class="member-actions">
+                <button class="small-btn" onclick="editMember('${m.username}','${m.expire || ""}',${m.enabled})">編輯帳號/時間</button>
+                <button class="small-btn warn" onclick="resetPassword('${m.username}')">重製密碼</button>
+                <button class="small-btn ok" onclick="setExpire('${m.username}')">調整時間</button>
+                <button class="small-btn ${m.enabled ? "danger":""}" onclick="toggleMember('${m.username}')">${m.enabled ? "停權":"啟用"}</button>
+                <button class="small-btn danger" onclick="deleteMember('${m.username}')">刪除會員</button>
+                <button class="small-btn warn" onclick="addDays('${m.username}')">補天數</button>
+            </div>
+        </div>`;
+    });
+    document.getElementById("memberList").innerHTML = html || "尚無會員";
+}
+
+async function createMember(){
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const expire = document.getElementById("expire").value;
+    const r = await fetch("/api/admin/create-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password,expire})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    if(d.ok){document.getElementById("username").value="";document.getElementById("password").value="";loadMembers();loadCoreStats();}
+}
+
+async function editMember(oldUsername, oldExpire, enabled){
+    const username = prompt("新的會員帳號", oldUsername);
+    if(!username) return;
+    const expire = prompt("到期時間，例：2026-12-31 23:59:59", oldExpire || "2026-12-31 23:59:59");
+    if(!expire) return;
+    const en = confirm("按確定＝啟用，按取消＝停權") ? 1 : 0;
+    const r = await fetch("/api/admin/update-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({oldUsername,username,expire,enabled:en})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    if(d.ok) loadMembers();
+}
+
+async function resetPassword(username){
+    const password = prompt(`輸入 ${username} 的新密碼`);
+    if(!password) return;
+    const r = await fetch("/api/admin/reset-password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+}
+
+async function setExpire(username){
+    const expire = prompt("新的到期時間，例：2026-12-31 23:59:59");
+    if(!expire) return;
+    const r = await fetch("/api/admin/set-expire",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,expire})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    if(d.ok) loadMembers();
+}
+
+async function deleteMember(username){
+    if(!confirm(`確定刪除會員 ${username}？`)) return;
+    const r = await fetch("/api/admin/delete-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    if(d.ok){loadMembers();loadCoreStats();}
+}
+
+async function toggleMember(username){
+    const r = await fetch("/api/admin/toggle-member",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username})});
+    const d = await r.json();
+    if(d.ok) loadMembers();
+}
+
+async function addDays(username){
+    const days = prompt("要補幾天？", "30");
+    if(!days) return;
+    const r = await fetch("/api/admin/add-days",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,days:Number(days)})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    if(d.ok) loadMembers();
+}
+
+function loadMaintTables(){
+    const platform = document.getElementById("maintPlatform").value;
+    const select = document.getElementById("maintTable");
+    const tables = platform === "DG"
+        ? ["RB01","RB02","RB03","RB04","RB05","RB06","RB07"]
+        : ["1","2","3","3A","5","6","7","8","9","10","11","12","13","13A","15"];
+    select.innerHTML = "";
+    tables.forEach(t=>{
+        const op = document.createElement("option");
+        op.value = t; op.textContent = t; select.appendChild(op);
+    });
+}
+
+async function setTableStatus(){
+    const platform = document.getElementById("maintPlatform").value;
+    const table = document.getElementById("maintTable").value;
+    const status = document.getElementById("maintStatus").value;
+    const note = document.getElementById("maintNote").value;
+    const r = await fetch("/api/admin/set-table-status",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({platform,table,status,note})});
+    const d = await r.json();
+    alert(d.msg || "完成");
+    loadTablesMonitor();
+}
+
+loadCoreStats();
+loadTablesMonitor();
+loadMembers();
+loadMaintTables();
+setInterval(loadCoreStats,5000);
+setInterval(loadTablesMonitor,5000);
+setInterval(loadMembers,8000);
 </script>
 </body>
 </html>
