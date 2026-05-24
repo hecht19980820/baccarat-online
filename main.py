@@ -333,12 +333,8 @@ def calc_cards(cards):
         player_two = sum(player_cards) % 10
         banker_two = sum(banker_cards) % 10
 
-        # 非天牌才進行補牌
         if player_two < 8 and banker_two < 8:
-
-            # 閒家補牌
             if player_two <= 5:
-
                 if len(nums) >= 5:
                     player_cards.append(nums[4])
                     player_third = nums[4]
@@ -347,26 +343,20 @@ def calc_cards(cards):
 
                 banker_draw = False
 
-                # 莊家補牌規則
                 if banker_two <= 2:
                     banker_draw = True
-
                 elif banker_two == 3 and player_third != 8:
                     banker_draw = True
-
-                elif banker_two == 4 and player_third in [2,3,4,5,6,7]:
+                elif banker_two == 4 and player_third in [2, 3, 4, 5, 6, 7]:
                     banker_draw = True
-
-                elif banker_two == 5 and player_third in [4,5,6,7]:
+                elif banker_two == 5 and player_third in [4, 5, 6, 7]:
                     banker_draw = True
-
-                elif banker_two == 6 and player_third in [6,7]:
+                elif banker_two == 6 and player_third in [6, 7]:
                     banker_draw = True
 
                 if banker_draw and len(nums) >= 6:
                     banker_cards.append(nums[5])
 
-            # 閒家不補牌
             else:
                 if banker_two <= 5 and len(nums) >= 5:
                     banker_cards.append(nums[4])
@@ -376,14 +366,12 @@ def calc_cards(cards):
 
         if player_point > banker_point:
             result = "P"
-
         elif banker_point > player_point:
             result = "B"
-
         else:
             result = "T"
 
-    return {
+        return {
             "result": result,
             "playerPoint": player_point,
             "bankerPoint": banker_point,
