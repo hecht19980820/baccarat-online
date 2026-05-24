@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>AI 管理後台</title>
+
+<style>
+body{
+background:#020817;
+color:white;
+font-family:Arial;
+padding:20px
+}
+
+.card{
+background:#071226;
+padding:20px;
+border-radius:20px;
+margin-bottom:20px
+}
+
+.member{
+padding:15px;
+border-bottom:1px solid #1e3a5f
+}
+
+button,input{
+padding:10px;
+margin-top:10px
+}
+</style>
+</head>
+
+<body>
+
+<h1>AI 百家樂管理中心</h1>
+
+<div class="card">
+
+<h2>新增會員</h2>
+
+<input id="username" placeholder="帳號">
+<input id="password" placeholder="密碼">
+<input id="expire" value="2026-12-31 23:59:59">
+
+<button onclick="createMember()">
+新增會員
+</button>
+
+</div>
+
+<div class="card">
+
+<h2>會員列表</h2>
+
+<div id="memberList">
+讀取中...
+</div>
+
+</div>
+
+<script>
+
+async function loadMembers(){
+
+    let r =
+    await fetch("/api/admin/members")
+
+    let data = await r.json()
+
+    let html = ""
+
+    data.members.forEach(m=>{
+
+        html += `
+        <div class="member">
+
+        <div>帳號：${m.username}</div>
+
+        <div>
+        狀態：
+        ${m.enabled ? '啟用':'停權'}
+        </div>
+
+        <div>
+        桌號：
+        ${m.current_platform || '-'}
+        ${m.current_table || ''}
+        </div>
+
+        <div>
+        最後操作：
+        ${m.last_active || '-'}
+        </div>
+
+        <button onclick="toggleMember('${m.username}')">
+        ${m.enabled ? '停權':'啟用'}
+        </button>
+
+        </div>
+        `
+    })
+
+    document.getElementById("memberList")
+    .innerHTML = html
+}
+
+async function createMember(){
+
+    let username =
+    document.getElementById("username").value
+
+    let password =
+    document.getElementById("password").value
+
+    let expire =
+    document.getElementById("expire").value
+
+    let r = await fetch(
+        "/api/admin/create-member",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                username,
+                password,
+                expire
+            })
+        }
+    )
+
+    let data = await r.json()
+
+    alert(data.msg)
+
+    loadMembers()
+}
+
+async function toggleMember(username){
+
+    await fetch(
+        "/api/admin/toggle-member",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                username
+            })
+        }
+    )
+
+    loadMembers()
+}
+
+loadMembers()
+
+</script>
+
+</body>
+</html>
