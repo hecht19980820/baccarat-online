@@ -640,95 +640,16 @@ def api_login():
     })
 
 
-@app.route("/api/status")
-def api_status():
+@app.route("/api/tables")
+def api_tables():
+    platform = request.args.get("platform", "DG")
+    tables = MT_TABLES if platform == "MT" else DG_TABLES
+    return jsonify(tables)
+
+
+@app.route("/api/data")
+def api_data():
     member, error = require_active_member()
-
-    if error:
-        return error
-
-    update_member_active()
-
-    return jsonify({
-        "ok": True,
-        "platforms": {
-            "DG": DG_TABLES,
-            "MT": MT_TABLES
-        }
-    })
-
-
-@app.route("/api/tables-monitor")
-def api_tables_monitor():
-    member, error = require_active_member()
-
-    if error:
-        return error
-
-    tables = []
-
-    for t in DG_TABLES:
-        records = get_records("DG", t)
-
-        road = "".join([
-            r["result"]
-            for r in records[-12:]
-        ])
-
-        ai = "莊"
-
-        if len(records):
-            last = records[-1]["result"]
-
-            if last == "B":
-                ai = "閒"
-            else:
-                ai = "莊"
-
-        tables.append({
-            "platform": "DG",
-            "table": t,
-            "road": road if road else "-",
-            "ai": ai,
-            "online": True
-        })
-
-    for t in MT_TABLES:
-        records = get_records("MT", t)
-
-        road = "".join([
-            r["result"]
-            for r in records[-12:]
-        ])
-
-        ai = "莊"
-
-        if len(records):
-            last = records[-1]["result"]
-
-            if last == "B":
-                ai = "閒"
-            else:
-                ai = "莊"
-
-        tables.append({
-            "platform": "MT",
-            "table": t,
-            "road": road if road else "-",
-            "ai": ai,
-            "online": True
-        })
-
-    return jsonify({
-        "ok": True,
-        "tables": tables
-    })
-
-
-@app.route("/api/records")
-def api_records():
-    member, error = require_active_member()
-
     if error:
         return error
 
@@ -737,9 +658,327 @@ def api_records():
 
     update_member_active(platform, table)
 
+    records = get_records(platform, table)
+
+    b = len([r for r in records if r["result"] == "B"])
+    p = len([r for r in records if r["result"] == "P"])
+    t = len([r for r in records if r["result"] == "T"])
+    total = b + p
+
+    banker_rate = round((b / total) * 100, 1) if total else 0
+    player_rate = round((p / total) * 100, 1) if total else 0
+
+    suggest = "觀望"
+    stable = 0
+
+    if total >= 3:
+        if banker_rate > player_rate:
+            suggest = "莊"
+            stable = banker_rate
+        elif player_rate > banker_rate:
+            suggest = "閒"
+            stable = player_rate
+
+    stats = {
+        "suggest": suggest,
+        "stableRate": stable,
+        "bankerRate": banker_rate,
+        "playerRate": player_rate,
+        "tieCount": t,
+        "totalAnalysis": len(records),
+        "streakResult": records[-1]["result"] if records else "",
+        "streakCount": 1 if records else 0,
+        "alerts": ["目前無提醒"]
+    }
+
     return jsonify({
         "ok": True,
-        "records": get_records(platform, table)
+        "records": records,
+        "stats": stats,
+        "betCount": len(records),
+        "memberExpireTime": member["expire"]
+    })
+
+
+@app.route("/api/manual", methods=["POST"])
+def api_manual():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    result = body.get("result")
+
+    if result not in ["B", "P", "T"]:
+        return jsonify({"ok": False, "msg": "結果錯誤"})
+
+    conn = db()
+    conn.execute("""
+    INSERT INTO records
+    (platform, table_no, result, cards, source, count_bet, ai_learn, hidden, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        platform,
+        table,
+        result,
+        "",
+        "manual",
+        0,
+        1,
+        0,
+        now()
+    ))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/cards", methods=["POST"])
+def api_cards():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+    cards = body.get("cards", [])
+
+    calc = calc_cards(cards)
+
+    if calc is None:
+        return jsonify({"ok": False, "msg": "牌型錯誤"})
+
+    conn = db()
+    conn.execute("""
+    INSERT INTO records
+    (
+        platform, table_no, result, cards,
+        player_point, banker_point,
+        player_pair, banker_pair,
+        lucky6, tie,
+        source, count_bet, ai_learn, hidden, created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        platform,
+        table,
+        calc["result"],
+        json.dumps(cards),
+        calc["playerPoint"],
+        calc["bankerPoint"],
+        1 if calc["playerPair"] else 0,
+        1 if calc["bankerPair"] else 0,
+        1 if calc["lucky6"] else 0,
+        1 if calc["tie"] else 0,
+        "cards",
+        1,
+        1,
+        0,
+        now()
+    ))
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True, **calc})
+
+
+@app.route("/api/undo", methods=["POST"])
+def api_undo():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+
+    conn = db()
+    row = conn.execute("""
+    SELECT id FROM records
+    WHERE platform=? AND table_no=? AND hidden=0
+    ORDER BY id DESC
+    LIMIT 1
+    """, (platform, table)).fetchone()
+
+    if row:
+        conn.execute("""
+        UPDATE records
+        SET hidden=1
+        WHERE id=?
+        """, (row["id"],))
+        conn.commit()
+
+    conn.close()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/clear", methods=["POST"])
+def api_clear():
+    member, error = require_active_member()
+    if error:
+        return error
+
+    body = request.json or {}
+    platform = body.get("platform", "DG")
+    table = body.get("table", "RB01")
+
+    conn = db()
+    conn.execute("""
+    UPDATE records
+    SET hidden=1
+    WHERE platform=? AND table_no=? AND hidden=0
+    """, (platform, table))
+    conn.commit()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "msg": "已清除此桌畫面"
+    })
+
+
+@app.route("/api/admin/core-stats")
+def api_admin_core_stats():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    conn = db()
+
+    total_records = conn.execute("""
+    SELECT COUNT(*) c FROM records
+    """).fetchone()["c"]
+
+    total_members = conn.execute("""
+    SELECT COUNT(*) c FROM members
+    """).fetchone()["c"]
+
+    online_members = conn.execute("""
+    SELECT COUNT(*) c FROM members
+    WHERE last_active >= datetime('now','-5 minutes')
+    """).fetchone()["c"]
+
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "totalRecords": total_records,
+        "totalShared": total_records,
+        "accuracy": 100 if total_records else 0,
+        "totalMembers": total_members,
+        "onlineMembers": online_members
+    })
+
+
+@app.route("/api/admin/members")
+def api_admin_members():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    conn = db()
+    rows = conn.execute("""
+    SELECT *
+    FROM members
+    ORDER BY id DESC
+    """).fetchall()
+    conn.close()
+
+    return jsonify({
+        "ok": True,
+        "members": [dict(r) for r in rows]
+    })
+
+
+@app.route("/api/admin/create-member", methods=["POST"])
+def api_admin_create_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+    password = body.get("password", "").strip()
+    expire = normalize_expire(body.get("expire", "2026-12-31"))
+
+    if not username or not password:
+        return jsonify({"ok": False, "msg": "帳號密碼必填"})
+
+    conn = db()
+
+    try:
+        conn.execute("""
+        INSERT INTO members
+        (username,password,expire,enabled,role,created_at)
+        VALUES (?, ?, ?, 1, 'member', ?)
+        """, (username, password, expire, now()))
+        conn.commit()
+        ok = True
+        msg = "新增成功"
+    except sqlite3.IntegrityError:
+        ok = False
+        msg = "帳號已存在"
+
+    conn.close()
+    return jsonify({"ok": ok, "msg": msg})
+
+
+@app.route("/api/admin/toggle-member", methods=["POST"])
+def api_admin_toggle_member():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    body = request.json or {}
+    username = body.get("username", "").strip()
+
+    conn = db()
+    row = conn.execute("""
+    SELECT enabled FROM members
+    WHERE username=?
+    """, (username,)).fetchone()
+
+    if not row:
+        conn.close()
+        return jsonify({"ok": False})
+
+    new_status = 0 if row["enabled"] else 1
+
+    conn.execute("""
+    UPDATE members
+    SET enabled=?
+    WHERE username=?
+    """, (new_status, username))
+
+    conn.commit()
+    conn.close()
+
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/tables-monitor")
+def api_admin_tables_monitor():
+    if not session.get("admin"):
+        return jsonify({"ok": False}), 403
+
+    tables = []
+
+    for platform, list_tables in [("DG", DG_TABLES), ("MT", MT_TABLES)]:
+        for table in list_tables:
+            records = get_records(platform, table)
+            road = "".join([r["result"] for r in records[-20:]])
+
+            tables.append({
+                "platform": platform,
+                "table": table,
+                "road": road if road else "-",
+                "ai": "觀望",
+                "online": True
+            })
+
+    return jsonify({
+        "ok": True,
+        "tables": tables
     })
 
 
@@ -755,7 +994,6 @@ def api_admin_login():
         return jsonify({"ok": True})
 
     return jsonify({"ok": False})
-
 
 init_db()
 
