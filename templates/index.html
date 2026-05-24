@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<title>AI 百家樂</title>
+
+<style>
+body{
+background:#07111f;
+color:white;
+font-family:Arial;
+padding:20px
+}
+
+.top{
+display:flex;
+gap:10px;
+margin-bottom:20px
+}
+
+select,button{
+padding:10px;
+font-size:18px
+}
+
+.big-road{
+display:flex;
+flex-wrap:wrap;
+gap:10px;
+margin-top:20px
+}
+
+.item{
+width:60px;
+height:60px;
+border-radius:50%;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:28px;
+font-weight:bold
+}
+
+.B{
+background:red
+}
+
+.P{
+background:blue
+}
+
+.T{
+background:green
+}
+</style>
+</head>
+
+<body>
+
+<h1>AI 百家樂系統</h1>
+
+<div class="top">
+
+<select id="platform">
+<option value="DG">DG</option>
+<option value="MT">MT</option>
+</select>
+
+<select id="table">
+<option value="RB01">RB01</option>
+<option value="RB02">RB02</option>
+<option value="RB03">RB03</option>
+<option value="1">1</option>
+<option value="2">2</option>
+</select>
+
+<button onclick="addResult('B')">莊</button>
+<button onclick="addResult('P')">閒</button>
+<button onclick="addResult('T')">和</button>
+
+</div>
+
+<div class="big-road" id="road"></div>
+
+<script>
+
+async function updateActive(){
+
+    let platform =
+    document.getElementById("platform").value
+
+    let table =
+    document.getElementById("table").value
+
+    await fetch("/api/update-active",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform,
+            table
+        })
+    })
+
+    loadData()
+}
+
+document.getElementById("platform")
+.addEventListener("change",updateActive)
+
+document.getElementById("table")
+.addEventListener("change",updateActive)
+
+async function addResult(result){
+
+    let platform =
+    document.getElementById("platform").value
+
+    let table =
+    document.getElementById("table").value
+
+    await fetch("/api/manual",{
+        method:"POST",
+        headers:{
+            "Content-Type":"application/json"
+        },
+        body:JSON.stringify({
+            platform,
+            table,
+            result
+        })
+    })
+
+    loadData()
+}
+
+async function loadData(){
+
+    let platform =
+    document.getElementById("platform").value
+
+    let table =
+    document.getElementById("table").value
+
+    let r = await fetch(
+        `/api/data?platform=${platform}&table=${table}`
+    )
+
+    let data = await r.json()
+
+    let html = ""
+
+    data.records.forEach(x=>{
+
+        html += `
+        <div class="item ${x.result}">
+        ${x.result}
+        </div>
+        `
+    })
+
+    document.getElementById("road").innerHTML = html
+}
+
+updateActive()
+
+</script>
+
+</body>
+</html>
