@@ -3,115 +3,297 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 百家樂管理中心</title>
+<title>AI 百家樂後台管理</title>
 
 <style>
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+:root{
+    --bg:#020814;
+    --panel:#071426;
+    --line:#0b7cff;
+    --text:#dbeafe;
+    --muted:#8fb6df;
+    --green:#10b85a;
+    --red:#ff174f;
+    --yellow:#ffd21f;
+    --blue:#0b7cff;
 }
 
 body{
-background:#020817;
-color:white;
-font-family:Arial;
+    background:
+    radial-gradient(circle at top,#092340 0%,#020814 45%,#000 100%);
+    color:var(--text);
+    font-family:Arial,'Microsoft JhengHei',sans-serif;
+    min-height:100vh;
+    padding:15px;
 }
 
 .wrap{
-max-width:1500px;
-margin:auto;
-padding:20px;
+    width:100%;
+    max-width:1400px;
+    margin:auto;
 }
 
-.top{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:20px;
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+    gap:15px;
+    flex-wrap:wrap;
 }
 
 .logo{
-font-size:36px;
-font-weight:bold;
+    font-size:38px;
+    font-weight:900;
+    color:#dbeafe;
+}
+
+.right-top{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.time{
+    color:#8fd0ff;
+    font-size:20px;
 }
 
 .logout{
-color:#ffd54f;
-text-decoration:none;
-font-size:20px;
+    color:#ffd84d;
+    text-decoration:none;
+    font-size:18px;
+    font-weight:bold;
 }
 
 .grid{
-display:grid;
-grid-template-columns:1fr 420px;
-gap:20px;
+    display:grid;
+    grid-template-columns:350px 1fr 420px;
+    gap:15px;
 }
 
 .card{
-background:#071226;
-border:1px solid #16345f;
-border-radius:24px;
-padding:20px;
-box-shadow:0 0 25px rgba(0,140,255,.15);
-margin-bottom:20px;
+    background:
+    linear-gradient(
+        180deg,
+        rgba(5,20,39,.96),
+        rgba(3,12,25,.96)
+    );
+
+    border:1px solid var(--line);
+
+    border-radius:18px;
+
+    padding:18px;
+
+    box-shadow:
+    0 0 24px rgba(0,132,255,.15),
+    inset 0 0 20px rgba(0,132,255,.04);
 }
 
-.title{
-font-size:26px;
-margin-bottom:20px;
+.card-title{
+    font-size:24px;
+    font-weight:900;
+    margin-bottom:18px;
+    color:#b9dcff;
 }
 
-input{
-width:100%;
-padding:14px;
-margin-top:10px;
-background:#08101f;
-border:1px solid #1e3a5f;
-border-radius:14px;
-color:white;
-font-size:18px;
-}
-
-button{
-padding:14px;
-border:none;
-border-radius:14px;
-background:linear-gradient(90deg,#2563eb,#38bdf8);
-color:white;
-font-size:18px;
-font-weight:bold;
-margin-top:12px;
-}
-
-.member{
-background:#08101f;
-border:1px solid #16345f;
-border-radius:18px;
-padding:16px;
-margin-top:14px;
+.ai-circle{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    border:10px solid #0ea5e9;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:54px;
+    font-weight:900;
+    margin:20px auto;
+    box-shadow:
+    0 0 40px rgba(14,165,233,.4);
 }
 
 .stat{
-margin-top:10px;
-font-size:18px;
+    display:flex;
+    justify-content:space-between;
+    margin-top:12px;
+    font-size:18px;
+    gap:10px;
 }
 
 .green{
-color:#22c55e;
-font-weight:bold;
+    color:var(--green);
+    font-weight:bold;
 }
 
 .red{
-color:#ef4444;
-font-weight:bold;
+    color:var(--red);
+    font-weight:bold;
+}
+
+.blue{
+    color:#38bdf8;
+    font-weight:bold;
+}
+
+.yellow{
+    color:var(--yellow);
+    font-weight:bold;
+}
+
+.predict-wrap{
+    display:flex;
+    justify-content:space-around;
+    align-items:center;
+    margin-top:20px;
+    flex-wrap:wrap;
+    gap:20px;
+}
+
+.predict-box{
+    width:180px;
+    height:220px;
+    border-radius:18px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    font-size:58px;
+    font-weight:900;
+}
+
+.player{
+    border:2px solid #2563eb;
+    color:#60a5fa;
+    box-shadow:
+    0 0 30px rgba(37,99,235,.3);
+}
+
+.banker{
+    border:2px solid #ef4444;
+    color:#fb7185;
+    box-shadow:
+    0 0 30px rgba(239,68,68,.3);
+}
+
+.center-rate{
+    text-align:center;
+}
+
+.center-rate .num{
+    font-size:72px;
+    color:#34d399;
+    font-weight:900;
+}
+
+.center-rate .txt{
+    margin-top:10px;
+    font-size:28px;
+}
+
+.table-box{
+    margin-top:15px;
+    border:1px solid #1e3a5f;
+    border-radius:14px;
+    overflow:hidden;
+}
+
+.table-row{
+    display:grid;
+    grid-template-columns:
+    80px 80px 80px 1fr 100px;
+
+    padding:14px;
+    border-bottom:1px solid #132944;
+    align-items:center;
+}
+
+.table-row.head{
+    background:#0b1730;
+    font-weight:bold;
+}
+
+.member{
+    background:#08101f;
+    border:1px solid #16345f;
+    border-radius:16px;
+    padding:15px;
+    margin-top:15px;
+}
+
+input{
+    width:100%;
+    background:#0b1730;
+    border:none;
+    border-radius:12px;
+    padding:14px;
+    color:white;
+    margin-top:10px;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:14px;
+    margin-top:15px;
+
+    background:
+    linear-gradient(
+        90deg,
+        #2563eb,
+        #38bdf8
+    );
+
+    color:white;
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+}
+
+.small-btn{
+    padding:10px;
+    font-size:14px;
+    margin-top:10px;
 }
 
 @media(max-width:1200px){
+
 .grid{
-grid-template-columns:1fr;
+    grid-template-columns:1fr;
 }
+
+.table-row{
+    grid-template-columns:
+    70px 60px 60px 1fr 70px;
+
+    font-size:15px;
 }
+
+.logo{
+    font-size:30px;
+}
+
+.predict-box{
+    width:140px;
+    height:170px;
+    font-size:44px;
+}
+
+.center-rate .num{
+    font-size:50px;
+}
+
+}
+
 </style>
 </head>
 
@@ -119,157 +301,162 @@ grid-template-columns:1fr;
 
 <div class="wrap">
 
-<div class="top">
-<div class="logo">AI 百家樂管理中心</div>
-<a href="/logout" class="logout">登出</a>
+<div class="topbar">
+
+    <div class="logo">
+        AI 百家樂控制中心
+    </div>
+
+    <div class="right-top">
+
+        <div class="time" id="timeNow">
+            --:--:--
+        </div>
+
+        <a class="logout" href="/logout">
+            登出
+        </a>
+
+    </div>
+
 </div>
 
 <div class="grid">
 
 <div>
 
-<div class="card">
+    <div class="card">
 
-<div class="title">AI 系統監控</div>
+        <div class="card-title">
+            系統狀態
+        </div>
 
-<div class="stat">共享 AI：<span class="green">運行中</span></div>
-<div class="stat">SQLite：<span class="green">正常</span></div>
-<div class="stat">Render：<span class="green">在線</span></div>
-<div class="stat">共享分析：<span class="green">同步中</span></div>
+        <div class="ai-circle">
+            AI
+        </div>
 
-</div>
+        <div class="stat">
+            <span>AI 模型</span>
+            <span class="green">運行中</span>
+        </div>
 
-<div class="card">
+        <div class="stat">
+            <span>共享資料庫</span>
+            <span class="blue">已同步</span>
+        </div>
 
-<div class="title">新增會員</div>
+        <div class="stat">
+            <span>即時監控</span>
+            <span class="green">正常</span>
+        </div>
 
-<input id="username" placeholder="帳號">
-<input id="password" placeholder="密碼">
-<input id="expire" value="2026-12-31 23:59:59">
+        <div class="stat">
+            <span>系統穩定度</span>
+            <span class="yellow">98%</span>
+        </div>
 
-<button onclick="createMember()">
-新增會員
-</button>
+    </div>
 
-</div>
+    <div class="card">
+
+        <div class="card-title">
+            新增會員
+        </div>
+
+        <input id="username" placeholder="會員帳號">
+
+        <input id="password" placeholder="會員密碼">
+
+        <input id="expire" type="date">
+
+        <button onclick="createMember()">
+            新增會員
+        </button>
+
+    </div>
 
 </div>
 
 <div>
 
-<div class="card">
+    <div class="card">
 
-<div class="title">會員列表</div>
+        <div class="card-title">
+            AI 即時預測
+        </div>
 
-<div id="members"></div>
+        <div class="predict-wrap">
+
+            <div class="predict-box player">
+                閒
+                <div style="font-size:36px;" id="playerPredict">
+                    0%
+                </div>
+            </div>
+
+            <div class="center-rate">
+                <div class="num" id="mainConfidence">
+                    0%
+                </div>
+
+                <div class="txt" id="mainSuggest">
+                    建議：觀望
+                </div>
+            </div>
+
+            <div class="predict-box banker">
+                莊
+                <div style="font-size:36px;" id="bankerPredict">
+                    0%
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-title">
+            桌號即時監控
+        </div>
+
+        <div class="table-box" id="tableMonitor">
+            讀取中...
+        </div>
+
+    </div>
+
+</div>
+
+<div>
+
+    <div class="card">
+
+        <div class="card-title">
+            會員列表
+        </div>
+
+        <div id="memberList">
+            讀取中...
+        </div>
+
+    </div>
 
 </div>
 
 </div>
-
-</div>
-
 </div>
 
 <script>
 
-async function loadMembers(){
-
-    let r=await fetch("/api/admin/members")
-    let data=await r.json()
-
-    let html=""
-
-    data.members.forEach(m=>{
-
-        html+=`
-        <div class="member">
-
-        <div class="stat">
-        帳號：${m.username}
-        </div>
-
-        <div class="stat">
-        狀態：
-        <span class="${m.enabled?'green':'red'}">
-        ${m.enabled?'啟用':'停權'}
-        </span>
-        </div>
-
-        <div class="stat">
-        到期：${m.expire}
-        </div>
-
-        <div class="stat">
-        裝置：${m.device||'-'}
-        </div>
-
-        <div class="stat">
-        IP：${m.ip||'-'}
-        </div>
-
-        <div class="stat">
-        桌號：${m.current_platform||'-'} ${m.current_table||''}
-        </div>
-
-        <div class="stat">
-        最後操作：${m.last_active||'-'}
-        </div>
-
-        <button onclick="toggle('${m.username}')">
-        ${m.enabled?'停權':'啟用'}
-        </button>
-
-        </div>
-        `
-    })
-
-    document.getElementById("members").innerHTML=html
+function updateClock(){
+    document.getElementById("timeNow").innerHTML =
+    new Date().toLocaleTimeString()
 }
 
-async function createMember(){
-
-    let username=document.getElementById("username").value
-    let password=document.getElementById("password").value
-    let expire=document.getElementById("expire").value
-
-    let r=await fetch("/api/admin/create-member",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            username,
-            password,
-            expire
-        })
-    })
-
-    let data=await r.json()
-
-    alert(data.msg)
-
-    loadMembers()
-}
-
-async function toggle(username){
-
-    await fetch("/api/admin/toggle-member",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            username
-        })
-    })
-
-    loadMembers()
-}
-
-loadMembers()
-
-setInterval(loadMembers,5000)
+setInterval(updateClock,1000)
+updateClock()
 
 </script>
 
