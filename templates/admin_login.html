@@ -4,317 +4,74 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>管理員登入</title>
-
 <style>
-
-*{
-    box-sizing:border-box;
-}
-
 body{
-    margin:0;
-    height:100vh;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:
-        radial-gradient(circle at top,#132a4f 0%,#07111f 45%,#01040b 100%);
-    font-family:Arial,"Microsoft JhengHei",sans-serif;
-    color:white;
+background:#000814;
+color:white;
+font-family:Arial;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+margin:0;
 }
-
-.bg{
-    position:fixed;
-    inset:0;
-    overflow:hidden;
-    z-index:-1;
+.box{
+width:380px;
+background:#071226;
+padding:30px;
+border-radius:20px;
+border:1px solid #16345f;
+box-shadow:0 0 30px rgba(0,180,255,.2);
 }
-
-.scan{
-    position:absolute;
-    width:200%;
-    height:2px;
-    background:linear-gradient(
-        90deg,
-        transparent,
-        rgba(0,220,255,.9),
-        transparent
-    );
-    animation:scanMove 8s linear infinite;
-    opacity:.35;
+input{
+width:100%;
+padding:15px;
+margin-top:15px;
+background:#0b1730;
+border:none;
+border-radius:12px;
+color:white;
+font-size:16px;
 }
-
-.scan:nth-child(1){
-    top:20%;
+button{
+width:100%;
+padding:15px;
+margin-top:20px;
+background:linear-gradient(90deg,#2563eb,#38bdf8);
+border:none;
+border-radius:14px;
+color:white;
+font-size:18px;
+font-weight:bold;
 }
-
-.scan:nth-child(2){
-    top:40%;
-    animation-delay:2s;
-}
-
-.scan:nth-child(3){
-    top:60%;
-    animation-delay:4s;
-}
-
-.scan:nth-child(4){
-    top:80%;
-    animation-delay:6s;
-}
-
-@keyframes scanMove{
-    from{
-        transform:translateX(-50%);
-    }
-    to{
-        transform:translateX(0%);
-    }
-}
-
-.login-box{
-    width:430px;
-    max-width:92%;
-    padding:38px;
-    border-radius:24px;
-
-    background:rgba(5,16,34,.92);
-
-    border:1px solid rgba(0,180,255,.35);
-
-    box-shadow:
-        0 0 30px rgba(0,140,255,.25),
-        inset 0 0 20px rgba(255,255,255,.03);
-
-    backdrop-filter:blur(10px);
-}
-
-.logo{
-    text-align:center;
-    margin-bottom:28px;
-}
-
-.logo h1{
-    margin:0;
-    font-size:38px;
-    color:#7fd5ff;
-    letter-spacing:2px;
-    text-shadow:0 0 15px rgba(0,180,255,.6);
-}
-
-.logo p{
-    margin-top:10px;
-    font-size:14px;
-    color:#98bfff;
-    opacity:.75;
-}
-
-.input-group{
-    margin-bottom:18px;
-}
-
-.input-group label{
-    display:block;
-    margin-bottom:8px;
-    font-size:14px;
-    color:#9dccff;
-}
-
-.input-group input{
-    width:100%;
-    padding:15px;
-    border:none;
-    outline:none;
-    border-radius:14px;
-
-    background:#09182f;
-
-    border:1px solid rgba(90,170,255,.28);
-
-    color:white;
-    font-size:16px;
-
-    transition:.2s;
-}
-
-.input-group input:focus{
-    border-color:#3ab7ff;
-    box-shadow:0 0 14px rgba(0,180,255,.3);
-}
-
-.login-btn{
-    width:100%;
-    height:56px;
-
-    border:none;
-    border-radius:14px;
-
-    font-size:18px;
-    font-weight:bold;
-
-    cursor:pointer;
-
-    color:white;
-
-    background:
-        linear-gradient(
-            135deg,
-            #005eff,
-            #00a2ff
-        );
-
-    box-shadow:
-        0 0 20px rgba(0,140,255,.4);
-
-    transition:.2s;
-}
-
-.login-btn:hover{
-    transform:translateY(-2px);
-
-    box-shadow:
-        0 0 28px rgba(0,180,255,.55);
-}
-
-.msg{
-    margin-top:16px;
-    min-height:20px;
-
-    text-align:center;
-
-    color:#ff7d95;
-
-    font-size:14px;
-}
-
-.footer{
-    margin-top:22px;
-
-    text-align:center;
-
-    font-size:12px;
-
-    color:#6f8bb6;
-}
-
-@media(max-width:760px){
-
-    .login-box{
-        padding:24px;
-        border-radius:16px;
-    }
-
-    .logo h1{
-        font-size:28px;
-    }
-
-    .login-btn{
-        height:50px;
-        font-size:16px;
-    }
-
-    .input-group input{
-        padding:12px;
-        font-size:15px;
-    }
-}
-
 </style>
 </head>
-
 <body>
-
-<div class="bg">
-    <div class="scan"></div>
-    <div class="scan"></div>
-    <div class="scan"></div>
-    <div class="scan"></div>
+<div class="box">
+<h1>AI 管理後台</h1>
+<input id="username" placeholder="管理員帳號">
+<input id="password" type="password" placeholder="管理員密碼">
+<button onclick="login()">登入</button>
 </div>
-
-<div class="login-box">
-
-    <div class="logo">
-        <h1>管理控制中心</h1>
-        <p>ADMIN CONTROL PANEL</p>
-    </div>
-
-    <div class="input-group">
-        <label>管理員帳號</label>
-
-        <input
-            type="text"
-            id="username"
-            placeholder="請輸入管理員帳號"
-        >
-    </div>
-
-    <div class="input-group">
-        <label>管理員密碼</label>
-
-        <input
-            type="password"
-            id="password"
-            placeholder="請輸入管理員密碼"
-            onkeydown="if(event.key==='Enter'){login()}"
-        >
-    </div>
-
-    <button class="login-btn" onclick="login()">
-        進入管理後台
-    </button>
-
-    <div id="msg" class="msg"></div>
-
-    <div class="footer">
-        Baccarat AI Admin System v3.2.1 PRO
-    </div>
-
-</div>
-
 <script>
-
 async function login(){
+const username=document.getElementById('username').value
+const password=document.getElementById('password').value
 
-    const username =
-        document.getElementById("username").value.trim();
+const r=await fetch('/api/admin-login',{
+method:'POST',
+headers:{'Content-Type':'application/json'},
+body:JSON.stringify({username,password})
+})
 
-    const password =
-        document.getElementById("password").value.trim();
+const data=await r.json()
 
-    if(!username || !password){
-
-        document.getElementById("msg").textContent =
-            "請輸入帳號密碼";
-
-        return;
-    }
-
-    const res = await fetch("/api/admin-login",{
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify({
-            username,
-            password
-        })
-    });
-
-    const data = await res.json();
-
-    if(!data.ok){
-
-        document.getElementById("msg").textContent =
-            data.msg || "登入失敗";
-
-        return;
-    }
-
-    location.href = "/admin";
+if(data.ok){
+location.href='/admin'
+}else{
+alert('登入失敗')
 }
-
+}
 </script>
-
 </body>
 </html>
