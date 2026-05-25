@@ -4,758 +4,346 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>百家樂 AI 輔助分析系統</title>
-
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
 :root{
     --bg:#020814;
-    --panel:#071426;
-    --line:#0a7cff;
-    --line2:#1a3d68;
+    --panel:#061426;
+    --line:#0878d8;
+    --line-soft:#183957;
     --blue:#0b7cff;
     --red:#ff174f;
-    --green:#00b85c;
+    --green:#08a84d;
     --yellow:#ffd21f;
     --pink:#ff4db8;
-    --text:#dcecff;
+    --text:#dbeafe;
+    --muted:#9fb7d6;
 }
-
 html,body{
     min-height:100%;
-    background:
-    radial-gradient(circle at top,#092340 0%,#020814 45%,#000 100%);
+    background:radial-gradient(circle at top,#071c34 0%,#020814 48%,#000 100%);
+    color:var(--text);
     font-family:Arial,'Microsoft JhengHei',sans-serif;
-    color:white;
 }
-
-body{
-    padding:10px;
-    overflow-x:hidden;
-}
-
+body{padding:8px;overflow-x:hidden}
+button,select,input{font-family:inherit}
+button{cursor:pointer}
 .app{
     width:100%;
-    max-width:1180px;
-    margin:auto;
+    max-width:390px;
+    margin:0 auto;
+    padding-bottom:22px;
 }
-
-.card{
-    background:linear-gradient(180deg,#071426,#030b16);
-    border:1px solid var(--line);
-    border-radius:16px;
-    box-shadow:
-    0 0 25px rgba(0,132,255,.18),
-    inset 0 0 20px rgba(0,132,255,.05);
-    padding:14px;
-    margin-bottom:12px;
-}
-
-.card-title{
-    font-size:28px;
-    font-weight:900;
-    color:#d8ebff;
-    margin-bottom:14px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-}
-
-.card-title:before{
-    content:'♠';
-    color:#b9dcff;
-}
-
-/* top */
-
 .topbar{
     display:grid;
-    grid-template-columns:160px 160px 1fr 160px 200px;
-    gap:12px;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
     align-items:center;
-    margin-bottom:12px;
+    margin-bottom:8px;
 }
-
 .select-wrap{
     position:relative;
-    height:54px;
-    border-radius:12px;
-    overflow:hidden;
+    height:43px;
     border:1px solid var(--line);
-    background:linear-gradient(180deg,#07192d,#030914);
-    box-shadow:0 0 12px rgba(0,132,255,.18);
+    border-radius:8px;
+    background:linear-gradient(180deg,#071a31,#030b18);
+    box-shadow:0 0 10px rgba(0,132,255,.18),inset 0 0 12px rgba(0,132,255,.05);
+    overflow:hidden;
 }
-
 .select-wrap:before{
     content:'♠';
     position:absolute;
-    left:14px;
-    top:11px;
-    font-size:22px;
-    color:#9cc9ff;
+    left:12px;
+    top:9px;
+    color:#9bc8ff;
+    font-size:20px;
+    z-index:1;
 }
-
-.select-wrap.mode:before{
-    content:'🖥';
-}
-
+.select-wrap.version:before{content:'▣';font-size:17px;top:11px}
 .select-wrap select{
-    width:100%;
-    height:100%;
-    background:transparent;
-    border:0;
-    color:white;
-    font-size:24px;
-    font-weight:900;
-    padding-left:48px;
-    padding-right:40px;
-    appearance:none;
-    outline:none;
+    width:100%;height:100%;appearance:none;background:transparent;color:white;border:0;outline:0;
+    font-size:17px;font-weight:800;padding:0 31px 0 40px;
 }
-
 .select-wrap:after{
-    content:'⌄';
-    position:absolute;
-    right:14px;
-    top:8px;
-    color:white;
-    font-size:28px;
+    content:'⌄';position:absolute;right:10px;top:5px;font-size:27px;color:#b7d8ff;pointer-events:none;
 }
-
-.expire{
-    color:var(--yellow);
-    font-size:19px;
-    font-weight:900;
-    white-space:nowrap;
-}
-
-.update{
-    text-align:right;
-    font-size:17px;
-    color:#dcecff;
-    white-space:nowrap;
-}
-
-/* AI */
-
-.main-ai{
+.info-row{
     display:grid;
     grid-template-columns:1fr 1fr;
-    min-height:220px;
-    padding:20px;
+    gap:8px;
+    min-height:33px;
+    align-items:center;
+    border:1px solid rgba(143,182,223,.48);
+    border-radius:7px;
+    padding:5px 9px;
+    margin-bottom:9px;
+    background:linear-gradient(180deg,rgba(5,20,39,.75),rgba(3,12,25,.75));
+    color:#d9eaff;
+    font-size:13px;
+    white-space:nowrap;
 }
-
-.ai-left{
-    border-right:1px solid rgba(255,255,255,.15);
-    padding-right:18px;
+.info-left{overflow:hidden;text-overflow:ellipsis}
+.info-right{text-align:right;overflow:hidden;text-overflow:ellipsis}
+.info-icon{color:#9bc8ff;margin-right:3px}
+.card{
+    background:linear-gradient(180deg,rgba(5,20,39,.96),rgba(3,12,25,.96));
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 0 18px rgba(0,132,255,.16),inset 0 0 22px rgba(0,132,255,.035);
+    padding:10px;
+    margin-bottom:9px;
 }
-
-.ai-right{
-    padding-left:18px;
-}
-
-.ai-big{
-    text-align:center;
-    font-size:88px;
-    color:var(--pink);
-    font-weight:1000;
-    margin-top:10px;
-    text-shadow:
-    0 0 18px rgba(255,77,184,.7),
-    0 0 35px rgba(255,77,184,.25);
-}
-
-.ai-rate{
-    text-align:center;
-    font-size:42px;
-    color:var(--pink);
+.card-title{
+    font-size:19px;
     font-weight:900;
-}
-
-.alert-box{
-    height:120px;
-    border-radius:12px;
-    border:1px solid #274563;
-    background:linear-gradient(180deg,#08192b,#030b15);
+    color:#d8ebff;
+    margin-bottom:8px;
     display:flex;
     align-items:center;
-    padding:20px;
-    color:var(--yellow);
-    font-size:28px;
-    font-weight:900;
-    margin-top:20px;
+    gap:5px;
+    line-height:1.15;
 }
-
-/* road */
-
+.card-title.spade:before{content:'♠';color:#b9dcff;font-size:21px}
+.main-card{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:0;
+    background:transparent;
+    border:none;
+    box-shadow:none;
+}
+.ai-panel{
+    background:linear-gradient(180deg,rgba(5,20,39,.96),rgba(3,12,25,.96));
+    border:1px solid var(--line);
+    border-radius:10px;
+    box-shadow:0 0 18px rgba(0,132,255,.16),inset 0 0 22px rgba(0,132,255,.035);
+    padding:10px;
+    min-height:149px;
+    position:relative;
+    overflow:hidden;
+}
+.ai-panel:before{
+    content:'';
+    position:absolute;inset:0;
+    background:radial-gradient(circle at 40% 52%,rgba(0,132,255,.14),transparent 44%);
+    pointer-events:none;
+}
+.ai-title{position:relative;font-size:17px;font-weight:900;color:#d8ebff;display:flex;align-items:center;justify-content:center;gap:5px}
+.ai-big{position:relative;text-align:center;margin-top:18px;color:var(--pink);font-size:46px;line-height:1;font-weight:1000;text-shadow:0 0 14px rgba(255,77,184,.8),0 0 32px rgba(255,77,184,.25)}
+.ai-rate{position:relative;text-align:center;margin-top:5px;color:var(--pink);font-size:24px;font-weight:900}
+.alert-box{
+    height:86px;
+    border:1px solid #2a4766;
+    border-radius:8px;
+    background:linear-gradient(180deg,#07192c,#030b16);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:10px;
+    color:var(--yellow);
+    font-size:17px;
+    font-weight:900;
+    margin-top:18px;
+}
+.road-card{padding:10px 10px 9px}
 .road-grid{
     width:100%;
-    height:300px;
-    border:1px solid #24405c;
-    border-radius:10px;
-    overflow-x:auto;
-    overflow-y:hidden;
-
+    height:168px;
+    border:1px solid #203955;
+    border-radius:7px;
+    background:rgba(3,12,25,.55);
     display:grid;
     grid-template-rows:repeat(6,1fr);
     grid-auto-flow:column;
-    grid-auto-columns:52px;
-
-    background:#04101e;
+    grid-auto-columns:34px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:none;
 }
-
-.road-slot{
-    border-right:1px solid rgba(255,255,255,.08);
-    border-bottom:1px solid rgba(255,255,255,.08);
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.road-chip{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:22px;
-    font-weight:900;
-    background:#061426;
-}
-
-.road-chip.B{
-    border:2px solid var(--red);
-    color:#ffb3c3;
-}
-
-.road-chip.P{
-    border:2px solid var(--blue);
-    color:#98c8ff;
-}
-
-.road-chip.T{
-    border:2px solid var(--green);
-    color:#95ffbf;
-}
-
-.road-actions{
-    display:grid;
-    grid-template-columns:1fr 1fr 1fr 1fr;
-    gap:12px;
-    margin-top:12px;
-}
-
-.action-btn{
-    height:58px;
-    border-radius:10px;
-    border:1px solid #2e4d6d;
-    font-size:34px;
-    font-weight:900;
-    color:white;
-    cursor:pointer;
-}
-
-.red{
-    background:linear-gradient(180deg,#bf0035,#77001d);
-}
-
-.blue{
-    background:linear-gradient(180deg,#0059d8,#00337a);
-}
-
-.green{
-    background:linear-gradient(180deg,#009448,#005f2e);
-}
-
-.undo{
-    background:linear-gradient(180deg,#13253a,#09121f);
-}
-
-/* cards */
-
-.card-input-inner{
-    border:1px solid #23405d;
-    border-radius:10px;
-    padding:16px;
-    background:#04101d;
-}
-
-.current-title{
-    color:#a8c6e7;
-    font-size:18px;
-    margin-bottom:10px;
-}
-
-.current-cards{
-    display:grid;
-    grid-template-columns:repeat(6,60px);
-    gap:12px;
-}
-
-.current-card{
-    height:60px;
-    border-radius:10px;
-    border:1px solid #325273;
-    background:#071426;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:28px;
-    font-weight:900;
-}
-
-.minmax{
-    margin-top:10px;
-    text-align:center;
-    color:#c6d9ef;
-    font-size:18px;
-}
-
-.sequence{
-    margin:14px 0;
-    color:#dcecff;
-    font-size:20px;
-}
-
-.sequence b:nth-child(1),
-.sequence b:nth-child(3){
-    color:#0b7cff;
-}
-
-.sequence b:nth-child(2),
-.sequence b:nth-child(4){
-    color:#ff174f;
-}
-
-.keypad{
-    display:grid;
-    grid-template-columns:repeat(6,1fr);
-    gap:12px;
-}
-
-.key{
-    height:58px;
-    border-radius:10px;
-    border:1px solid #355578;
-    background:linear-gradient(180deg,#122033,#08111f);
-    color:white;
-    font-size:30px;
-    font-weight:900;
-}
-
-.key.clear{
-    background:linear-gradient(180deg,#bc8500,#725000);
-}
-
-.key.submit{
-    background:linear-gradient(180deg,#d10038,#7a001f);
-}
-
-/* mobile */
-
-@media(max-width:760px){
-
-    .app{
-        max-width:410px;
-    }
-
-    .topbar{
-        grid-template-columns:1fr 1fr;
-        gap:8px;
-    }
-
-    .expire{
-        grid-column:1/3;
-        font-size:16px;
-    }
-
-    .update{
-        grid-column:1/3;
-        text-align:left;
-        font-size:15px;
-    }
-
-    .select-wrap{
-        height:48px;
-    }
-
-    .select-wrap select{
-        font-size:22px;
-    }
-
-    .main-ai{
-        grid-template-columns:1fr 1fr;
-        min-height:160px;
-        padding:12px;
-    }
-
-    .ai-big{
-        font-size:60px;
-    }
-
-    .ai-rate{
-        font-size:28px;
-    }
-
-    .alert-box{
-        height:80px;
-        font-size:18px;
-        padding:12px;
-        margin-top:10px;
-    }
-
-    .road-grid{
-        height:220px;
-        grid-auto-columns:46px;
-    }
-
-    .road-chip{
-        width:32px;
-        height:32px;
-        font-size:18px;
-    }
-
-    .action-btn{
-        height:48px;
-        font-size:26px;
-    }
-
-    .current-cards{
-        grid-template-columns:repeat(6,1fr);
-        gap:8px;
-    }
-
-    .current-card{
-        height:44px;
-        font-size:22px;
-    }
-
-    .sequence{
-        font-size:15px;
-        white-space:nowrap;
-    }
-
-    .keypad{
-        gap:7px;
-    }
-
-    .key{
-        height:42px;
-        font-size:20px;
-    }
-}
+.road-grid::-webkit-scrollbar{display:none}
+.road-slot{border-right:1px solid rgba(143,182,223,.18);border-bottom:1px solid rgba(143,182,223,.18);display:flex;align-items:center;justify-content:center}
+.road-chip{width:25px;height:25px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;background:#061426;line-height:1}
+.road-chip.B{border:1.8px solid var(--red);color:#ffe0e7;box-shadow:0 0 6px rgba(255,23,79,.42)}
+.road-chip.P{border:1.8px solid var(--blue);color:#d4e8ff;box-shadow:0 0 6px rgba(11,124,255,.42)}
+.road-chip.T{border:1.8px solid var(--green);color:#d6ffe7;box-shadow:0 0 6px rgba(16,184,90,.42)}
+.road-actions{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;margin-top:10px}
+.action-btn{height:37px;border-radius:6px;border:1px solid #315070;color:white;font-size:23px;font-weight:900;background:#061426;cursor:pointer}
+.action-btn.red{background:linear-gradient(180deg,#b60031,#690018);border-color:#ff174f;box-shadow:0 0 10px rgba(255,23,79,.16)}
+.action-btn.blue{background:linear-gradient(180deg,#0056d4,#003071);border-color:#0b7cff;box-shadow:0 0 10px rgba(11,124,255,.16)}
+.action-btn.green{background:linear-gradient(180deg,#00843e,#004e24);border-color:#10b85a;box-shadow:0 0 10px rgba(16,184,90,.16)}
+.action-btn.undo{background:linear-gradient(180deg,#112238,#07111f);border-color:#315070;font-size:26px;color:#dcecff}
+.card-input{padding:10px}
+.input-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.input-note{font-size:14px;color:#b7cce7;white-space:nowrap}
+.card-input-inner{border:1px solid #203955;border-radius:8px;background:rgba(3,12,25,.45);padding:9px}
+.current-title{font-size:13px;color:#9fb9d8;margin-bottom:8px}
+.current-cards{display:grid;grid-template-columns:repeat(6,1fr);gap:11px;min-height:42px;margin-bottom:10px}
+.current-card{height:42px;border:1px solid #315070;border-radius:6px;background:#071426;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:900;color:white}
+.sequence{font-size:14px;color:#b9cae2;margin:8px 0 10px;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.sequence::-webkit-scrollbar{display:none}
+.sequence b:nth-child(1),.sequence b:nth-child(3){color:#0b7cff}.sequence b:nth-child(2),.sequence b:nth-child(4){color:#ff174f}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.key{height:40px;border:1px solid #315070;border-radius:6px;background:linear-gradient(180deg,#122033,#08111f);color:white;font-size:24px;font-weight:800}
+.key.clear{font-size:20px}.key.submit{font-size:20px;background:linear-gradient(180deg,#957000,#5d4300);border-color:#d9a900}.clear-table{height:44px;width:100%;border-radius:7px;border:1px solid #ff174f;background:linear-gradient(180deg,rgba(170,0,42,.95),rgba(65,0,18,.95));box-shadow:0 0 14px rgba(255,23,79,.22);color:#ffd8e2;font-size:19px;font-weight:900;margin-top:9px}
+@media(min-width:761px){.app{max-width:760px}.road-grid{height:220px;grid-auto-columns:42px}.road-chip{width:31px;height:31px;font-size:17px}.key{height:52px}.action-btn{height:46px}.ai-big{font-size:66px}.ai-rate{font-size:32px}.ai-panel{min-height:190px}.alert-box{height:112px;font-size:24px}.current-card{height:54px}.current-cards{min-height:54px}}
 </style>
 </head>
-
 <body>
-
 <div class="app">
-
-<div class="topbar">
-
-    <div class="select-wrap">
-        <select id="platform" onchange="changePlatform()">
-            <option value="DG">DG</option>
-            <option value="MT">MT</option>
-        </select>
+    <div class="topbar">
+        <div class="select-wrap"><select id="platform" onchange="changePlatform()"><option value="DG">DG</option><option value="MT">MT</option></select></div>
+        <div class="select-wrap"><select id="table" onchange="loadData()"></select></div>
+        <div class="select-wrap version"><select id="viewMode" onchange="setViewMode(this.value)"><option value="mobile">手機版</option><option value="desktop">電腦版</option></select></div>
     </div>
 
-    <div class="select-wrap">
-        <select id="table" onchange="loadData()"></select>
+    <div class="info-row">
+        <div class="info-left"><span class="info-icon">👤</span>會員到期：<span id="memberExpire">-</span></div>
+        <div class="info-right"><span class="info-icon">⟳</span>更新時間 <span id="updateTime">--:--:--</span></div>
     </div>
 
-    <div class="expire">
-        會員到期：<span id="memberExpire">-</span>
-    </div>
-
-    <div class="select-wrap mode">
-        <select id="viewMode" onchange="setViewMode(this.value)">
-            <option value="desktop">電腦版</option>
-            <option value="mobile">手機版</option>
-        </select>
-    </div>
-
-    <div class="update">
-        ⟳ 更新時間 <span id="updateTime">--:--:--</span>
-    </div>
-
-</div>
-
-<div class="card main-ai">
-
-    <div class="ai-left">
-        <div class="card-title">AI 建議方向</div>
-        <div class="ai-big" id="aiSuggest">觀望</div>
-        <div class="ai-rate" id="aiRate">0%</div>
-    </div>
-
-    <div class="ai-right">
-        <div class="card-title">🔔 AI 提醒</div>
-        <div class="alert-box" id="aiAlert">
-            目前無提醒
+    <div class="main-card card">
+        <div class="ai-panel">
+            <div class="ai-title">♠ AI 建議方向</div>
+            <div class="ai-big" id="aiSuggest">觀望</div>
+            <div class="ai-rate" id="aiRate">0%</div>
+        </div>
+        <div class="ai-panel">
+            <div class="ai-title">🔔 AI 提醒</div>
+            <div class="alert-box" id="aiAlert">目前無提醒</div>
         </div>
     </div>
 
-</div>
-
-<div class="card">
-
-    <div class="card-title">大路盤</div>
-
-    <div class="road-grid" id="roadGrid"></div>
-
-    <div class="road-actions">
-        <button class="action-btn red" onclick="manualAdd('B')">莊</button>
-        <button class="action-btn blue" onclick="manualAdd('P')">閒</button>
-        <button class="action-btn green" onclick="manualAdd('T')">和</button>
-        <button class="action-btn undo" onclick="undoLast()">↩</button>
+    <div class="card road-card">
+        <div class="card-title spade">大路盤</div>
+        <div class="road-grid" id="roadGrid"></div>
+        <div class="road-actions">
+            <button class="action-btn red" onclick="manualAdd('B')">莊</button>
+            <button class="action-btn blue" onclick="manualAdd('P')">閒</button>
+            <button class="action-btn green" onclick="manualAdd('T')">和</button>
+            <button class="action-btn undo" onclick="undoLast()">↩</button>
+        </div>
     </div>
 
-</div>
-
-<div class="card">
-
-    <div class="card-title">牌組輸入</div>
-
-    <div class="card-input-inner">
-
-        <div class="current-title">目前輸入</div>
-
-        <div class="current-cards" id="cardPreview">
-            <div class="current-card"></div>
-            <div class="current-card"></div>
-            <div class="current-card"></div>
-            <div class="current-card"></div>
-            <div class="current-card"></div>
-            <div class="current-card"></div>
+    <div class="card card-input">
+        <div class="input-head">
+            <div class="card-title spade" style="margin-bottom:0">牌組輸入</div>
+            <div class="input-note">最少 4 張，最多 6 張</div>
         </div>
-
-        <div class="minmax">最少 4 張，最多 6 張</div>
-
-        <div class="sequence">
-            輸入順序：
-            <b>閒1</b> →
-            <b>莊1</b> →
-            <b>閒2</b> →
-            <b>莊2</b> →
-            第5張 →
-            第6張
+        <div class="card-input-inner">
+            <div class="current-title">目前輸入</div>
+            <div class="current-cards" id="cardPreview">
+                <div class="current-card"></div><div class="current-card"></div><div class="current-card"></div><div class="current-card"></div><div class="current-card"></div><div class="current-card"></div>
+            </div>
+            <div class="sequence">輸入順序： <b>閒1</b> → <b>莊1</b> → <b>閒2</b> → <b>莊2</b> → 第5張 → 第6張</div>
+            <div class="keypad">
+                <button class="key" onclick="addCard(1)">1</button>
+                <button class="key" onclick="addCard(2)">2</button>
+                <button class="key" onclick="addCard(3)">3</button>
+                <button class="key" onclick="addCard(4)">4</button>
+                <button class="key" onclick="addCard(5)">5</button>
+                <button class="key" onclick="addCard(6)">6</button>
+                <button class="key" onclick="addCard(7)">7</button>
+                <button class="key" onclick="addCard(8)">8</button>
+                <button class="key" onclick="addCard(9)">9</button>
+                <button class="key clear" onclick="clearCards()">清除</button>
+                <button class="key" onclick="addCard(0)">0</button>
+                <button class="key submit" onclick="submitCards()">送出</button>
+            </div>
         </div>
-
-        <div class="keypad">
-
-            <button class="key" onclick="addCard(1)">1</button>
-            <button class="key" onclick="addCard(2)">2</button>
-            <button class="key" onclick="addCard(3)">3</button>
-            <button class="key" onclick="addCard(4)">4</button>
-            <button class="key" onclick="addCard(5)">5</button>
-            <button class="key" onclick="addCard(6)">6</button>
-
-            <button class="key" onclick="addCard(7)">7</button>
-            <button class="key" onclick="addCard(8)">8</button>
-            <button class="key" onclick="addCard(9)">9</button>
-            <button class="key" onclick="addCard(0)">0</button>
-
-            <button class="key clear" onclick="clearCards()">清除</button>
-            <button class="key submit" onclick="submitCards()">送出</button>
-
-        </div>
-
+        <button class="clear-table" onclick="clearTableData()">🗑 清除此桌資料</button>
     </div>
-
-</div>
-
 </div>
 
 <script>
-
 let currentCards=[];
-
+function textResult(r){return r==='B'?'莊':r==='P'?'閒':r==='T'?'和':'-'}
+function shortResult(r){return r==='B'?'莊':r==='P'?'閒':r==='T'?'和':''}
+function nowTime(){return new Date().toLocaleTimeString('zh-TW',{hour12:false})}
 function setViewMode(mode){
-
-    localStorage.setItem("viewMode",mode);
-
-    if(mode==="mobile"){
-        document.querySelector(".app").style.maxWidth="410px";
-    }else{
-        document.querySelector(".app").style.maxWidth="1180px";
-    }
+    localStorage.setItem('viewMode',mode);
+    document.querySelector('.app').style.maxWidth=(mode==='desktop')?'760px':'390px';
 }
-
 async function changePlatform(){
-
-    const platform=document.getElementById("platform").value;
-
-    const r=await fetch("/api/tables?platform="+platform);
-
+    const platform=document.getElementById('platform').value;
+    const r=await fetch('/api/tables?platform='+platform);
     const tables=await r.json();
-
-    const sel=document.getElementById("table");
-
-    sel.innerHTML="";
-
-    tables.forEach(t=>{
-        const op=document.createElement("option");
-        op.value=t;
-        op.textContent=t;
-        sel.appendChild(op);
-    });
-
-    loadData();
+    const sel=document.getElementById('table');
+    sel.innerHTML='';
+    tables.forEach(t=>{const op=document.createElement('option');op.value=t;op.textContent=t;sel.appendChild(op)});
+    await loadData();
 }
-
-async function loadData(){
-
-    const platform=document.getElementById("platform").value;
-    const table=document.getElementById("table").value;
-
-    if(!table)return;
-
-    const r=await fetch(`/api/data?platform=${platform}&table=${table}`);
-
-    const data=await r.json();
-
-    if(!data.ok)return;
-
-    document.getElementById("memberExpire").innerHTML=data.memberExpireTime||"-";
-
-    document.getElementById("updateTime").innerHTML=
-    new Date().toLocaleTimeString();
-
-    renderRoad(data.records||[]);
-}
-
 function renderRoad(records){
-
-    const box=document.getElementById("roadGrid");
-
-    box.innerHTML="";
-
-    const total=Math.max(72,records.length+12);
-
+    const box=document.getElementById('roadGrid');
+    box.innerHTML='';
+    const total=Math.max(84,(records||[]).length+18);
     for(let i=0;i<total;i++){
-
-        const slot=document.createElement("div");
-
-        slot.className="road-slot";
-
-        if(records[i]){
-
-            const chip=document.createElement("div");
-
-            chip.className="road-chip "+records[i].result;
-
-            chip.innerHTML=records[i].result;
-
+        const slot=document.createElement('div');
+        slot.className='road-slot';
+        const r=(records||[])[i];
+        if(r){
+            const chip=document.createElement('div');
+            chip.className='road-chip '+r.result;
+            chip.textContent=shortResult(r.result);
             slot.appendChild(chip);
         }
-
         box.appendChild(slot);
     }
 }
-
+function renderStats(data){
+    const s=data.stats||{};
+    document.getElementById('aiSuggest').textContent=s.suggest||'觀望';
+    document.getElementById('aiRate').textContent=(s.stableRate||0)+'%';
+    document.getElementById('aiAlert').textContent=(s.alerts&&s.alerts.length)?s.alerts[0]:'目前無提醒';
+}
+async function loadData(){
+    const platform=document.getElementById('platform').value;
+    const table=document.getElementById('table').value;
+    if(!table)return;
+    const r=await fetch(`/api/data?platform=${platform}&table=${table}`);
+    const data=await r.json();
+    if(!data.ok){location.href='/login';return;}
+    document.getElementById('memberExpire').textContent=data.memberExpireTime||'-';
+    document.getElementById('updateTime').textContent=nowTime();
+    renderRoad(data.records||[]);
+    renderStats(data);
+}
 async function manualAdd(result){
-
-    const platform=document.getElementById("platform").value;
-    const table=document.getElementById("table").value;
-
-    await fetch("/api/manual",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            platform,
-            table,
-            result
-        })
-    });
-
-    loadData();
+    const platform=document.getElementById('platform').value;
+    const table=document.getElementById('table').value;
+    const r=await fetch('/api/manual',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,table,result})});
+    const data=await r.json();
+    if(!data.ok){alert(data.msg||'新增失敗');return;}
+    await loadData();
 }
-
 async function undoLast(){
-
-    const platform=document.getElementById("platform").value;
-    const table=document.getElementById("table").value;
-
-    await fetch("/api/undo",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            platform,
-            table
-        })
-    });
-
-    loadData();
+    const platform=document.getElementById('platform').value;
+    const table=document.getElementById('table').value;
+    await fetch('/api/undo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,table})});
+    await loadData();
 }
-
-function addCard(n){
-
-    if(currentCards.length>=6)return;
-
-    currentCards.push(n);
-
-    renderCards();
+async function clearTableData(){
+    if(!confirm('確定清除此桌資料？'))return;
+    const platform=document.getElementById('platform').value;
+    const table=document.getElementById('table').value;
+    await fetch('/api/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,table})});
+    await loadData();
 }
-
-function clearCards(){
-
-    currentCards=[];
-
-    renderCards();
-}
-
-function renderCards(){
-
-    const cells=document.querySelectorAll(".current-card");
-
-    cells.forEach((c,i)=>{
-        c.innerHTML=currentCards[i]||"";
-    });
-}
-
+function addCard(n){if(currentCards.length>=6)return;currentCards.push(n);renderCardPreview()}
+function clearCards(){currentCards=[];renderCardPreview()}
+function renderCardPreview(){document.querySelectorAll('#cardPreview .current-card').forEach((c,i)=>c.textContent=currentCards[i]!==undefined?currentCards[i]:'')}
 async function submitCards(){
-
-    if(currentCards.length<4){
-        alert("最少4張");
-        return;
-    }
-
-    const platform=document.getElementById("platform").value;
-    const table=document.getElementById("table").value;
-
-    await fetch("/api/cards",{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-            platform,
-            table,
-            cards:currentCards
-        })
-    });
-
-    clearCards();
-
-    loadData();
+    if(currentCards.length<4){alert('最少輸入 4 張');return;}
+    const platform=document.getElementById('platform').value;
+    const table=document.getElementById('table').value;
+    const r=await fetch('/api/cards',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform,table,cards:currentCards})});
+    const data=await r.json();
+    if(!data.ok){alert(data.msg||'牌型錯誤');return;}
+    clearCards();await loadData();
 }
-
-const mode=localStorage.getItem("viewMode")||"desktop";
-
-document.getElementById("viewMode").value=mode;
-
-setViewMode(mode);
-
+const savedMode=localStorage.getItem('viewMode')||'mobile';
+document.getElementById('viewMode').value=savedMode;
+setViewMode(savedMode);
 changePlatform();
-
 setInterval(loadData,5000);
-
 </script>
-
 </body>
 </html>
