@@ -3,462 +3,258 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI 百家樂後台管理</title>
-
+<title>百家樂 AI 預測系統後台</title>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
+*{margin:0;padding:0;box-sizing:border-box}
 :root{
     --bg:#020814;
-    --panel:#071426;
-    --line:#0b7cff;
-    --text:#dbeafe;
-    --muted:#8fb6df;
-    --green:#10b85a;
-    --red:#ff174f;
-    --yellow:#ffd21f;
+    --panel:#061426;
+    --panel2:#081a30;
+    --line:#00b7ff;
+    --line2:#11557f;
+    --cyan:#1ee8ff;
     --blue:#0b7cff;
+    --red:#ff365f;
+    --green:#28ff99;
+    --yellow:#ffd21f;
+    --text:#dff6ff;
+    --muted:#8fb6df;
 }
-
-body{
-    background:
-    radial-gradient(circle at top,#092340 0%,#020814 45%,#000 100%);
+html,body{
+    min-height:100%;
+    background:radial-gradient(circle at top,#08233d 0%,#020814 45%,#000 100%);
     color:var(--text);
     font-family:Arial,'Microsoft JhengHei',sans-serif;
-    min-height:100vh;
-    padding:15px;
+    overflow-x:auto;
 }
-
-.wrap{
-    width:100%;
-    max-width:1400px;
-    margin:auto;
-}
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:15px;
-    gap:15px;
-    flex-wrap:wrap;
-}
-
-.logo{
-    font-size:38px;
-    font-weight:900;
-    color:#dbeafe;
-}
-
-.right-top{
-    display:flex;
-    align-items:center;
-    gap:15px;
-    flex-wrap:wrap;
-}
-
-.time{
-    color:#8fd0ff;
-    font-size:20px;
-}
-
-.logout{
-    color:#ffd84d;
-    text-decoration:none;
-    font-size:18px;
-    font-weight:bold;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:350px 1fr 420px;
-    gap:15px;
-}
-
-.card{
-    background:
-    linear-gradient(
-        180deg,
-        rgba(5,20,39,.96),
-        rgba(3,12,25,.96)
-    );
-
-    border:1px solid var(--line);
-
-    border-radius:18px;
-
-    padding:18px;
-
-    box-shadow:
-    0 0 24px rgba(0,132,255,.15),
-    inset 0 0 20px rgba(0,132,255,.04);
-}
-
-.card-title{
-    font-size:24px;
-    font-weight:900;
-    margin-bottom:18px;
-    color:#b9dcff;
-}
-
-.ai-circle{
-    width:180px;
-    height:180px;
-    border-radius:50%;
-    border:10px solid #0ea5e9;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    font-size:54px;
-    font-weight:900;
-    margin:20px auto;
-    box-shadow:
-    0 0 40px rgba(14,165,233,.4);
-}
-
-.stat{
-    display:flex;
-    justify-content:space-between;
-    margin-top:12px;
-    font-size:18px;
-    gap:10px;
-}
-
-.green{
-    color:var(--green);
-    font-weight:bold;
-}
-
-.red{
-    color:var(--red);
-    font-weight:bold;
-}
-
-.blue{
-    color:#38bdf8;
-    font-weight:bold;
-}
-
-.yellow{
-    color:var(--yellow);
-    font-weight:bold;
-}
-
-.predict-wrap{
-    display:flex;
-    justify-content:space-around;
-    align-items:center;
-    margin-top:20px;
-    flex-wrap:wrap;
-    gap:20px;
-}
-
-.predict-box{
-    width:180px;
-    height:220px;
-    border-radius:18px;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-    font-size:58px;
-    font-weight:900;
-}
-
-.player{
-    border:2px solid #2563eb;
-    color:#60a5fa;
-    box-shadow:
-    0 0 30px rgba(37,99,235,.3);
-}
-
-.banker{
-    border:2px solid #ef4444;
-    color:#fb7185;
-    box-shadow:
-    0 0 30px rgba(239,68,68,.3);
-}
-
-.center-rate{
-    text-align:center;
-}
-
-.center-rate .num{
-    font-size:72px;
-    color:#34d399;
-    font-weight:900;
-}
-
-.center-rate .txt{
-    margin-top:10px;
-    font-size:28px;
-}
-
-.table-box{
-    margin-top:15px;
-    border:1px solid #1e3a5f;
-    border-radius:14px;
-    overflow:hidden;
-}
-
-.table-row{
-    display:grid;
-    grid-template-columns:
-    80px 80px 80px 1fr 100px;
-
-    padding:14px;
-    border-bottom:1px solid #132944;
-    align-items:center;
-}
-
-.table-row.head{
-    background:#0b1730;
-    font-weight:bold;
-}
-
-.member{
-    background:#08101f;
-    border:1px solid #16345f;
-    border-radius:16px;
-    padding:15px;
-    margin-top:15px;
-}
-
-input{
-    width:100%;
-    background:#0b1730;
-    border:none;
-    border-radius:12px;
-    padding:14px;
-    color:white;
-    margin-top:10px;
-    font-size:16px;
-}
-
-button{
-    width:100%;
-    padding:14px;
-    border:none;
-    border-radius:14px;
-    margin-top:15px;
-
-    background:
-    linear-gradient(
-        90deg,
-        #2563eb,
-        #38bdf8
-    );
-
-    color:white;
-    font-size:18px;
-    font-weight:900;
-    cursor:pointer;
-}
-
-.small-btn{
-    padding:10px;
-    font-size:14px;
-    margin-top:10px;
-}
-
-@media(max-width:1200px){
-
-.grid{
-    grid-template-columns:1fr;
-}
-
-.table-row{
-    grid-template-columns:
-    70px 60px 60px 1fr 70px;
-
-    font-size:15px;
-}
-
-.logo{
-    font-size:30px;
-}
-
-.predict-box{
-    width:140px;
-    height:170px;
-    font-size:44px;
-}
-
-.center-rate .num{
-    font-size:50px;
-}
-
-}
-
+body{padding:14px}
+button,input,select{font-family:inherit}
+.wrap{width:1500px;max-width:1500px;margin:0 auto}
+.topbar{display:grid;grid-template-columns:360px 1fr 330px;gap:18px;align-items:center;margin-bottom:18px}
+.brand{display:flex;align-items:center;gap:16px}
+.logo-circle{width:76px;height:76px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#7ee9ff;box-shadow:0 0 22px rgba(0,183,255,.5),inset 0 0 24px rgba(0,183,255,.15);position:relative}.logo-circle:before{content:'';position:absolute;inset:7px;border-radius:50%;border:1px dashed rgba(126,233,255,.55)}
+.brand h1{font-size:32px;letter-spacing:1px}.brand p{font-size:14px;color:#b7d9ef;margin-top:4px;letter-spacing:1px}
+.nav{height:70px;border:1px solid var(--line);clip-path:polygon(3% 0,100% 0,96% 100%,0 100%);background:linear-gradient(180deg,rgba(5,25,48,.95),rgba(3,11,24,.95));display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 0 20px rgba(0,183,255,.2)}
+.nav-item{display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid rgba(0,183,255,.25);font-weight:900;color:#dff6ff}.nav-item span{font-size:22px}.nav-item small{font-size:11px;color:#58d9ff;margin-top:4px}.nav-item.active{background:linear-gradient(180deg,rgba(0,183,255,.18),rgba(0,80,140,.15))}
+.sys-right{display:grid;grid-template-columns:1fr 120px;gap:14px;align-items:center}.cloud{font-size:15px;color:#bfefff;text-align:right}.cloud b{color:var(--green)}.version{font-size:13px;color:#7edaff;text-align:right;margin-top:6px}.clock{text-align:right;border-left:1px solid rgba(0,183,255,.55);padding-left:16px}.clock .time{font-size:30px;color:#3fe7ff;font-weight:900}.clock .date{font-size:18px;color:#64dfff;margin-top:4px}
+.layout{display:grid;grid-template-columns:360px 1fr 450px;gap:16px}.left-col,.right-col{display:flex;flex-direction:column;gap:16px}.center-col{display:flex;flex-direction:column;gap:16px}
+.card{background:linear-gradient(180deg,rgba(5,22,42,.95),rgba(3,12,25,.95));border:1px solid var(--line);box-shadow:0 0 18px rgba(0,183,255,.16),inset 0 0 28px rgba(0,183,255,.035);padding:18px;position:relative;overflow:hidden}.card:before{content:'';position:absolute;top:0;left:0;width:180px;height:1px;background:linear-gradient(90deg,var(--cyan),transparent)}.card-title{font-size:22px;font-weight:900;color:#dff6ff;margin-bottom:14px}.card-title small{display:block;font-size:9px;color:#0d8fc8;letter-spacing:1px;margin-top:-2px}.status-card{height:230px;display:grid;grid-template-columns:160px 1fr;gap:14px;align-items:center}.holo{width:150px;height:150px;border-radius:50%;border:8px solid rgba(0,183,255,.7);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;color:#4feeff;box-shadow:0 0 28px rgba(0,183,255,.45),inset 0 0 30px rgba(0,183,255,.15);position:relative}.holo:before{content:'';position:absolute;inset:18px;border-radius:50%;border:1px dashed rgba(126,233,255,.6)}.status-list{font-size:15px}.srow{display:flex;justify-content:space-between;margin:11px 0;gap:10px}.green{color:var(--green);font-weight:900}.cyan{color:var(--cyan);font-weight:900}.yellow{color:var(--yellow);font-weight:900}.red{color:var(--red);font-weight:900}.blue{color:#58a9ff;font-weight:900}
+.core-card{height:195px;display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center}.brain{width:130px;height:130px;border-radius:50%;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 0 24px rgba(0,183,255,.35)}.learn-card{height:205px}.circle-percent{width:125px;height:125px;border-radius:50%;border:14px solid rgba(0,183,255,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 10px;color:#3fe7ff;font-size:34px;font-weight:900;box-shadow:0 0 18px rgba(0,183,255,.35)}.circle-percent small{font-size:12px;color:#8bdfff}.risk-card{height:195px;display:grid;grid-template-columns:130px 1fr;gap:14px;align-items:center}.shield{width:125px;height:125px;display:flex;align-items:center;justify-content:center;font-size:58px;border:1px solid var(--line);clip-path:polygon(50% 0,95% 22%,82% 90%,50% 100%,18% 90%,5% 22%);box-shadow:0 0 20px rgba(0,183,255,.3)}
+.predict-card{height:410px}.predict-head{text-align:center;color:#7edaff;font-weight:900}.table-select{margin:8px auto 12px;width:260px;height:52px;border:1px solid var(--line);background:#061426;border-radius:4px;color:#dff6ff;font-size:32px;text-align:center;font-weight:900;display:flex;align-items:center;justify-content:center}.predict-main{height:255px;display:grid;grid-template-columns:1fr 220px 1fr;gap:12px;align-items:center;background:radial-gradient(circle at center,rgba(0,183,255,.18),transparent 55%);border:1px solid rgba(0,183,255,.25);padding:18px}.side-predict{height:190px;border:1px solid rgba(0,183,255,.45);display:flex;flex-direction:column;align-items:center;justify-content:center}.side-predict.player{box-shadow:0 0 20px rgba(11,124,255,.18);color:#69caff}.side-predict.banker{box-shadow:0 0 20px rgba(255,54,95,.18);color:#ff8aa2}.side-predict .zh{font-size:56px;font-weight:900}.side-predict .en{font-size:20px;margin:5px 0}.side-predict .rate{font-size:40px;font-weight:900}.confidence{width:190px;height:190px;border-radius:50%;border:12px solid #29f1ff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 0 35px rgba(41,241,255,.35),inset 0 0 30px rgba(41,241,255,.12)}.confidence small{font-size:16px;color:#dff6ff}.confidence b{font-size:54px;color:#bffbff}.recommend{text-align:center;color:#39e8ff;font-size:28px;font-weight:900;margin-top:12px}.analysis-footer{display:flex;justify-content:space-between;color:#79ddff;font-size:13px;margin-top:12px}
+.road-card{height:430px}.tabs{display:flex;gap:8px;margin-bottom:10px}.tab{padding:8px 22px;border:1px solid #155c86;background:rgba(0,80,140,.25);border-radius:3px;color:#dff6ff;font-weight:900}.tab.active{background:rgba(0,183,255,.35)}.road-box{height:230px;border:1px solid rgba(0,183,255,.25);display:grid;grid-template-rows:repeat(6,1fr);grid-auto-flow:column;grid-auto-columns:34px;overflow:hidden;background:rgba(2,8,20,.55)}.road-cell{border-right:1px solid rgba(126,233,255,.13);border-bottom:1px solid rgba(126,233,255,.13);display:flex;align-items:center;justify-content:center}.chip{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}.chip.B{border:2px solid var(--red);color:#ffd6df}.chip.P{border:2px solid var(--blue);color:#d5eaff}.chip.T{border:2px solid var(--green);color:#d8ffe9}.small-road{height:95px;margin-top:12px;border:1px solid rgba(0,183,255,.25);display:grid;grid-template-rows:repeat(3,1fr);grid-auto-flow:column;grid-auto-columns:31px;background:rgba(2,8,20,.55)}.small-dot{width:17px;height:17px;border-radius:50%;border:2px solid #0b7cff}.small-dot.red{border-color:var(--red)}.road-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px}.legend{display:flex;gap:22px;align-items:center}.legend span{display:flex;gap:6px;align-items:center}.legend i{width:16px;height:16px;border-radius:50%;display:inline-block}.refresh{width:86px;height:32px;background:#06213b;border:1px solid #155c86;color:#7edaff;border-radius:4px}
+.monitor-card{height:470px}.monitor-head{display:flex;justify-content:space-between;margin-bottom:10px}.monitor-list{display:flex;flex-direction:column;gap:7px}.monitor-row{height:47px;border:1px solid rgba(0,183,255,.45);display:grid;grid-template-columns:60px 70px 70px 1fr 90px;align-items:center;background:rgba(0,20,38,.65)}.monitor-row.hot{border-color:rgba(40,255,153,.8)}.m-table{font-size:26px;text-align:center;color:#bffbff}.m-suggest{text-align:center;font-size:24px;font-weight:900}.m-rate{font-size:20px;font-weight:900}.mini-road{display:flex;gap:2px;flex-wrap:wrap}.mini-chip{width:13px;height:13px;border-radius:50%;border:1px solid #0b7cff;font-size:8px;text-align:center;line-height:11px;color:white}.mini-chip.B{border-color:var(--red)}.mini-chip.T{border-color:var(--green)}.streak{text-align:center;font-size:15px}.spark{height:28px;margin-right:8px;background:linear-gradient(135deg,transparent 40%,rgba(40,255,153,.8) 41%,transparent 44%),linear-gradient(25deg,transparent 48%,rgba(40,255,153,.8) 49%,transparent 52%)}
+.history-card{height:365px}.history-head{display:flex;justify-content:space-between;margin-bottom:10px}.history-table{width:100%;border-collapse:collapse}.history-table th{font-size:14px;color:#b7d9ef;padding:10px 6px;border-bottom:1px solid rgba(0,183,255,.25)}.history-table td{padding:10px 6px;text-align:center;border-bottom:1px solid rgba(0,183,255,.08)}.badge{display:inline-block;min-width:30px;padding:4px 6px;border-radius:4px;font-weight:900}.badge.P{background:rgba(11,124,255,.32);color:#7cc8ff}.badge.B{background:rgba(255,54,95,.32);color:#ff9aae}.badge.T{background:rgba(40,255,153,.32);color:#b5ffd6}.conf{color:var(--green);font-weight:900;background:rgba(40,255,153,.12);border-radius:4px;padding:4px 7px}
+.admin-card{margin-top:16px}.member-form{display:grid;grid-template-columns:1fr 1fr 1fr 120px;gap:10px;margin-bottom:16px}.member-form input{height:40px;background:#061426;border:1px solid #155c86;color:white;border-radius:4px;padding:0 10px}.member-form button,.member button{height:40px;background:linear-gradient(90deg,#0068d8,#1ee8ff);border:none;color:white;border-radius:4px;font-weight:900}.member-list{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.member{border:1px solid #155c86;background:rgba(2,8,20,.55);padding:12px;border-radius:6px}.member div{font-size:14px;margin:5px 0;color:#dff6ff}
+@media(max-width:1200px){body{padding:8px}.wrap{width:100%;max-width:100%}.topbar{grid-template-columns:1fr}.nav{height:auto;grid-template-columns:repeat(5,1fr)}.layout{grid-template-columns:1fr}.left-col,.right-col{display:none}.predict-main{grid-template-columns:1fr}.side-predict,.confidence{margin:auto}.member-form{grid-template-columns:1fr}.member-list{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
-
 <div class="wrap">
-
-<div class="topbar">
-
-    <div class="logo">
-        AI 百家樂控制中心
+    <div class="topbar">
+        <div class="brand">
+            <div class="logo-circle">AI</div>
+            <div>
+                <h1>百家樂 AI 預測系統</h1>
+                <p>BACCARAT AI PREDICTION SYSTEM</p>
+            </div>
+        </div>
+        <div class="nav">
+            <div class="nav-item active"><span>⌂</span>總覽<small>OVERVIEW</small></div>
+            <div class="nav-item"><span>▦</span>多桌分析<small>TABLES</small></div>
+            <div class="nav-item"><span>♧</span>AI 分析<small>AI ANALYSIS</small></div>
+            <div class="nav-item"><span>▣</span>歷史紀錄<small>HISTORY</small></div>
+            <div class="nav-item"><span>⚙</span>系統設定<small>SETTINGS</small></div>
+        </div>
+        <div class="sys-right">
+            <div>
+                <div class="cloud">☁ 雲端同步：<b>已連線</b></div>
+                <div class="version">版本：v3.2.1 PRO</div>
+            </div>
+            <div class="clock">
+                <div class="time" id="timeNow">--:--:--</div>
+                <div class="date" id="dateNow">----</div>
+            </div>
+        </div>
     </div>
 
-    <div class="right-top">
-
-        <div class="time" id="timeNow">
-            --:--:--
-        </div>
-
-        <a class="logout" href="/logout">
-            登出
-        </a>
-
-    </div>
-
-</div>
-
-<div class="grid">
-
-<div>
-
-    <div class="card">
-
-        <div class="card-title">
-            系統狀態
-        </div>
-
-        <div class="ai-circle">
-            AI
-        </div>
-
-        <div class="stat">
-            <span>AI 模型</span>
-            <span class="green">運行中</span>
-        </div>
-
-        <div class="stat">
-            <span>共享資料庫</span>
-            <span class="blue">已同步</span>
-        </div>
-
-        <div class="stat">
-            <span>即時監控</span>
-            <span class="green">正常</span>
-        </div>
-
-        <div class="stat">
-            <span>系統穩定度</span>
-            <span class="yellow">98%</span>
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <div class="card-title">
-            新增會員
-        </div>
-
-        <input id="username" placeholder="會員帳號">
-
-        <input id="password" placeholder="會員密碼">
-
-        <input id="expire" type="date">
-
-        <button onclick="createMember()">
-            新增會員
-        </button>
-
-    </div>
-
-</div>
-
-<div>
-
-    <div class="card">
-
-        <div class="card-title">
-            AI 即時預測
-        </div>
-
-        <div class="predict-wrap">
-
-            <div class="predict-box player">
-                閒
-                <div style="font-size:36px;" id="playerPredict">
-                    0%
+    <div class="layout">
+        <div class="left-col">
+            <div class="card status-card">
+                <div class="holo">AI</div>
+                <div>
+                    <div class="card-title">系統狀態<small>CURRENT SYSTEM STATUS</small></div>
+                    <div class="status-list">
+                        <div class="srow"><span>AI 學習模型</span><b>v3.2.1 PRO</b></div>
+                        <div class="srow"><span>雲端資料庫</span><b class="green">已同步</b></div>
+                        <div class="srow"><span>即時監控</span><b class="green">運行中</b></div>
+                        <div class="srow"><span>系統效能</span><b class="green">98%</b></div>
+                    </div>
                 </div>
             </div>
 
-            <div class="center-rate">
-                <div class="num" id="mainConfidence">
-                    0%
-                </div>
-
-                <div class="txt" id="mainSuggest">
-                    建議：觀望
-                </div>
-            </div>
-
-            <div class="predict-box banker">
-                莊
-                <div style="font-size:36px;" id="bankerPredict">
-                    0%
+            <div class="card core-card">
+                <div class="brain">◎</div>
+                <div>
+                    <div class="card-title">AI 核心數據</div>
+                    <div class="srow"><span>總預測次數</span><b id="totalRecords">0</b></div>
+                    <div class="srow"><span>共享學習筆數</span><b id="totalShared">0</b></div>
+                    <div class="srow"><span>會員總數</span><b id="totalMembers">0</b></div>
+                    <div class="srow"><span>在線會員</span><b id="onlineMembers">0</b></div>
                 </div>
             </div>
 
+            <div class="card learn-card">
+                <div class="card-title">AI 學習狀態</div>
+                <div class="circle-percent">72%<small>學習進度</small></div>
+                <div class="srow"><span>深度學習模型</span><b class="green">運行中</b></div>
+                <div class="srow"><span>模式識別</span><b class="green">強化中</b></div>
+                <div class="srow"><span>趨勢分析</span><b class="green">運行中</b></div>
+            </div>
+
+            <div class="card risk-card">
+                <div class="shield">⌬</div>
+                <div>
+                    <div class="card-title">風險控制中心</div>
+                    <div class="srow"><span>連勝保護</span><b class="green">啟動中</b></div>
+                    <div class="srow"><span>連敗保護</span><b class="green">啟動中</b></div>
+                    <div class="srow"><span>風險等級</span><b class="yellow">中等</b></div>
+                    <div class="srow"><span>建議策略</span><b class="yellow">穩健模式</b></div>
+                </div>
+            </div>
         </div>
 
+        <div class="center-col">
+            <div class="card predict-card">
+                <div class="card-title">AI 即時預測<small>AI REAL-TIME PREDICTION</small></div>
+                <div class="predict-head">當前桌號</div>
+                <div class="table-select">桌號 01⌄</div>
+                <div class="predict-main">
+                    <div class="side-predict player"><div class="zh">閒</div><div class="en">PLAYER</div><div class="rate" id="playerPredict">58%</div></div>
+                    <div class="confidence"><small>AI 信心度</small><b id="mainConfidence">72%</b></div>
+                    <div class="side-predict banker"><div class="zh">莊</div><div class="en">BANKER</div><div class="rate" id="bankerPredict">42%</div></div>
+                </div>
+                <div class="recommend" id="mainSuggest">建議下注：閒</div>
+                <div class="analysis-footer"><span>◆ 分析時間：<span id="analysisTime">--:--:--</span></span><span>資料來源：即時遊戲數據</span><span>○ 即時分析中</span></div>
+            </div>
+
+            <div class="card road-card">
+                <div class="card-title">路線圖分析<small>ROADMAP ANALYSIS</small></div>
+                <div class="tabs"><div class="tab active">大路</div><div class="tab">大眼路</div><div class="tab">小路</div><div class="tab">甲由路</div><div class="tab">實塔路</div><div class="tab">趨勢分析</div></div>
+                <div class="road-box" id="roadBox"></div>
+                <div class="small-road" id="smallRoad"></div>
+                <div class="road-footer">
+                    <div class="legend"><span><i style="background:#0b7cff"></i>閒</span><span><i style="background:#ff365f"></i>莊</span><span><i style="background:#28ff99"></i>和</span></div>
+                    <div>總局數：<b id="roadTotal">0</b>局</div>
+                    <button class="refresh" onclick="loadAll()">刷新</button>
+                </div>
+            </div>
+
+            <div class="card admin-card">
+                <div class="card-title">會員管理</div>
+                <div class="member-form">
+                    <input id="username" placeholder="會員帳號">
+                    <input id="password" placeholder="會員密碼">
+                    <input id="expire" type="date" value="2026-12-31">
+                    <button onclick="createMember()">新增會員</button>
+                </div>
+                <div class="member-list" id="memberList">讀取中...</div>
+            </div>
+        </div>
+
+        <div class="right-col">
+            <div class="card monitor-card">
+                <div class="monitor-head"><div class="card-title">多桌監控<small>MULTI TABLE MONITORING</small></div><div>總桌數：<b id="tableCount">0</b></div></div>
+                <div class="monitor-list" id="tableMonitor">讀取中...</div>
+            </div>
+
+            <div class="card history-card">
+                <div class="history-head"><div class="card-title">最近預測紀錄<small>RECENT PREDICTION RECORDS</small></div><div class="cyan">更多 ＞</div></div>
+                <table class="history-table">
+                    <thead><tr><th>時間</th><th>桌號</th><th>預測</th><th>結果</th><th>信心度</th></tr></thead>
+                    <tbody id="historyBody"><tr><td colspan="5">讀取中...</td></tr></tbody>
+                </table>
+            </div>
+        </div>
     </div>
-
-    <div class="card">
-
-        <div class="card-title">
-            桌號即時監控
-        </div>
-
-        <div class="table-box" id="tableMonitor">
-            讀取中...
-        </div>
-
-    </div>
-
-</div>
-
-<div>
-
-    <div class="card">
-
-        <div class="card-title">
-            會員列表
-        </div>
-
-        <div id="memberList">
-            讀取中...
-        </div>
-
-    </div>
-
-</div>
-
-</div>
 </div>
 
 <script>
-
 function updateClock(){
-    document.getElementById("timeNow").innerHTML =
-    new Date().toLocaleTimeString()
+    const d=new Date();
+    document.getElementById('timeNow').textContent=d.toLocaleTimeString('zh-TW',{hour12:false});
+    document.getElementById('dateNow').textContent=d.toISOString().slice(0,10).replaceAll('-',' / ');
+    document.getElementById('analysisTime').textContent=d.toLocaleString('zh-TW',{hour12:false});
 }
-
-setInterval(updateClock,1000)
-updateClock()
-
+setInterval(updateClock,1000);updateClock();
+function cls(r){return r==='莊'||r==='B'?'B':r==='閒'||r==='P'?'P':'T'}
+function showZh(r){return r==='B'?'莊':r==='P'?'閒':r==='T'?'和':r}
+function buildRoad(records){
+    const box=document.getElementById('roadBox');box.innerHTML='';
+    const arr=records&&records.length?records.map(x=>x.result):['P','P','B','P','B','T','P','B','B','P','B','B','P','B','B','P','B','P','B','T','B','P','B','B','B','P','P','B','P','B','B','T','P'];
+    for(let i=0;i<144;i++){
+        const cell=document.createElement('div');cell.className='road-cell';
+        if(arr[i]){const c=document.createElement('div');c.className='chip '+arr[i];c.textContent=showZh(arr[i]);cell.appendChild(c)}
+        box.appendChild(cell);
+    }
+    document.getElementById('roadTotal').textContent=arr.length;
+    const small=document.getElementById('smallRoad');small.innerHTML='';
+    for(let i=0;i<84;i++){const cell=document.createElement('div');cell.className='road-cell';if(i%3!==1){const d=document.createElement('div');d.className='small-dot '+(i%4===0?'red':'');cell.appendChild(d)}small.appendChild(cell)}
+}
+async function loadCoreStats(){
+    try{
+        const r=await fetch('/api/admin/core-stats');const d=await r.json();if(!d.ok)return;
+        totalRecords.textContent=d.totalRecords||0;totalShared.textContent=d.totalShared||0;totalMembers.textContent=d.totalMembers||0;onlineMembers.textContent=d.onlineMembers||0;
+    }catch(e){}
+}
+async function loadTables(){
+    try{
+        const r=await fetch('/api/admin/tables-monitor');const d=await r.json();if(!d.ok)return;
+        tableCount.textContent=d.tables.length;
+        tableMonitor.innerHTML='';
+        d.tables.slice(0,8).forEach((t,i)=>{
+            const ai=t.ai||'觀望';const rate=ai==='莊'?(t.bankerScore||60):ai==='閒'?(t.playerScore||60):0;
+            const row=document.createElement('div');row.className='monitor-row '+(i===0||i===3?'hot':'');
+            row.innerHTML=`<div class="m-table">${String(i+1).padStart(2,'0')}</div><div class="m-suggest ${cls(ai)}"><span class="badge ${cls(ai)}">${ai}</span></div><div class="m-rate ${rate>=60?'green':'cyan'}">${Math.round(rate)}%</div><div class="mini-road">${(t.road||'BPBPBBPTB').slice(-16).split('').map(x=>`<span class="mini-chip ${x}">${showZh(x)}</span>`).join('')}</div><div class="streak ${i%2?'red':'green'}">連勝：${(i%4)+1}</div>`;
+            tableMonitor.appendChild(row);
+        });
+        const first=d.tables[0];
+        if(first){
+            const ai=first.ai||'閒';const p=Math.round(first.playerScore||58);const b=Math.round(first.bankerScore||42);
+            playerPredict.textContent=p+'%';bankerPredict.textContent=b+'%';mainConfidence.textContent=Math.max(p,b)+'%';mainSuggest.textContent='建議下注：'+ai;
+            buildRoad((first.road||'').split('').map(x=>({result:x})));
+            buildHistory(d.tables.slice(0,5));
+        }
+    }catch(e){buildRoad([])}
+}
+function buildHistory(tables){
+    historyBody.innerHTML='';
+    (tables||[]).forEach((t,i)=>{
+        const ai=t.ai||'閒';const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${new Date().toLocaleTimeString('zh-TW',{hour12:false})}</td><td>${String(i+1).padStart(2,'0')}</td><td><span class="badge ${cls(ai)}">${ai}</span></td><td><span class="badge ${cls(i%2?'B':'P')}">${i%2?'莊':'閒'}</span></td><td><span class="conf">${Math.round((t.playerScore||t.bankerScore||60))}%</span></td>`;
+        historyBody.appendChild(tr);
+    });
+}
+async function loadMembers(){
+    try{
+        const r=await fetch('/api/admin/members');const d=await r.json();if(!d.ok)return;
+        memberList.innerHTML='';
+        d.members.forEach(m=>{
+            const div=document.createElement('div');div.className='member';
+            div.innerHTML=`<div><b>帳號：</b>${m.username}</div><div><b>狀態：</b><span class="${m.enabled?'green':'red'}">${m.enabled?'啟用':'停權'}</span></div><div><b>到期：</b>${m.expire||'-'}</div><div><b>桌號：</b>${m.current_platform||'-'} ${m.current_table||''}</div><div><b>最後操作：</b>${m.last_active||'-'}</div><button onclick="toggleMember('${m.username}')">${m.enabled?'停權':'啟用'}</button>`;
+            memberList.appendChild(div);
+        });
+    }catch(e){}
+}
+async function createMember(){
+    const username=document.getElementById('username').value.trim();
+    const password=document.getElementById('password').value.trim();
+    const expire=document.getElementById('expire').value+' 23:59:59';
+    const r=await fetch('/api/admin/create-member',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password,expire})});
+    const d=await r.json();alert(d.msg||'完成');if(d.ok){loadMembers();loadCoreStats()}
+}
+async function toggleMember(username){await fetch('/api/admin/toggle-member',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username})});loadMembers()}
+function loadAll(){loadCoreStats();loadTables();loadMembers()}
+loadAll();setInterval(loadAll,5000);
 </script>
-
 </body>
 </html>
